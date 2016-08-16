@@ -38,15 +38,19 @@ private:
 		MIRROR_CLAMP = 5,
 		MIRROR_CLAMP_TO_EDGE = 6
 	} m_addr_u, m_addr_v, m_addr_w;
-	bool m_tsnormal = false;
-	bool m_ui = false;
 	u8 m_bias = 0;
 	bool m_noanisotropic = false;
+	bool m_nocompress = false;
+	bool m_customColorSpace = false;
 	std::string m_basepath; // @example: C:/
 	std::string m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
+
+	bool m_tsnormal = false;
+	bool m_ui = false;
 public:
 	bool load(std::string basepath, std::string filepath);
+	bool loadDDS(std::string filepath);
 	bool saveToMidFormats(std::string exportpath);
 };
 

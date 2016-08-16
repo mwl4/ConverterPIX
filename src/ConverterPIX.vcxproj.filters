@@ -52,6 +52,9 @@
     <Filter Include="Header Files\texture">
       <UniqueIdentifier>{5fc76f30-360e-46c1-a66a-e6f1bdc01b2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\structs">
+      <UniqueIdentifier>{031271cf-59ec-43e4-a2f7-b6cdf7f73730}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_main.cpp">
@@ -98,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="config.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="structs\dds.cpp">
+      <Filter>Source Files\structs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -208,6 +214,9 @@
     </ClInclude>
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\dds.h">
+      <Filter>Header Files\structs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

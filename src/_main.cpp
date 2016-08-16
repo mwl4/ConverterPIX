@@ -15,12 +15,16 @@
 #include <texture/texture_object.h>
 #include <texture/texture.h>
 
+#include <structs/dds.h>
+#include <file.h>
+
 void print_help()
 {
 	printf(" Parameters:\n");
 	printf("  -h                   - prints help text\n");
 	printf("  -m <model_path>      - turns into single model mode and specifies model path (relative to base)\n");
 	printf("  -t <tobj_path>       - turns into single tobj mode and specifies tobj path (relative to base)\n");
+	printf("  -d <dds_path>        - turns into single dds mode and prints debug info (absolute path)\n");
 	printf("  -b <base_path>       - specify base path\n");
 	printf("  -e <export_path>     - specify export path\n");
 	printf("\n");
@@ -76,6 +80,7 @@ int main(int argc, char *argv[])
 		DIRECTORY_LIST,
 		SINGLE_MODEL,
 		SINGLE_TOBJ,
+		DEBUG_DDS
 	} mode = DIRECTORY_LIST;
 	
 	std::string *parameter = nullptr;
@@ -112,6 +117,11 @@ int main(int argc, char *argv[])
 		else if (arg == "-e")
 		{
 			parameter = &exportpath;
+		}
+		else if (arg == "-d")
+		{
+			mode = DEBUG_DDS;
+			parameter = &filepath;
 		}
 		else
 		{
@@ -228,6 +238,13 @@ int main(int argc, char *argv[])
 			{
 				tobj.saveToMidFormats(exportpath);
 				printf("%s: tobj: yes\n", filepath.substr(directory(filepath).length() + 1).c_str());
+			}
+		} break;
+		case DEBUG_DDS:
+		{
+			if (!filepath.empty())
+			{
+				dds::print_debug(filepath);
 			}
 		} break;
 	}

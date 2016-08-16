@@ -97,6 +97,7 @@
     <ClCompile Include="model\piece.cpp" />
     <ClCompile Include="prefab\prefab.cpp" />
     <ClCompile Include="resource_lib.cpp" />
+    <ClCompile Include="structs\dds.cpp" />
     <ClCompile Include="texture\texture.cpp" />
     <ClCompile Include="texture\texture_object.cpp" />
     <ClCompile Include="utils\token.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="prefab\trigger_point.h" />
     <ClInclude Include="prerequisites.h" />
     <ClInclude Include="resource_lib.h" />
+    <ClInclude Include="structs\dds.h" />
     <ClInclude Include="structs\pma.h" />
     <ClInclude Include="structs\pmd.h" />
     <ClInclude Include="structs\pmg.h" />

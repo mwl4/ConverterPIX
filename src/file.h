@@ -55,7 +55,7 @@ public:
 	const char *getLine(std::string &out)
 	{
 		char buffer[1024] = { 0 };
-		const char *result = fgets(buffer, 1024, m_file);
+		const char *result = fgets(buffer, sizeof(buffer), m_file);
 		if (result)
 		{
 			out = buffer;

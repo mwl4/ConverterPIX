@@ -17,7 +17,7 @@ namespace prism
 {
 	struct tobj_header
 	{
-		u32 m_magic;		// 1890650625
+		u32 m_version;
 		u32 m_unkn0;
 		u32 m_unkn1;
 		u32 m_unkn2;
@@ -34,12 +34,12 @@ namespace prism
 		u8 m_addr_u;		// { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3, 
 		u8 m_addr_v;		//   mirror = 4, mirror_clamp = 5, mirror_clamp_to_edge = 6
 		u8 m_addr_w;		// }
-		u8 m_ui;
+		u8 m_nocompress;
 		u8 m_unkn7;
 		u8 m_noanisotropic;
 		u8 m_unkn9;
 		u8 m_unkn10;
-		u8 m_tsnormal;
+		u8 m_custom_color_space;	// color_space srgb(0[default]), tsnormal(1), color_space linear(1)
 		u8 m_unkn11;
 
 		static const u32 SUPPORTED_MAGIC = 1890650625;
@@ -50,6 +50,32 @@ namespace prism
 		u32 m_length;
 		u32 m_unknown;
 	};	ENSURE_SIZE(tobj_texture, 8);
+
+	/*
+		default:
+		 - tga (32 bits) -> DXT5
+		 - tga (24 bits) -> DXT1
+
+		usage tsnormal:
+		 - tga -> ATI2
+		 - png (nocompress) -> R16G16    # png is required
+
+		nomips:
+		 - tga -> DXT5/DXT1
+
+		color_space linear:
+		 - tga -> DXT5/DXT1
+
+		nocompress:
+		 - tga (32 bits) -> A8R8G8B8
+		 - tga (24 bits) -> R8G8B8
+
+		usage ui = nomips + color_space linear + nocompress
+
+		usage ui    # (nomips + color_space linear + nocompress)
+		 - tga (32 bits) -> A8R8G8B8
+		 - tga (24 bits) -> R8G8B8
+	*/
 } // namespace prism
 
 #pragma pack(pop)
