@@ -38,7 +38,7 @@ namespace prism
 
 	struct pma_frame
 	{
-		quat_t m_stretch;			// +0
+		quat_t m_scale_orient;		// +0
 		quat_t m_rot;				// +16
 		float3 m_trans;				// +32
 		float3 m_scale;				// +44

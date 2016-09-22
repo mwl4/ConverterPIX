@@ -101,6 +101,8 @@ class TerrainPointVariant;
 class TriggerPoint;
 class Intersection;
 
+class Collision;
+
 class Texture;
 class TextureObject;
 class Material;

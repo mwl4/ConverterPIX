@@ -93,6 +93,7 @@
     <ClCompile Include="libs\fmt\fmt\posix.cc" />
     <ClCompile Include="material\material.cpp" />
     <ClCompile Include="model\animation.cpp" />
+    <ClCompile Include="model\collision.cpp" />
     <ClCompile Include="model\model.cpp" />
     <ClCompile Include="model\piece.cpp" />
     <ClCompile Include="prefab\prefab.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="math\vector.h" />
     <ClInclude Include="model\animation.h" />
     <ClInclude Include="model\bone.h" />
+    <ClInclude Include="model\collision.h" />
     <ClInclude Include="model\locator.h" />
     <ClInclude Include="model\model.h" />
     <ClInclude Include="model\part.h" />
@@ -130,6 +132,7 @@
     <ClInclude Include="resource_lib.h" />
     <ClInclude Include="structs\dds.h" />
     <ClInclude Include="structs\pma.h" />
+    <ClInclude Include="structs\pmc.h" />
     <ClInclude Include="structs\pmd.h" />
     <ClInclude Include="structs\pmg.h" />
     <ClInclude Include="structs\ppd.h" />

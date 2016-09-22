@@ -21,6 +21,13 @@ namespace prism
 	public:
 		T m_a[N];
 	public:
+		vec_t()
+		{
+			for (size_t i = 0; i < N; ++i)
+			{
+				m_a[i] = T();
+			}
+		}
 		T &get_at(size_t idx)
 		{
 			return m_a[idx];

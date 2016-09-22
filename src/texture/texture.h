@@ -22,7 +22,7 @@ private:
 public:
 	bool load(std::string basePath);
 	std::string texture() const { return m_texture; }
-	auto texobj() const -> decltype(m_texObj) { return m_texObj; }
+	auto texobj() const -> const decltype(m_texObj) { return m_texObj; }
 };
 
 /* eof */

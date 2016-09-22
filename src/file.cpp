@@ -20,12 +20,12 @@ FileStd::~FileStd()
 	close();
 }
 
-FileStd::FileStd(const std::string& filepath, const char* attr)
+FileStd::FileStd(const std::string& filepath, const char *attr)
 {
 	open(filepath, attr);
 }
 
-bool FileStd::open(const std::string& filepath, const char* attr)
+bool FileStd::open(const std::string& filepath, const char *attr)
 {
 	if (m_file = fopen(filepath.c_str(), attr))
 	{
@@ -33,7 +33,7 @@ bool FileStd::open(const std::string& filepath, const char* attr)
 	}
 	else
 	{
-		if (!directoryExists(directory(filepath)))
+		if (!directoryExists(directory(filepath)) && strchr(attr, 'w') != nullptr)
 		{
 			if (createDirectory(directory(filepath)))
 			{
@@ -41,7 +41,7 @@ bool FileStd::open(const std::string& filepath, const char* attr)
 			}
 		}
 	}
-	return m_file ? true : false;
+	return !!m_file;
 }
 
 void FileStd::close()
@@ -92,20 +92,17 @@ IFile& FileStd::read(char* buffer, size_t elementSize, size_t size)
 
 IFile& FileStd::operator>>(int& dest)
 {
-	return read((char*)&dest, sizeof(int), 1);
+	return read((char *)&dest, sizeof(int), 1);
 }
 
-void FileStd::seek(uint32_t offset, attrib attr)
+int FileStd::seek(uint32_t offset, attrib attr)
 {
-	if (m_file)
-		fseek(m_file, offset, attr);
+	return m_file ? fseek(m_file, offset, attr) : -1;
 }
 
 size_t FileStd::tell()
 {
-	if (m_file)
-		return ftell(m_file);
-	return 0;
+	return m_file ? ftell(m_file) : 0;
 }
 
 void FileStd::rewind()

@@ -310,7 +310,10 @@ bool Material::convertTextures(std::string exportPath) const
 {
 	for (auto &texture : m_textures)
 	{
-		texture.texobj()->saveToMidFormats(exportPath);
+		if (texture.texobj())
+		{
+			texture.texobj()->saveToMidFormats(exportPath);
+		}
 	}
 	return true;
 }

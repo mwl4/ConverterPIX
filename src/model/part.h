@@ -15,13 +15,12 @@
 
 class Part
 {
-	friend Model;
-private:
+public:
 	std::string m_name;
 	uint32_t m_locatorCount;
-	uint32_t m_locatorId;
+	uint32_t m_locatorId; // start index
 	uint32_t m_pieceCount;
-	uint32_t m_pieceId;
+	uint32_t m_pieceId; // start index
 };
 
 /* eof */

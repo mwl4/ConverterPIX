@@ -19,7 +19,7 @@ public:
 	{
 		friend Animation;
 	private:
-		Quaternion m_stretch;
+		Quaternion m_scaleOrientation;
 		Quaternion m_rotation;
 		Float3 m_translation;
 		Float3 m_scale;

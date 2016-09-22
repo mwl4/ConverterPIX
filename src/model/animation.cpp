@@ -70,7 +70,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 		{
 			pma_frame *frame = (pma_frame *)(buffer.get() + header->m_frames_offset + i*sizeof(pma_frame) + j*m_bones.size()*sizeof(pma_frame));
 			if(i == 0) m_timeframes[j] = *(float *)(buffer.get() + header->m_lengths_offset + j * sizeof(float));
-			m_frames[i][j].m_stretch = frame->m_stretch;
+			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
 			m_frames[i][j].m_rotation = frame->m_rot;
 			m_frames[i][j].m_translation = frame->m_trans;
 			m_frames[i][j].m_scale = frame->m_scale;
@@ -172,6 +172,8 @@ void Animation::saveToPia(std::string exportPath) const
 
 	for (uint32_t i = 0; i < m_bones.size(); ++i)
 	{
+		const auto bone = m_model->bone(m_bones[i]);
+
 		if (m_bones[i] >= m_model->boneCount())
 		{
 			printf("[anim] %s: Bone index outside bones array! [%i/%i]\n", filename.c_str(), (int)m_bones[i], m_model->boneCount());
@@ -184,7 +186,7 @@ void Animation::saveToPia(std::string exportPath) const
 				TAB "Name: \"%s\""		SEOL
 				TAB "StreamCount: %i"	SEOL
 				TAB "KeyframeCount: %i"	SEOL,
-					m_model->bone(m_bones[i])->m_name.c_str(),
+					bone->m_name.c_str(),
 					2,
 					m_timeframes.size()
 				);
@@ -217,18 +219,18 @@ void Animation::saveToPia(std::string exportPath) const
 					const Frame *frame = &m_frames[i][j];
 					const glm::vec3 trans = glm_cast(frame->m_translation);
 					const glm::quat rot = glm_cast(frame->m_rotation);
-					const glm::vec3 scale = glm_cast(frame->m_scale);
-					const prism::mat4 mat = glm::translate(trans) * glm::rotate(glm::angle(rot), glm::axis(rot)) * glm::scale(scale);
+					const glm::vec3 scale = glm_cast(frame->m_scale) * bone->m_signOfDeterminantOfMatrix;
+					const prism::mat4 mat = glm::translate(trans) * glm::mat4_cast(rot) * glm::scale(scale);
 
 					file << fmt::sprintf(
 						TAB TAB  "%-5i(  &%08x  &%08x  &%08x  &%08x"	SEOL
 						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
 						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
 						TAB TAB "        &%08x  &%08x  &%08x  &%08x )"	SEOL,
-							j,	flh(mat[0][0]), flh(mat[0][1]), flh(mat[0][2]), flh(mat[0][3]),
-								flh(mat[1][0]), flh(mat[1][1]), flh(mat[1][2]), flh(mat[1][3]),
-								flh(mat[2][0]), flh(mat[2][1]), flh(mat[2][2]), flh(mat[2][3]),
-								flh(mat[3][0]), flh(mat[3][1]), flh(mat[3][2]), flh(mat[3][3])
+							j,  flh(mat[0][0]), flh(mat[1][0]), flh(mat[2][0]), flh(mat[3][0]),
+								flh(mat[0][1]), flh(mat[1][1]), flh(mat[2][1]), flh(mat[3][1]),
+								flh(mat[0][2]), flh(mat[1][2]), flh(mat[2][2]), flh(mat[3][2]),
+								flh(mat[0][3]), flh(mat[1][3]), flh(mat[2][3]), flh(mat[3][3])
 						);
 				}
 			}

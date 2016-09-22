@@ -72,7 +72,7 @@ public:
 		SeekEnd = SEEK_END,
 	};
 
-	void seek(uint32_t offset, attrib attr);
+	int seek(uint32_t offset, attrib attr);
 	void rewind();
 	size_t tell();
 

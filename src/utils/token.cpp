@@ -37,7 +37,7 @@ namespace prism
 			tokenCopy = result.quot;
 			resultStr[i] = token_data::g_letters[result.rem];
 		}
-		return resultStr;
+		return resultStr.c_str();
 	}
 
 	u64 _string_to_token(const char *str, size_t index = 0, u64 multiplier = 1)

@@ -65,7 +65,7 @@ namespace prism
 
 	struct pmg_piece // sizeof(104)
 	{
-		i32 m_triangles;							// +0 edges
+		i32 m_edges;								// +0
 		i32 m_verts;								// +4
 		u32 m_uv_mask;								// +8
 		i32 m_uv_channels;							// +12

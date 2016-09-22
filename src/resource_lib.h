@@ -1,11 +1,11 @@
 /*********************************************************************
-*                   Copyright by mwl4 (C) 2015                      *
-*********************************************************************
-* File       : resource_lib.h
-* Project    : ConverterPIX
-* Developers : Michal Wojtowicz (mwl450@gmail.com)
-			 : Piotr Krupa (piotrekwidzew1@gmail.com)
-*********************************************************************/
+ *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *********************************************************************
+ * File       : resource_lib.h
+ * Project    : ConverterPIX
+ * Developers : Michal Wojtowicz (mwl450@gmail.com)
+ 			  : Piotr Krupa (piotrkrupa06@gmail.com)
+ *********************************************************************/
 
 #pragma once
 

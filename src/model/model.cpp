@@ -13,21 +13,56 @@
 #include <resource_lib.h>
 #include <texture/texture.h>
 #include <prefab/prefab.h>
+#include <model/collision.h>
+
+#include <glm/gtx/transform.hpp>
 
 using namespace prism;
+
+auto Variant::Part::operator[](std::string attribute) const -> const Attribute &
+{
+	const auto it = std::find_if(m_attributes.cbegin(), m_attributes.cend(),
+	[&](const Attribute &attr) {
+		return attr.getName() == attribute;
+	});
+	assert(it != m_attributes.cend());
+	return (*it);
+}
+
+auto Variant::Part::operator[](std::string attribute) -> Attribute &
+{
+	auto it = std::find_if(m_attributes.begin(), m_attributes.end(),
+	[&](const Attribute &attr) {
+		return attr.getName() == attribute;
+	});
+	assert(it != m_attributes.end());
+	return (*it);
+}
+
+auto Variant::Part::operator[](size_t attribute) const -> const Attribute &
+{
+	assert(attribute < m_attributes.size());
+	return m_attributes[attribute];
+}
+
+auto Variant::Part::operator[](size_t attribute) -> Attribute &
+{
+	assert(attribute < m_attributes.size());
+	return m_attributes[attribute];
+}
 
 void Variant::setPartCount(size_t parts)
 {
 	m_parts.resize(parts);
 }
 
-auto Variant::operator[](u32 id) const -> const std::vector<Attribute> &
+auto Variant::operator[](size_t id) const -> const Part &
 {
 	assert(id >= 0 && id < m_parts.size());
 	return m_parts[id];
 }
 
-auto Variant::operator[](u32 id) -> std::vector<Attribute> &
+auto Variant::operator[](size_t id) -> Part &
 {
 	assert(id >= 0 && id < m_parts.size());
 	return m_parts[id];
@@ -87,6 +122,8 @@ bool Model::load(std::string basePath, std::string filePath)
 			m_prefab.reset();
 		}
 	}
+
+	loadCollision();
 	
 	m_loaded = true;
 	return true;
@@ -103,8 +140,7 @@ bool Model::loadModel()
 		return false;
 	}
 
-	size_t fileSize = file.getSize();
-
+	const size_t fileSize = file.getSize();
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file.read((char *)buffer.get(), sizeof(char), fileSize);
 
@@ -113,7 +149,7 @@ bool Model::loadModel()
 	pmg_header *header = (pmg_header *)(buffer.get());
 	if (header->m_version != pmg_header::SUPPORTED_VERSION || !(header->m_signature[2] == 'P' && header->m_signature[1] == 'm' && header->m_signature[0] == 'g'))
 	{
-		printf("Invalid version of geometry file! (have: %i signature: %c%c%c, expected: %i)" SEOL, 
+		printf("Invalid version of geometry file: \"%s\" (have: %i signature: %c%c%c, expected: %i)" SEOL, m_filePath.c_str(),
 			   header->m_version, header->m_signature[2], header->m_signature[1], header->m_signature[0], pmg_header::SUPPORTED_VERSION);
 		return false;
 	}
@@ -180,8 +216,8 @@ bool Model::loadModel()
 		currentPiece->m_vertices.resize(piece->m_verts);
 		m_vertCount += piece->m_verts;
 
-		currentPiece->m_triangles.resize(piece->m_triangles / 3);
-		m_triangleCount += (piece->m_triangles / 3);
+		currentPiece->m_triangles.resize(piece->m_edges / 3);
+		m_triangleCount += (piece->m_edges / 3);
 
 		m_skinVertCount += currentPiece->m_bones > 0 ? currentPiece->m_vertices.size() : 0;
 
@@ -281,7 +317,7 @@ bool Model::loadModel()
 		}
 
 		pmg_triangle *triangle = (pmg_triangle *)(buffer.get() + piece->m_triangle_offset);
-		for (int32_t j = 0; j < (piece->m_triangles / 3); ++j)
+		for (int32_t j = 0; j < (piece->m_edges / 3); ++j)
 		{
 			currentPiece->m_triangles[j].m_a[0] = triangle->a[0];
 			currentPiece->m_triangles[j].m_a[1] = triangle->a[1];
@@ -376,19 +412,20 @@ bool Model::loadDescriptor()
 	for (uint32_t i = 0; i < m_variants.size(); ++i)
 	{
 		Variant *variant = &m_variants[i];
-		token_t variantName = *(token_t *)(buffer.get() + header->m_variant_offset + i*sizeof(token_t));
+		token_t variantName = *((token_t *)(buffer.get() + header->m_variant_offset) + i);
 
-		variant->m_name = token_to_string(variantName);
+		variant->m_name = variantName.to_string();
 		variant->setPartCount(header->m_part_count);
 	
 		for (uint32_t j = 0; j < header->m_part_count; ++j)
 		{
-			pmd_attrib_link *attribLink = (pmd_attrib_link *)(buffer.get() + header->m_part_attribs_offset + j*sizeof(pmd_attrib_link));
+			(*variant)[j].m_part = &m_parts[j];
+			const auto attribLink = (pmd_attrib_link *)(buffer.get() + header->m_part_attribs_offset) + j;
 			for (int32_t k = attribLink->m_from; k < attribLink->m_to; ++k)
 			{
-				pmd_attrib_def *attribDef = (pmd_attrib_def *)(buffer.get() + header->m_attribs_offset + k*sizeof(pmd_attrib_def));
-				pmd_attrib_value *attribValue = (pmd_attrib_value *)(buffer.get() + header->m_attribs_value_offset + attribDef->m_offset + i*header->m_attribs_values_size);
-				Variant::Attribute attrib(token_to_string(attribDef->m_name));
+				const auto attribDef = (pmd_attrib_def *)(buffer.get() + header->m_attribs_offset) + k;
+				const auto attribValue = (pmd_attrib_value *)(buffer.get() + header->m_attribs_value_offset + attribDef->m_offset + i*header->m_attribs_values_size);
+				Variant::Attribute attrib(attribDef->m_name.to_string());
 				switch (attribDef->m_type)
 				{
 					case 0:
@@ -397,9 +434,9 @@ bool Model::loadDescriptor()
 						attrib.m_intValue = attribValue->m_int_value;
 					} break;
 					// TODO: More attributes
-					default: printf("Invalid attribute value <%i>!", attribDef->m_type);
+					default: printf("Invalid attribute type <%i>!", attribDef->m_type);
 				}
-				(*variant)[j].push_back(attrib);
+				(*variant)[j].m_attributes.push_back(attrib);
 			}
 		}
 	}
@@ -408,8 +445,12 @@ bool Model::loadDescriptor()
 
 bool Model::loadCollision()
 {
-	// TODO: collisions import
-	return true;
+	if (fileExists(m_basePath + m_filePath + ".pmc"))
+	{
+		m_collision = std::make_shared<Collision>();
+		return m_collision->load(this, m_basePath, m_filePath);
+	}
+	return false;
 }
 
 bool Model::saveToPim(std::string exportPath) const
@@ -844,10 +885,10 @@ bool Model::saveToPit(std::string exportPath) const
 				TAB TAB "Name: \"%s\""			SEOL
 				TAB TAB "AttributeCount: %i"	SEOL,
 					m_parts[j].m_name.c_str(),
-					m_variants[i].m_parts[j].size()
+					m_variants[i].m_parts[j].m_attributes.size()
 				);
 
-			for (uint32_t k = 0; k < m_variants[i].m_parts[j].size(); ++k)
+			for (uint32_t k = 0; k < m_variants[i].m_parts[j].m_attributes.size(); ++k)
 			{
 				file << m_variants[i].m_parts[j][k].toDefinition(TAB TAB);
 			}
@@ -898,7 +939,8 @@ bool Model::saveToPis(std::string exportPath) const
 	{
 		for (size_t i = 0; i < m_bones.size(); ++i)
 		{
-			prism::mat4 mat = m_bones[i].m_transformation;
+			prism::mat4 mat = glm_cast(m_bones[i].m_transformation);
+
 			file << fmt::sprintf(
 				TAB "%-5i ( Name:  \"%s\""													SEOL
 				TAB TAB "   Parent: \"%s\""													SEOL
@@ -936,14 +978,13 @@ void Model::saveToMidFormat(std::string exportPath, bool convertTexture) const
 	bool pim = saveToPim(exportPath);
 	bool pit = saveToPit(exportPath);
 	bool pis = saveToPis(exportPath);
-	bool pip = m_prefab.get() ? m_prefab->saveToPip(exportPath) : false;
-	if (convertTexture)
-	{
-		convertTextures(exportPath);
-	}
+	bool pic = m_collision ? m_collision->saveToPic(exportPath) : false;
+	bool pip = m_prefab ? m_prefab->saveToPip(exportPath) : false;
+	if (convertTexture) { convertTextures(exportPath); }
+
 	auto state = [](bool x) -> const char * { return x ? "yes" : "no"; };
-	printf("%s: pim:%s pit:%s pis:%s pip:%s. vertices: %i materials: %i" SEOL, 
-		   m_fileName.c_str(), state(pim), state(pit), state(pis), state(pip), m_vertCount, m_materialCount);
+	printf("%s: pim:%s pit:%s pis:%s pic:%s pip:%s. vertices: %i materials: %i" SEOL, 
+		   m_fileName.c_str(), state(pim), state(pit), state(pis), state(pic), state(pip), m_vertCount, m_materialCount);
 }
 
 Bone *Model::bone(size_t index)

@@ -30,6 +30,9 @@ class Variant
 public:
 	class Attribute
 	{
+		friend Variant;
+		friend Model;
+
 		std::string m_name;
 		enum { INT = 0 } m_type;
 		union
@@ -48,16 +51,32 @@ public:
 		*/
 		std::string toDefinition(const std::string &prefix = "") const;
 
+		std::string getName() const { return m_name; }
+		int getInt() const { return m_intValue; }
+		float getFloat() const { return m_floatValue; }
+	};
+	class Part
+	{
 		friend Variant;
 		friend Model;
+
+		const ::Part *m_part = nullptr;
+		std::vector<Attribute> m_attributes;
+	public:
+		const Attribute &operator[](std::string attribute) const;
+		const Attribute &operator[](size_t attribute) const;
+		Attribute &operator[](std::string attribute);
+		Attribute &operator[](size_t attribute);
 	};
 private:
 	std::string m_name;
-	std::vector<std::vector<Attribute>> m_parts;
+	std::vector<Part> m_parts;
 public:
 	void setPartCount(size_t parts);
-	const std::vector<Attribute> &operator[](u32 id) const;
-	std::vector<Attribute> &operator[](u32 id);
+	const Part &operator[](size_t id) const;
+	Part &operator[](size_t id);
+
+	std::string getName() const { return m_name; }
 
 	friend Model;
 };
@@ -78,6 +97,7 @@ private:
 	uint32_t m_materialCount = 0;
 
 	std::shared_ptr<Prefab> m_prefab;
+	std::shared_ptr<Collision> m_collision;
 
 	bool m_loaded = false;
 
@@ -107,6 +127,9 @@ public:
 
 	uint32_t boneCount() const { return m_bones.size(); }
 	Bone *bone(size_t index);
+
+	const std::vector<Part> &getParts() const { return m_parts; }
+	const std::vector<Variant> &getVariants() const { return m_variants; }
 };
 
 /* eof */

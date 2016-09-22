@@ -101,6 +101,14 @@ namespace prism
 		{
 			set(string_to_token(s));
 		}
+		inline std::string to_string() const
+		{
+			return token_to_string(*this);
+		}
+		inline operator std::string() const
+		{
+			return to_string();
+		}
 		inline token_t &operator=(const token_t& rhs)
 		{
 			set(rhs.m_value);
