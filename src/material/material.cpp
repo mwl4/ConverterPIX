@@ -119,11 +119,8 @@ bool Material::load(std::string basePath, std::string filePath)
 		return false;
 	}
 
-	size_t fx_end = effect.find(".fx");
-	if(fx_end != std::string::npos)
-	{
-		effect = effect.substr(0, fx_end);
-	}
+	remove(effect, ".rfx");
+	remove(effect, ".fx");
 
 	m_effect = effect.c_str();
 

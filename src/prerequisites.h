@@ -158,6 +158,14 @@ static std::string betweenQuotes(std::string str)
 	return "ERROR";
 }
 
+static void remove(std::string &str, const std::string &substr)
+{
+	for (size_t pos = std::string::npos; (pos = str.find(substr)) != std::string::npos;)
+	{
+		str.erase(pos, substr.length());
+	}
+}
+
 /**
  * @brief: Returns directory of the file
  * 
