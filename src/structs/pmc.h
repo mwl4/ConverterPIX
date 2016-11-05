@@ -57,7 +57,7 @@ namespace prism
 
 	struct pmc_locator // sizeof(36)
 	{
-		s32 m_unknown;					// +0 ; 8 or 1
+		s32 m_type;						// +0 ; 1 = box, 2 = ..., 4 = ..., 8 = convex
 		s32 m_data_size;				// +4
 		u32 m_alias;					// +8
 		float m_weight;					// +12

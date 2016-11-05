@@ -25,11 +25,13 @@ public:
 	class Locator
 	{
 	public:
+		int m_type = 0; // 1 - box, 2 - ..., 4 - ..., 8 - convex
 		std::string m_name;
 		size_t m_index;
 		Float3 m_position;
 		Quaternion m_rotation;
 		float m_weight;
+		const Part *m_owner = nullptr;
 	public:
 		virtual std::string type() const = 0;
 		virtual std::string toDefinition() const;
@@ -72,6 +74,7 @@ public:
 	public:
 		std::string m_name;
 		std::vector<std::shared_ptr<Locator>> m_locators;
+		const ::Variant *m_modelVariant = nullptr;
 	};
 private:
 	Model *m_model = nullptr;
@@ -88,6 +91,8 @@ public:
 	void destroy();
 
 	bool saveToPic(std::string exportPath) const;
+
+	void assignLocatorsToParts();
 };
 
 /* eof */

@@ -67,6 +67,8 @@ public:
 		const Attribute &operator[](size_t attribute) const;
 		Attribute &operator[](std::string attribute);
 		Attribute &operator[](size_t attribute);
+
+		const ::Part *part() const { return m_part; }
 	};
 private:
 	std::string m_name;
@@ -75,6 +77,8 @@ public:
 	void setPartCount(size_t parts);
 	const Part &operator[](size_t id) const;
 	Part &operator[](size_t id);
+
+	const std::vector<Part> &getParts() const { return m_parts; }
 
 	std::string getName() const { return m_name; }
 

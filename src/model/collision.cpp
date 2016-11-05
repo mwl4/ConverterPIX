@@ -66,6 +66,7 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 
 		Variant variant;
 		variant.m_name = variantName->m_name.to_string();
+		variant.m_modelVariant = &m_model->getVariants()[i];
 		for (size_t j = 0, currentOffset = 0; ; ++j)
 		{
 			assert((variantDef->m_offset + currentOffset) < fileSize);
@@ -77,7 +78,12 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 			currentOffset += locatorf->m_data_size;
 
 			const auto it = std::find_if(m_locators.begin(), m_locators.end(), [&](std::shared_ptr<Locator> &loc) {
-				return loc->m_name == locatorf->m_name.to_string(); 
+				/* I have not found better method to recognize locators */
+				return loc->m_name == locatorf->m_name.to_string()
+					&& loc->m_type == locatorf->m_type
+					&& fl_eq(loc->m_position[0], locatorf->m_position[0])
+					&& fl_eq(loc->m_position[1], locatorf->m_position[1])
+					&& fl_eq(loc->m_position[2], locatorf->m_position[2]);
 			});
 			if (it != m_locators.end())
 			{
@@ -127,6 +133,7 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 			}
 			if (locator)
 			{
+				locator->m_type = locatorf->m_type;
 				locator->m_index = m_locators.size();
 				locator->m_weight = locatorf->m_weight;
 				locator->m_name = locatorf->m_name.to_string();
@@ -138,6 +145,7 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 		}
 		m_variants.push_back(variant);
 	}
+	assignLocatorsToParts();
 	return true;
 }
 
@@ -151,6 +159,42 @@ void Collision::destroy()
 	m_locators.clear();
 	m_vertCount = 0;
 	m_triangleCount = 0;
+}
+
+void Collision::assignLocatorsToParts()
+{
+	for (auto &loc : m_locators)
+	{
+		std::vector<const Variant *> belongsToVariants;
+		std::for_each(m_variants.begin(), m_variants.end(), [&belongsToVariants, &loc](const Variant &v) {
+			if (std::find(v.m_locators.begin(), v.m_locators.end(), loc) != v.m_locators.end())
+			{
+				belongsToVariants.push_back(&v);
+			}
+		});
+
+		for (size_t i = 0; i < m_model->getParts().size(); ++i)
+		{
+			const auto &part = m_model->getParts()[i];
+			std::vector<const Variant *> partBelongsToVariants;
+			std::for_each(m_variants.begin(), m_variants.end(), [&partBelongsToVariants, &part, i](const Variant &v) {
+				if ((*v.m_modelVariant)[i]["visible"].getInt() == 1)
+				{
+					partBelongsToVariants.push_back(&v);
+				}
+			});
+
+			if (belongsToVariants == partBelongsToVariants)
+			{
+				loc->m_owner = &part;
+			}
+		}
+
+		if (!loc->m_owner)
+		{
+			printf("[coll] Could not find part for locator: %s(%s)\n", loc->m_name.c_str(), loc->type().c_str());
+		}
+	}
 }
 
 bool Collision::saveToPic(std::string exportPath) const
@@ -243,24 +287,17 @@ bool Collision::saveToPic(std::string exportPath) const
 	{
 		const auto &part = m_model->getParts()[i];
 
-		std::vector<const ::Variant *> variants;
-		for (const auto &v : m_model->getVariants())
+		std::vector<int> locators;
+		for (size_t j = 0; j < m_locators.size(); ++j)
 		{
-			if (v[i]["visible"].getInt() == 1) {
-				variants.push_back(&v);
+			if (m_locators[j]->m_owner == &part)
+			{
+				locators.push_back(j);
 			}
 		}
 
-		std::vector<int> partLocators;
-		for (const auto &v : m_variants)
-		{
-			const auto &variant = std::find_if(variants.begin(), variants.end(), [&](const ::Variant *&variant) { return v.m_name == variant->getName(); });
-		}
-
-		for (size_t j = 0; j < m_locators.size(); ++j)
-		{
-			partLocators.push_back(j);
-		}
+		std::vector<int> pieces;
+		/* No idea what are pieces here */
 
 		file << fmt::sprintf(
 			"Part {"						SEOL
@@ -268,15 +305,19 @@ bool Collision::saveToPic(std::string exportPath) const
 			TAB "PieceCount: %i"			SEOL
 			TAB "LocatorCount: %i"			SEOL,
 				part.m_name.c_str(),
-				0,
-				(int)partLocators.size()
+				(int)pieces.size(),
+				(int)locators.size()
 		);
 
 		file << TAB "Pieces: ";
+		for (const auto piece : pieces)
+		{
+			file << fmt::sprintf("%i ", piece);
+		}
 		file <<								SEOL;
 
 		file << TAB "Locators: ";
-		for (const auto loc : partLocators)
+		for (const auto loc : locators)
 		{
 			file << fmt::sprintf("%i ", loc);
 		}

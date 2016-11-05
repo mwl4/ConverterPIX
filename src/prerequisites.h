@@ -87,6 +87,7 @@ class Part;
 class Locator;
 class Bone;
 class Model;
+class Variant;
 
 class Animation;
 
@@ -188,5 +189,12 @@ bool directoryExists(const std::string &dir);
 bool fileExists(const std::string &filepath);
 bool copyFile(const char *input, const char *output);
 std::vector<std::string> listFilesInDirectory(const std::string &directory, bool recursive = true);
+
+/* float equal */
+static bool fl_eq(float a, float b)
+{
+	return fabs(a - b) < FLT_EPSILON;
+}
+
 
 /* eof */
