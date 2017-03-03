@@ -3,6 +3,7 @@
 Tool for conversion from game formats to middle formats (Euro Truck Simulator 2 and American Truck Simulator)
 
  Parameters:
+ 
   -h                   - prints help text
 
   -m <model_path>      - turns into single model mode and specifies model path (relative to base)
