@@ -3,7 +3,7 @@
 Tool for conversion from game formats to middle formats (Euro Truck Simulator 2 and American Truck Simulator)
 
  Parameters:
- 
+
   -h                   - prints help text
 
   -m <model_path>      - turns into single model mode and specifies model path (relative to base)
@@ -49,9 +49,7 @@ Tool for conversion from game formats to middle formats (Euro Truck Simulator 2 
 
  This is caused by lack of information, so you have to convert each model individually to edit animations.
 
- Supported formats: pmg(0x13, 0x14), pmd(0x04), pma(0x03), ppd(0x15), tobj, mat
-
- TODO: pmc format support, multi base paths
+ Supported formats: pmg(0x13, 0x14), pmd(0x04), pma(0x03), ppd(0x15), pmc, tobj, mat
 
  This is Open-Source software under the GNU LGPL License.
 
