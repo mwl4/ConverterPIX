@@ -197,12 +197,15 @@ int main(int argc, char *argv[])
 			if (basepath.empty())
 			{
 				basepath.push_back(optionalArgs[0]);
+				static int priority = 1;
+				bool noneedslash = (optionalArgs[0][optionalArgs[0].length() - 1] == '/') || (optionalArgs[0][optionalArgs[0].length() - 1] == '\\');
+				ufsMount(noneedslash ? optionalArgs[0] : optionalArgs[0] + '/', true, priority++);
 			}
 			if (exportpath.empty())
 			{
 				exportpath = basepath[0] + "_exp";
 			}
-			auto files = getSFS()->readDir(basepath[0], true, false);
+			auto files = getSFS()->readDir(basepath[0], true, true);
 			for (const auto &f : *files)
 			{
 				const std::string filename = f.substr(basepath[0].length());
