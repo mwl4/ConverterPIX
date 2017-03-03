@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : resource_lib.h
  * Project    : ConverterPIX
@@ -20,7 +20,7 @@ public:
 private:
 	std::unordered_map<std::string, Entry> m_tobjs;
 public:
-	Entry obtain(std::string basepath, std::string tobjfile);
+	Entry obtain(std::string tobjfile);
 	void destroy();
 };
 

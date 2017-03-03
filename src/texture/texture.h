@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : texture.h
  * Project    : ConverterPIX
@@ -20,7 +20,7 @@ private:
 
 	std::shared_ptr<TextureObject> m_texObj;
 public:
-	bool load(std::string basePath);
+	bool load();
 	std::string texture() const { return m_texture; }
 	auto texobj() const -> const decltype(m_texObj) { return m_texObj; }
 };

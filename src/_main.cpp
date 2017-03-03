@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : _main.cpp
  * Project    : ConverterPIX
@@ -16,52 +16,56 @@
 #include <texture/texture.h>
 
 #include <structs/dds.h>
-#include <file.h>
+#include <fs/file.h>
+#include <fs/sysfilesystem.h>
+#include <fs/uberfilesystem.h>
 
 void print_help()
 {
-	printf(" Parameters:\n");
-	printf("  -h                   - prints help text\n");
-	printf("  -m <model_path>      - turns into single model mode and specifies model path (relative to base)\n");
-	printf("  -t <tobj_path>       - turns into single tobj mode and specifies tobj path (relative to base)\n");
-	printf("  -d <dds_path>        - turns into single dds mode and prints debug info (absolute path)\n");
-	printf("  -b <base_path>       - specify base path\n");
-	printf("  -e <export_path>     - specify export path\n");
-	printf("\n");
-	printf(" Usage:\n");
-	printf("  converter_pix -b C:\\ets2_base -m /vehicle/truck/man_tgx/interior/anim s_wheel\n");
-	printf("    ^ will export into C:\\ets2_base_exp single model with s_wheel animation.\n");
-	printf("    ^ instead of exact animation name you can use * to convert every anim file from model directory.\n");
-	printf("    ^ when anim name is not started by /, then converter is looking for it in model directory.\n");
-	printf("\n");
-	printf("  converter_pix C:\\ets2_base\n");
-	printf("    ^ will convert whole base, it will export it into: <base_path>_exp (C:\\ets2_base_exp in this example).\n");
-	printf("    ^ you can also specify export path using the -e parameter.\n");
-	printf("\n");
-	printf("  converter_pix -b C:\\ets2_base -t /material/environment/vehicle_reflection.tobj\n");
-	printf("    ^ will convert tobj file and copy texture to export path.\n");
-	printf("\n");
-	printf("  converter_pix -b C:\\ets2_base -m /model/mover/characters/models/generic/m_afam_01 /model/mover/characters/animations/man/walk/walk_01\n");
-	printf("    ^ animations are located in another directory than the models. These animations can be used for multiple models.\n");
-	printf("\n");
-	printf(" Note that animations will not be converted when converting the whole base.\n");
-	printf(" This is caused by lack of information, so you have to convert each model individually to edit animations.\n");
-	printf("\n");
-	printf(" Supported formats: pmg(0x13), pmd(0x04), pma(0x03), ppd(0x15), tobj, mat\n");
-	printf(" TODO: pmc format support, multi base paths\n");
-	printf("\n\n");
-	printf(" This is Open-Source software under the GNU LGPL License.\n\n");
-	printf(" Enjoy!\n");
+	printf(" Parameters:\n"
+		   "  -h                   - prints help text\n"
+		   "  -m <model_path>      - turns into single model mode and specifies model path (relative to base)\n"
+		   "  -t <tobj_path>       - turns into single tobj mode and specifies tobj path (relative to base)\n"
+		   "  -d <dds_path>        - turns into single dds mode and prints debug info (absolute path)\n"
+		   "  -b <base_path>       - specify base path\n"
+		   "  -e <export_path>     - specify export path\n"
+		   "\n"
+		   " Usage:\n"
+		   "  converter_pix -b C:\\ets2_base -m /vehicle/truck/man_tgx/interior/anim s_wheel\n"
+		   "    ^ will export into C:\\ets2_base_exp single model with s_wheel animation.\n"
+		   "    ^ instead of exact animation name you can use * to convert every anim file from model directory.\n"
+		   "    ^ when anim name is not started by /, then converter is looking for it in model directory.\n"
+		   "\n"
+		   "  converter_pix C:\\ets2_base\n"
+		   "    ^ will convert whole base, it will export it into: <base_path>_exp (C:\\ets2_base_exp in this example).\n"
+		   "    ^ you can also specify export path using the -e parameter.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base -t /material/environment/vehicle_reflection.tobj\n"
+		   "    ^ will convert tobj file and copy texture to export path.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base -m /model/mover/characters/models/generic/m_afam_01 /model/mover/characters/animations/man/walk/walk_01\n"
+		   "    ^ animations are located in another directory than the models. These animations can be used for multiple models.\n"
+		   "\n"
+		   " Note that animations will not be converted when converting the whole base.\n"
+		   " This is caused by lack of information, so you have to convert each model individually to edit animations.\n"
+		   "\n"
+		   " Supported formats: pmg(0x13), pmd(0x04), pma(0x03), ppd(0x15), tobj, mat\n"
+		   " TODO: pmc format support, multi base paths\n"
+		   "\n\n"
+		   " This is Open-Source software under the GNU LGPL License.\n\n"
+		   " Enjoy!\n"
+	);
 }
 
 int main(int argc, char *argv[])
 {
-	printf("\n");
-	printf(" ******************************************\n");
-	printf(" **        Converter PMX to PIX          **\n");
-	printf(" **       Copyright (C) 2016 mwl4        **\n");
-	printf(" ******************************************\n");
-	printf("\n");
+	printf("\n"
+		   " ******************************************\n"
+		   " **        Converter PMX to PIX          **\n"
+		   " **       Copyright (C) 2017 mwl4        **\n"
+		   " ******************************************\n"
+		   "\n"
+	);
 
 	if (argc < 2)
 	{
@@ -72,7 +76,7 @@ int main(int argc, char *argv[])
 
 	auto resLib = std::make_unique<ResourceLibrary>();
 
-	std::string basepath;
+	std::vector<std::string> basepath;
 	std::string exportpath;
 	std::string filepath;
 
@@ -112,7 +116,8 @@ int main(int argc, char *argv[])
 		}
 		else if (arg == "-b")
 		{
-			parameter = &basepath;
+			basepath.push_back("");
+			parameter = &basepath.back();
 		}
 		else if (arg == "-e")
 		{
@@ -129,6 +134,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	for (const auto &base : basepath)
+	{
+		static int priority = 1;
+		bool noneedslash = (base[base.length() - 1] == '/') || (base[base.length() - 1] == '\\');
+		ufsMount(noneedslash ? base : base + '/', true, priority++);
+	}
+
 	switch (mode)
 	{
 		case SINGLE_MODEL:
@@ -140,11 +152,11 @@ int main(int argc, char *argv[])
 			}
 			if (exportpath.empty())
 			{
-				exportpath = basepath + "_exp";
+				exportpath = basepath[0] + "_exp";
 			}
-			std::replace(filepath.begin(), filepath.end(), '\\', '/'); // backslashes to slashes
+			backslashesToSlashes(filepath);
 			auto model = std::make_shared<Model>();
-			if (!model->load(basepath, filepath))
+			if (!model->load(filepath))
 			{
 				printf("Failed to load: %s\n", filepath.c_str());
 				return 1;
@@ -154,17 +166,17 @@ int main(int argc, char *argv[])
 			{
 				if (optionalArgs[i] == "*")
 				{
-					auto files = listFilesInDirectory(model->basePath() + model->fileDirectory(), false);
-					files.erase(std::remove_if(files.begin(), files.end(), [](const std::string &s) {
+					auto files = getUFS()->readDir(model->fileDirectory(), true, false);
+					files->erase(std::remove_if(files->begin(), files->end(), [](const std::string &s) {
 						return s.substr(s.rfind('.')) != ".pma";
-					}), files.end()); // remove files with no .pma extension
-					std::for_each(files.begin(), files.end(), [&](std::string &s) {
-						s = s.substr(model->basePath().length(), s.rfind('.') - model->basePath().length());
+					}), files->end()); // remove files with no .pma extension
+					std::for_each(files->begin(), files->end(), [&](std::string &s) {
+						s = s.substr(0, s.rfind('.'));
 					}); // remove extensions
-					optionalArgs.insert(optionalArgs.end(), files.begin(), files.end());
+					optionalArgs.insert(optionalArgs.end(), files->begin(), files->end());
 					continue;
 				}
-				std::replace(optionalArgs[i].begin(), optionalArgs[i].end(), '\\', '/');
+				backslashesToSlashes(optionalArgs[i]);
 				Animation anim;
 				if (!anim.load(model, optionalArgs[i]))
 				{
@@ -185,22 +197,22 @@ int main(int argc, char *argv[])
 			}
 			if (basepath.empty())
 			{
-				basepath = optionalArgs[0];
+				basepath.push_back(optionalArgs[0]);
 			}
 			if (exportpath.empty())
 			{
-				exportpath = basepath + "_exp";
+				exportpath = basepath[0] + "_exp";
 			}
-			auto files = listFilesInDirectory(basepath);
-			for (const auto &f : files)
+			auto files = getSFS()->readDir(basepath[0], true, false);
+			for (const auto &f : *files)
 			{
-				const std::string filename = f.substr(basepath.length());
+				const std::string filename = f.substr(basepath[0].length());
 				const std::string extension = f.substr(f.rfind('.'));
 				if (extension == ".pmg")
 				{
 					const std::string modelPath = filename.substr(0, filename.length() - 4);
 					Model model;
-					if (!model.load(basepath, modelPath))
+					if (!model.load(modelPath))
 					{
 						printf("Failed to load: %s\n", modelPath.c_str());
 					}
@@ -212,7 +224,7 @@ int main(int argc, char *argv[])
 				else if (extension == ".tobj")
 				{
 					TextureObject tobj;
-					if (tobj.load(basepath, filename))
+					if (tobj.load(filename))
 					{
 						tobj.saveToMidFormats(exportpath);
 						printf("%s: tobj: yes\n", filename.substr(directory(filename).length() + 1).c_str());
@@ -230,11 +242,11 @@ int main(int argc, char *argv[])
 			}
 			if (exportpath.empty())
 			{
-				exportpath = basepath + "_exp";
+				exportpath = basepath[0] + "_exp";
 			}
-			std::replace(filepath.begin(), filepath.end(), '\\', '/'); // backslashes to slashes
+			backslashesToSlashes(filepath);
 			TextureObject tobj;
-			if (tobj.load(basepath, filepath))
+			if (tobj.load(filepath))
 			{
 				tobj.saveToMidFormats(exportpath);
 				printf("%s: tobj: yes\n", filepath.substr(directory(filepath).length() + 1).c_str());

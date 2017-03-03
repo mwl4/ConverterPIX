@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : model.h
  * Project    : ConverterPIX
@@ -105,12 +105,11 @@ private:
 
 	bool m_loaded = false;
 
-	std::string m_basePath;		// @example C:/ets2/base
 	std::string m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
 	std::string m_fileName;		// @example anim
 	std::string m_directory;	// @example /vehicle/truck/man_tgx/interior
 public:
-	bool load(std::string basePath, std::string filePath);
+	bool load(std::string filePath);
 	void destroy();
 
 	bool loadModel();
@@ -124,7 +123,6 @@ public:
 	void saveToMidFormat(std::string exportPath, bool convertTexture = true) const;
 
 	bool loaded() const { return m_loaded; }
-	std::string basePath() const { return m_basePath; }
 	std::string fileName() const { return m_fileName; }
 	std::string filePath() const { return m_filePath; }
 	std::string fileDirectory() const { return m_directory; }
@@ -134,6 +132,9 @@ public:
 
 	const std::vector<Part> &getParts() const { return m_parts; }
 	const std::vector<Variant> &getVariants() const { return m_variants; }
+
+	bool loadModel0x13(const uint8_t *const buffer);
+	bool loadModel0x14(const uint8_t *const buffer);
 };
 
 /* eof */

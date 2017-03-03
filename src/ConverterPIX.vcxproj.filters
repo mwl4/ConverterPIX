@@ -55,6 +55,12 @@
     <Filter Include="Source Files\structs">
       <UniqueIdentifier>{031271cf-59ec-43e4-a2f7-b6cdf7f73730}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fs">
+      <UniqueIdentifier>{88df5826-0bb4-461f-9bb4-74ff5ece4744}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fs">
+      <UniqueIdentifier>{21447c85-e879-4006-829a-044d1e6f0fe2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_main.cpp">
@@ -71,9 +77,6 @@
     </ClCompile>
     <ClCompile Include="utils\token.cpp">
       <Filter>Source Files\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="file.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="model\animation.cpp">
       <Filter>Source Files\model</Filter>
@@ -108,11 +111,29 @@
     <ClCompile Include="model\collision.cpp">
       <Filter>Source Files\model</Filter>
     </ClCompile>
+    <ClCompile Include="fs\filesystem.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\sysfs_file.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\uberfilesystem.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\sysfilesystem.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\file.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\zipfilesystem.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\zipfs_file.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="structs\pmg.h">
-      <Filter>Header Files\structs</Filter>
-    </ClInclude>
     <ClInclude Include="prerequisites.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -151,9 +172,6 @@
     </ClInclude>
     <ClInclude Include="utils\token.h">
       <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="file.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
@@ -226,6 +244,39 @@
     </ClInclude>
     <ClInclude Include="model\collision.h">
       <Filter>Header Files\model</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\filesystem.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\sysfs_file.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\uberfilesystem.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\sysfilesystem.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\file.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\zipfilesystem.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\zipfs_file.h">
+      <Filter>Header Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\zip.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\pmg_0x13.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\pmg_0x14.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="math\aabox.h">
+      <Filter>Header Files\math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

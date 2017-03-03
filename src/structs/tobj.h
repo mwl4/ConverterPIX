@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : tobj.h
  * Project    : ConverterPIX
@@ -15,7 +15,7 @@
 
 namespace prism
 {
-	struct tobj_header
+	struct tobj_header_t
 	{
 		u32 m_version;
 		u32 m_unkn0;
@@ -43,13 +43,13 @@ namespace prism
 		u8 m_unkn11;
 
 		static const u32 SUPPORTED_MAGIC = 1890650625;
-	};	ENSURE_SIZE(tobj_header, 40);
+	};	ENSURE_SIZE(tobj_header_t, 40);
 
-	struct tobj_texture
+	struct tobj_texture_t
 	{
 		u32 m_length;
 		u32 m_unknown;
-	};	ENSURE_SIZE(tobj_texture, 8);
+	};	ENSURE_SIZE(tobj_texture_t, 8);
 
 	/*
 		default:

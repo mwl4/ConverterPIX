@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : prefab.h
  * Project    : ConverterPIX
@@ -46,12 +46,11 @@ private:
 
 	bool m_loaded = false;
 
-	std::string m_basePath;		// @example C:/ets2/base
 	std::string m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
 	std::string m_fileName;		// @example anim
 	std::string m_directory;	// @example /vehicle/truck/man_tgx/interior
 public:
-	bool load(std::string basePath, std::string filePath);
+	bool load(std::string filePath);
 	void destroy();
 
 	bool saveToPip(std::string exportPath) const;

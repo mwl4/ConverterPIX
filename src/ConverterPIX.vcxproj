@@ -87,7 +87,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="config.cpp" />
-    <ClCompile Include="file.cpp" />
+    <ClCompile Include="fs\file.cpp" />
+    <ClCompile Include="fs\filesystem.cpp" />
+    <ClCompile Include="fs\sysfilesystem.cpp" />
+    <ClCompile Include="fs\sysfs_file.cpp" />
+    <ClCompile Include="fs\uberfilesystem.cpp" />
+    <ClCompile Include="fs\zipfilesystem.cpp" />
+    <ClCompile Include="fs\zipfs_file.cpp" />
     <ClCompile Include="libs\fmt\fmt\format.cc" />
     <ClCompile Include="libs\fmt\fmt\ostream.cc" />
     <ClCompile Include="libs\fmt\fmt\posix.cc" />
@@ -106,8 +112,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
-    <ClInclude Include="file.h" />
+    <ClInclude Include="fs\file.h" />
+    <ClInclude Include="fs\filesystem.h" />
+    <ClInclude Include="fs\sysfilesystem.h" />
+    <ClInclude Include="fs\sysfs_file.h" />
+    <ClInclude Include="fs\uberfilesystem.h" />
+    <ClInclude Include="fs\zipfilesystem.h" />
+    <ClInclude Include="fs\zipfs_file.h" />
     <ClInclude Include="material\material.h" />
+    <ClInclude Include="math\aabox.h" />
     <ClInclude Include="math\matrix.h" />
     <ClInclude Include="math\quaternion.h" />
     <ClInclude Include="math\vector.h" />
@@ -134,9 +147,11 @@
     <ClInclude Include="structs\pma.h" />
     <ClInclude Include="structs\pmc.h" />
     <ClInclude Include="structs\pmd.h" />
-    <ClInclude Include="structs\pmg.h" />
+    <ClInclude Include="structs\pmg_0x13.h" />
+    <ClInclude Include="structs\pmg_0x14.h" />
     <ClInclude Include="structs\ppd.h" />
     <ClInclude Include="structs\tobj.h" />
+    <ClInclude Include="structs\zip.h" />
     <ClInclude Include="texture\texture.h" />
     <ClInclude Include="texture\texture_object.h" />
     <ClInclude Include="utils\explicit_singleton.h" />
@@ -144,6 +159,11 @@
     <ClInclude Include="utils\token.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="libs\zlib\zlib.vcxproj">
+      <Project>{33134f61-c1ad-4b6f-9cea-503a9f140c52}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : material.cpp
  * Project    : ConverterPIX
@@ -13,7 +13,8 @@
 #include <structs/tobj.h>
 #include <texture/texture.h>
 #include <texture/texture_object.h>
-#include <file.h>
+#include <fs/file.h>
+#include <fs/uberfilesystem.h>
 
 Material::Attribute::Attribute()
 	: m_valueType(FLOAT)
@@ -58,26 +59,21 @@ void Material::destroy()
 	m_attributes.clear();
 }
 
-bool Material::load(std::string basePath, std::string filePath)
+bool Material::load(std::string filePath)
 {
-	m_basePath = basePath;
 	m_filePath = filePath;
-	
-	std::string realFilePath = m_basePath + m_filePath;
-	
-	File file;
-	if (!file.open(realFilePath, "rb"))
+	auto file = getUFS()->open(m_filePath, FileSystem::read | FileSystem::binary);
+	if(!file)
 	{
 		printf("Cannot open material file: \"%s\"! %s\n", m_filePath.c_str(), strerror(errno));
 		return false;
 	}
 
-	size_t fileSize = file.getSize();
+	size_t fileSize = file->getSize();
 
 	uint8_t *buff = new uint8_t[fileSize + 1]; // +1 for null terminator
-
-	file.read((char *)buff, sizeof(uint8_t), fileSize);
-	file.close();
+	file->read((char *)buff, sizeof(uint8_t), fileSize);
+	file.reset();
 
 	buff[fileSize] = '\0';
 	std::string buffer = (char *)buff;
@@ -224,7 +220,7 @@ bool Material::load(std::string basePath, std::string filePath)
 
 	for (auto& tex : m_textures)
 	{
-		if (!tex.load(m_basePath))
+		if (!tex.load())
 		{
 			printf("Error in %s material!\n", m_filePath.c_str());
 		}

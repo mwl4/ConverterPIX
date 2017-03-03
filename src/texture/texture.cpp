@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : texture.cpp
  * Project    : ConverterPIX
@@ -11,9 +11,9 @@
 
 #include <resource_lib.h>
 
-bool Texture::load(std::string basePath)
+bool Texture::load()
 {
-	return (m_texObj = ResourceLibrary::Get()->obtain(basePath, m_texture)) != nullptr;
+	return (m_texObj = ResourceLibrary::Get()->obtain(m_texture)) != nullptr;
 }
 
 /* eof */

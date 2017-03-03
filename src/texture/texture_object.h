@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : texture_object.h
  * Project    : ConverterPIX
@@ -42,14 +42,13 @@ private:
 	bool m_noanisotropic = false;
 	bool m_nocompress = false;
 	bool m_customColorSpace = false;
-	std::string m_basepath; // @example: C:/
 	std::string m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
 
 	bool m_tsnormal = false;
 	bool m_ui = false;
 public:
-	bool load(std::string basepath, std::string filepath);
+	bool load(std::string filepath);
 	bool loadDDS(std::string filepath);
 	bool saveToMidFormats(std::string exportpath);
 };

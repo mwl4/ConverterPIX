@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : dds.cpp
  * Project    : ConverterPIX
@@ -10,24 +10,26 @@
 #pragma once
 
 #include "dds.h"
-#include <file.h>
+
+#include <fs/file.h>
+#include <fs/sysfilesystem.h>
 
 namespace dds
 {
 	void print_debug(std::string filepath)
 	{
-		File file;
-		if (!file.open(filepath.c_str(), "rb"))
+		auto file = getSFS()->open(filepath, FileSystem::read | FileSystem::binary);
+		if (!file)
 		{
 			printf("Cannot dds file: \"%s\"! %s" SEOL, filepath.c_str(), strerror(errno));
 			return;
 		}
 		else
 		{
-			const size_t fileSize = file.getSize();
+			const size_t fileSize = file->getSize();
 			std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-			file.read((char *)buffer.get(), sizeof(char), fileSize);
-			file.close();
+			file->read((char *)buffer.get(), sizeof(char), fileSize);
+			file.reset();
 
 			const uint32_t magic = *(uint32_t *)(buffer.get());
 			if (magic != dds::MAGIC)

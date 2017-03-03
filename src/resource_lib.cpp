@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : resource_lib.cpp
  * Project    : ConverterPIX
@@ -10,13 +10,14 @@
 #include "resource_lib.h"
 
 #include <texture/texture_object.h>
+#include <fs/uberfilesystem.h>
 
-auto ResourceLibrary::obtain(std::string basepath, std::string tobjfile) -> Entry
+auto ResourceLibrary::obtain(std::string tobjfile) -> Entry
 {
 	if (m_tobjs.find(tobjfile) == m_tobjs.end())
 	{
 		Entry texobj = std::make_shared<TextureObject>();
-		if (texobj->load(basepath, tobjfile))
+		if (texobj->load(tobjfile))
 		{
 			m_tobjs.insert({ tobjfile.c_str(), texobj });
 		}

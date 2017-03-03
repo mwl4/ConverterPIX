@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : prerequisites.h
  * Project    : ConverterPIX
@@ -79,6 +79,15 @@ namespace prism
 	class mat_sq_t;
 	class token_t;
 } // namespace prism
+
+class FileSystem;
+class SysFileSystem;
+class ZipFileSystem;
+class HashFileSystem;
+class UberFileSystem;
+
+class File;
+class SysFsFile;
 
 struct Vertex;
 struct Polygon;
@@ -184,11 +193,12 @@ std::string directory(const std::string &filepath);
 */
 std::string relativePath(const std::string &filepath, const std::string &directory);
 
-bool createDirectory(const std::string &dir);
-bool directoryExists(const std::string &dir);
-bool fileExists(const std::string &filepath);
-bool copyFile(const char *input, const char *output);
-std::vector<std::string> listFilesInDirectory(const std::string &directory, bool recursive = true);
+bool copyFile(File *const input, File *const output);
+
+static void backslashesToSlashes(std::string &str)
+{
+	std::replace(str.begin(), str.end(), '\\', '/');
+}
 
 /* float equal */
 static bool fl_eq(float a, float b)
@@ -196,5 +206,10 @@ static bool fl_eq(float a, float b)
 	return fabs(a - b) < FLT_EPSILON;
 }
 
+#ifndef MAKEFOURCC
+#define MAKEFOURCC(ch0, ch1, ch2, ch3) \
+	((unsigned)(unsigned char)(ch0) | ((unsigned)(unsigned char)(ch1) << 8) |   \
+	((unsigned)(unsigned char)(ch2) << 16) | ((unsigned)(unsigned char)(ch3) << 24 ))
+#endif
 
 /* eof */

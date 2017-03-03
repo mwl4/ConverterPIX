@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : material.h
  * Project    : ConverterPIX
@@ -37,11 +37,10 @@ private:
 	std::string m_effect;
 	std::vector<Texture> m_textures;
 	std::vector<Attribute> m_attributes;
-	std::string m_basePath;
 	std::string m_filePath;		// @example: /material/example.mat
 	std::string m_alias;
 public:
-	bool load(std::string basePath, std::string filePath);
+	bool load(std::string filePath);
 	void destroy();
 
 	/**

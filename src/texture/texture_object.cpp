@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : texture_object.cpp
  * Project    : ConverterPIX
@@ -9,34 +9,36 @@
 
 #include "texture_object.h"
 
-#include <file.h>
+#include <fs/file.h>
+#include <fs/uberfilesystem.h>
+#include <fs/sysfilesystem.h>
 #include <structs/tobj.h>
 #include <structs/dds.h>
 
-bool TextureObject::load(std::string basepath, std::string filepath)
+bool TextureObject::load(std::string filepath)
 {
 	m_filepath = filepath;
-	m_basepath = basepath;
-
-	std::string realPath = m_basepath + m_filepath;
-
-	File file;
-	if (!file.open(realPath.c_str(), "rb"))
+	auto file = getUFS()->open(m_filepath, FileSystem::read | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open tobj file: \"%s\"! %s\n", m_filepath.c_str(), strerror(errno));
 		return false;
 	}
 
-	const size_t fileSize = file.getSize();
+	const size_t fileSize = file->getSize();
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-	file.read((char *)buffer.get(), sizeof(char), fileSize);
-	file.close();
+	if (!file->blockRead((char *)buffer.get(), 0, fileSize))
+	{
+		printf("Unable to read in tobj file \"%s\"!", m_filepath.c_str());
+		return false;
+	}
+	file.reset();
 
-	prism::tobj_header *header = (prism::tobj_header *)(buffer.get());
-	if (header->m_version != prism::tobj_header::SUPPORTED_MAGIC)
+	prism::tobj_header_t *header = (prism::tobj_header_t *)(buffer.get());
+	if (header->m_version != prism::tobj_header_t::SUPPORTED_MAGIC)
 	{
 		printf("Invalid version of tobj file! \"%s\" (have: %i, expected: %i\n",
-			   m_filepath.c_str(), header->m_version, prism::tobj_header::SUPPORTED_MAGIC);
+			   m_filepath.c_str(), header->m_version, prism::tobj_header_t::SUPPORTED_MAGIC);
 		return false;
 	}
 
@@ -60,17 +62,17 @@ bool TextureObject::load(std::string basepath, std::string filepath)
 		case _CUBE_MAP: m_texturesCount = 6; break;
 	}
 
-	for (uint32_t i = 0, currentTextureOffset = sizeof(prism::tobj_header); i < m_texturesCount; ++i)
+	for (uint32_t i = 0, currentTextureOffset = sizeof(prism::tobj_header_t); i < m_texturesCount; ++i)
 	{
-		prism::tobj_texture *const texture = (prism::tobj_texture *)(buffer.get() + currentTextureOffset);
+		prism::tobj_texture_t *const texture = (prism::tobj_texture_t *)(buffer.get() + currentTextureOffset);
 
 		char *texture_str = new char[texture->m_length + 1];
-		memcpy(texture_str, (uint8_t *)texture + sizeof(prism::tobj_texture), texture->m_length);
+		memcpy(texture_str, (uint8_t *)texture + sizeof(prism::tobj_texture_t), texture->m_length);
 		texture_str[texture->m_length] = '\0';
 		m_textures[i] = texture_str;
 		delete[] texture_str;
 
-		currentTextureOffset += sizeof(prism::tobj_texture) + texture->m_length;
+		currentTextureOffset += sizeof(prism::tobj_texture_t) + texture->m_length;
 	}
 
 	loadDDS(m_textures[0]);
@@ -86,18 +88,18 @@ bool TextureObject::loadDDS(std::string filepath)
 {
 	using namespace dds;
 
-	File file;
-	if (!file.open((m_basepath + (filepath[0] == '/' ? filepath : directory(m_filepath) + "/" + filepath)).c_str(), "rb"))
+	auto file = getUFS()->open(filepath[0] == '/' ? filepath : directory(m_filepath) + "/" + filepath, FileSystem::read | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open file: \"%s\"! %s" SEOL, filepath.c_str(), strerror(errno));
 		return false;
 	}
 	else
 	{
-		const size_t fileSize = file.getSize();
+		const size_t fileSize = file->getSize();
 		std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-		file.read((char *)buffer.get(), sizeof(char), fileSize);
-		file.close();
+		file->read((char *)buffer.get(), sizeof(char), fileSize);
+		file.reset();
 
 		const uint32_t magic = *(uint32_t *)(buffer.get());
 		if (magic != dds::MAGIC)
@@ -124,8 +126,8 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 	if (m_converted)
 		return true;
 
-	File file;
-	if (!file.open(exportpath + m_filepath, "wb"))
+	auto file = getSFS()->open(exportpath + m_filepath, FileSystem::write | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open file: \"%s\"! %s\n" SEOL, m_filepath.c_str(), strerror(errno));
 		return false;
@@ -168,67 +170,81 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 			case TextureObject::NEAREST:	return "nearest";
 			case TextureObject::LINEAR:		return "linear";
 			default:
-			printf("Unknown filter type of tobj file: \"%s\"!\n", m_filepath.c_str());
+				printf("Unknown filter type of tobj file: \"%s\"!\n", m_filepath.c_str());
 		}
 		return "UNKNOWN";
 	};
 
-	file << fmt::sprintf("map %s" SEOL, mapType(m_type).c_str());
+	*file << fmt::sprintf("map %s" SEOL, mapType(m_type).c_str());
 	for (uint32_t i = 0; i < m_texturesCount; ++i)
 	{
-		copyFile((m_basepath + m_textures[i]).c_str(),
-			(exportpath + m_textures[i]).c_str());
+		*file << TAB << m_textures[i].c_str() << SEOL;
 
-		file << TAB << m_textures[i].c_str() << SEOL;
+		if (getSFS()->exists(exportpath + m_textures[i]))
+			continue;
+
+		auto inputf = getUFS()->open(m_textures[i], FileSystem::read | FileSystem::binary);
+		if (!inputf)
+		{
+			printf("Could not open file: \"%s\" to copy-read!\n", m_textures[i].c_str());
+			continue;
+		}
+		auto outputf = getSFS()->open(exportpath + m_textures[i], FileSystem::write | FileSystem::binary);
+		if (!outputf)
+		{
+			printf("Could not open file: \"%s\" to copy-read!\n", (exportpath + m_textures[i]).c_str());
+			continue;
+		}
+		copyFile(inputf.get(), outputf.get());
 	}
 
-	file << "addr" << SEOL;
-	file << TAB << addrAttribute(m_addr_u) << SEOL;
-	file << TAB << addrAttribute(m_addr_v) << SEOL;
+	*file << "addr" << SEOL;
+	*file << TAB << addrAttribute(m_addr_u) << SEOL;
+	*file << TAB << addrAttribute(m_addr_v) << SEOL;
 	if (m_type == TextureObject::_CUBE_MAP)
 	{
-		file << TAB << addrAttribute(m_addr_w) << SEOL;
+		*file << TAB << addrAttribute(m_addr_w) << SEOL;
 	}
 
 	if (m_mipFilter == TextureObject::LINEAR)
 	{
-		file << "trilinear" << SEOL;
+		*file << "trilinear" << SEOL;
 	}
 	else
 	{
 		if (!m_ui && m_mipFilter == TextureObject::NOMIPS)
 		{
-			file << "nomips" << SEOL;
+			*file << "nomips" << SEOL;
 		}
 		if (m_magFilter != TextureObject::DEFAULT || m_minFilter != TextureObject::DEFAULT)
 		{
-			file << "filter" << TAB << filterAttribute(m_magFilter) << TAB << filterAttribute(m_minFilter) << SEOL;
+			*file << "filter" << TAB << filterAttribute(m_magFilter) << TAB << filterAttribute(m_minFilter) << SEOL;
 		}
 	}
 
 	if (m_noanisotropic)
 	{
-		file << "noanisotropic" << SEOL;
+		*file << "noanisotropic" << SEOL;
 	}
 
 	if (!m_ui && m_nocompress)
 	{
-		file << "nocompress" << SEOL;
+		*file << "nocompress" << SEOL;
 	}
 
 	if (!m_tsnormal && !m_ui && m_customColorSpace)
 	{
-		file << "color_space linear" << SEOL;
+		*file << "color_space linear" << SEOL;
 	}
 
 	if (m_tsnormal || m_ui)
 	{
-		file << "usage " << (m_tsnormal ? "tsnormal" : "ui") << SEOL;
+		*file << "usage " << (m_tsnormal ? "tsnormal" : "ui") << SEOL;
 	}
 
 	if (m_bias != 0)
 	{
-		file << fmt::sprintf("bias %i" SEOL, m_bias);
+		*file << fmt::sprintf("bias %i" SEOL, m_bias);
 	}
 
 	m_converted = true;

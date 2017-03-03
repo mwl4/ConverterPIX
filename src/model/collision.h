@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : collision.h
  * Project    : ConverterPIX
@@ -20,7 +20,7 @@ public:
 	{
 	public:
 		std::vector<prism::float3> m_verts;
-		std::vector<prism::pmc_triangle> m_triangles;
+		std::vector<prism::pmc_triangle_t> m_triangles;
 	};
 	class Locator
 	{
@@ -78,7 +78,6 @@ public:
 	};
 private:
 	Model *m_model = nullptr;
-	std::string m_basePath;		// @example C:/ets2/base
 	std::string m_filePath;		// @example /vehicle/truck/man_tgx/truck
 	std::vector<Piece> m_pieces;
 	std::vector<Variant> m_variants;
@@ -87,7 +86,7 @@ private:
 	unsigned int m_vertCount = 0;
 	unsigned int m_triangleCount = 0;
 public:
-	bool load(Model *const model, std::string basePath, std::string filePath);
+	bool load(Model *const model, std::string filePath);
 	void destroy();
 
 	bool saveToPic(std::string exportPath) const;

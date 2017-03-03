@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : pmd.h
  * Project    : ConverterPIX
@@ -16,29 +16,29 @@
 
 namespace prism
 {
-	struct pmd_attrib_link
+	struct pmd_attrib_link_t
 	{
 		s32 m_from;							// +0
 		s32 m_to;							// +4
-	};	ENSURE_SIZE(pmd_attrib_link, 8);
+	};	ENSURE_SIZE(pmd_attrib_link_t, 8);
 
-	struct pmd_attrib_def
+	struct pmd_attrib_def_t
 	{
 		token_t m_name;						// +0
 		s32 m_type;							// +8
 		s32 m_offset;						// +12
-	};	ENSURE_SIZE(pmd_attrib_def, 16);
+	};	ENSURE_SIZE(pmd_attrib_def_t, 16);
 
-	struct pmd_attrib_value
+	struct pmd_attrib_value_t
 	{
 		union
 		{
 			int m_int_value;
 			float m_float_value;
 		};
-	};	ENSURE_SIZE(pmd_attrib_value, 4);
+	};	ENSURE_SIZE(pmd_attrib_value_t, 4);
 
-	struct pmd_header // sizeof(64)
+	struct pmd_header_t // sizeof(64)
 	{
 		u32 m_version;						// +0
 
@@ -71,7 +71,7 @@ namespace prism
 		*/
 
 		static const u32 SUPPORTED_VERSION = 0x04;
-	};	ENSURE_SIZE(pmd_header, 64);
+	};	ENSURE_SIZE(pmd_header_t, 64);
 } // namespace prism
 
 #pragma pack(pop)

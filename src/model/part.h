@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : part.h
  * Project    : ConverterPIX
@@ -10,7 +10,6 @@
 #pragma once
 
 #include <prerequisites.h>
-#include <structs/pmg.h>
 #include <math/vector.h>
 
 class Part

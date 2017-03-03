@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : prefab.cpp
  * Project    : ConverterPIX
@@ -8,7 +8,10 @@
  *********************************************************************/
 
 #include "prefab.h"
-#include <file.h>
+
+#include <fs/file.h>
+#include <fs/uberfilesystem.h>
+#include <fs/sysfilesystem.h>
 
 #include <structs/ppd.h>
 
@@ -24,29 +27,27 @@
 
 using namespace prism;
 
-bool Prefab::load(std::string basePath, std::string filePath)
+bool Prefab::load(std::string filePath)
 {
 	if (m_loaded)
 		destroy();
 
-	m_basePath = basePath;
 	m_filePath = filePath;
 	m_directory = directory(filePath);
 	m_fileName = filePath.substr(m_directory.length() + 1);
 
-	std::string ppdPath = m_basePath + m_filePath + ".ppd";
-
-	File file;
-	if (!file.open(ppdPath.c_str(), "rb"))
+	std::string ppdPath = m_filePath + ".ppd";
+	auto file = getUFS()->open(ppdPath, FileSystem::read | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open prefab file: \"%s\"! %s" SEOL, ppdPath.c_str(), strerror(errno));
 		return false;
 	}
 
-	size_t fileSize = file.getSize();
+	size_t fileSize = file->getSize();
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-	file.read((char *)buffer.get(), sizeof(uint8_t), fileSize);
-	file.close();
+	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
+	file.reset();
 
 	ppd_header_t *header = (ppd_header_t *)(buffer.get());
 	if (header->m_version != ppd_header_t::SUPPORTED_VERSION)
@@ -207,15 +208,14 @@ void Prefab::destroy()
 bool Prefab::saveToPip(std::string exportPath) const
 {
 	std::string pipFilePath = exportPath + m_filePath + ".pip";
-
-	File file;
-	if (!file.open(pipFilePath, "wb"))
+	auto file = getSFS()->open(pipFilePath, FileSystem::write | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open file: \"%s\"! %s" SEOL, pipFilePath.c_str(), strerror(errno));
 		return false;
 	}
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Header {"							SEOL
 		TAB "FormatVersion: 2"				SEOL
 		TAB "Source: \"%s\""				SEOL
@@ -226,7 +226,7 @@ bool Prefab::saveToPip(std::string exportPath) const
 			m_fileName.c_str()
 		);
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Global {"							SEOL
 		TAB "NodeCount: %i"					SEOL
 		TAB "TerrainPointCount : %i"		SEOL
@@ -254,8 +254,8 @@ bool Prefab::saveToPip(std::string exportPath) const
 	for (size_t i = 0; i < m_nodes.size(); ++i)
 	{
 		const Node *node = &m_nodes[i];
-		file << "Node {" SEOL;
-		file << fmt::sprintf(
+		*file << "Node {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Index: %i" SEOL
 			TAB "Position : ( %s )" SEOL
 			TAB "Direction : ( %s )" SEOL,
@@ -264,11 +264,11 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(node->m_direction).c_str()
 			);
 
-		file << TAB "InputLanes: ("; for (u32 j = 0; j < 8; ++j) { file << fmt::sprintf(" %i", node->m_inputLines[j]); } file << " )" SEOL;
-		file << TAB "OutputLanes: ("; for (u32 j = 0; j < 8; ++j) { file << fmt::sprintf(" %i", node->m_outputLines[j]); } file << " )" SEOL;
-		file << SEOL;
+		*file << TAB "InputLanes: ("; for (u32 j = 0; j < 8; ++j) { *file << fmt::sprintf(" %i", node->m_inputLines[j]); } *file << " )" SEOL;
+		*file << TAB "OutputLanes: ("; for (u32 j = 0; j < 8; ++j) { *file << fmt::sprintf(" %i", node->m_outputLines[j]); } *file << " )" SEOL;
+		*file << SEOL;
 
-		file << fmt::sprintf(
+		*file << fmt::sprintf(
 			TAB "TerrainPointCount: %i" SEOL
 			TAB "TerrainPointVariantCount : %i" SEOL
 			TAB "StreamCount : %i" SEOL,
@@ -279,7 +279,7 @@ bool Prefab::saveToPip(std::string exportPath) const
 
 		if (node->m_terrainPointCount > 0)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "Stream {" SEOL
 				TAB TAB "Format: %s" SEOL
 				TAB TAB "Tag: \"%s\"" SEOL,
@@ -289,15 +289,15 @@ bool Prefab::saveToPip(std::string exportPath) const
 
 			for (u32 j = 0; j < node->m_terrainPointCount; ++j)
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "%-5i( %s )" SEOL,
 						j, to_string(m_terrainPoints[node->m_terrainPointIdx + j].m_position).c_str()
 					);
 			}
 
-			file << TAB "}" SEOL;
+			*file << TAB "}" SEOL;
 
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "Stream {" SEOL
 				TAB TAB "Format: %s" SEOL
 				TAB TAB "Tag: \"%s\"" SEOL,
@@ -307,18 +307,18 @@ bool Prefab::saveToPip(std::string exportPath) const
 
 			for (u32 j = 0; j < node->m_terrainPointCount; ++j)
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "%-5i( %s )" SEOL,
 						j, to_string(m_terrainPoints[node->m_terrainPointIdx + j].m_normal).c_str()
 					);
 			}
 
-			file << TAB "}" SEOL;
+			*file << TAB "}" SEOL;
 		}
 
 		if (node->m_variantCount > 0)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "Stream {" SEOL
 				TAB TAB "Format: %s" SEOL
 				TAB TAB "Tag: \"%s\"" SEOL,
@@ -329,22 +329,22 @@ bool Prefab::saveToPip(std::string exportPath) const
 			for (u32 j = 0; j < node->m_variantCount; ++j)
 			{
 				TerrainPointVariant data = m_terrainPointVariants[node->m_variantIdx + j];
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "%-5i( %i %i )" SEOL,
 						j, data.m_attach0, data.m_attach1
 					);
 			}
 
-			file << TAB "}" SEOL;
+			*file << TAB "}" SEOL;
 		}
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_curves.size(); ++i)
 	{
 		const Curve *curve = &m_curves[i];
-		file << "Curve {" SEOL;
-		file << fmt::sprintf(
+		*file << "Curve {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Index: %i" SEOL
 			TAB "Name: \"%s\"" SEOL
 			TAB "Flags: %u" SEOL
@@ -354,16 +354,16 @@ bool Prefab::saveToPip(std::string exportPath) const
 				curve->m_flags,
 				curve->m_leadsToNodes
 			);
-		file << TAB "NextCurves: ("; for (u32 j = 0; j < 4; ++j) { file << fmt::sprintf(" %i", curve->m_nextLines[j]); } file << " )" SEOL;
-		file << TAB "PrevCurves: ("; for (u32 j = 0; j < 4; ++j) { file << fmt::sprintf(" %i", curve->m_prevLines[j]); } file << " )" SEOL;
-		file << fmt::sprintf(
+		*file << TAB "NextCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_nextLines[j]); } *file << " )" SEOL;
+		*file << TAB "PrevCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_prevLines[j]); } *file << " )" SEOL;
+		*file << fmt::sprintf(
 			TAB "Length: " FLT_FT SEOL,
 				flh(curve->m_length)
 			);
 
 		if (curve->m_semaphoreId != -1)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "SemaphoreID: %i" SEOL,
 					curve->m_semaphoreId
 				);
@@ -371,14 +371,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 
 		if (curve->m_trafficRule.length() > 0)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "TrafficRule: \"%s\"" SEOL,
 					curve->m_trafficRule.c_str()
 				);
 		}
 
-		file << TAB "Bezier {" SEOL;
-		file << fmt::sprintf(
+		*file << TAB "Bezier {" SEOL;
+		*file << fmt::sprintf(
 			TAB TAB "Start {" SEOL
 			TAB TAB TAB "Position: ( %s )" SEOL
 			TAB TAB TAB "Rotation: ( %s )" SEOL
@@ -387,7 +387,7 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(curve->m_startRotation).c_str()
 			);
 
-		file << fmt::sprintf(
+		*file << fmt::sprintf(
 			TAB TAB "End {" SEOL
 			TAB TAB TAB "Position: ( %s )" SEOL
 			TAB TAB TAB "Rotation: ( %s )" SEOL
@@ -396,15 +396,15 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(curve->m_endRotation).c_str()
 			);
 
-		file << TAB "}" SEOL;
-		file << "}" SEOL;
+		*file << TAB "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_signs.size(); ++i)
 	{
 		const Sign *sign = &m_signs[i];
-		file << "Sign {" SEOL;
-		file << fmt::sprintf(
+		*file << "Sign {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Name: \"%s\"" SEOL
 			TAB "Position: ( %s )" SEOL
 			TAB "Rotation: ( %s )" SEOL
@@ -416,14 +416,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 				sign->m_model.c_str(),
 				sign->m_part.c_str()
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_spawnPoints.size(); ++i)
 	{
 		const SpawnPoint *sp = &m_spawnPoints[i];
-		file << "SpawnPoint {" SEOL;
-		file << fmt::sprintf(
+		*file << "SpawnPoint {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Name: \"%s\"" SEOL
 			TAB "Position: ( %s )" SEOL
 			TAB "Rotation: ( %s )" SEOL
@@ -433,14 +433,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(sp->m_rotation).c_str(),
 				sp->m_type
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_semaphores.size(); ++i)
 	{
 		const Semaphore *semaphore = &m_semaphores[i];
-		file << "Semaphore {" SEOL;
-		file << fmt::sprintf(
+		*file << "Semaphore {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Position: ( %s )" SEOL
 			TAB "Rotation: ( %s )" SEOL
 			TAB "Type: %i" SEOL
@@ -456,14 +456,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 				flh(semaphore->m_cycle),
 				semaphore->m_profile.c_str()
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_mapPoints.size(); ++i)
 	{
 		const MapPoint *mp = &m_mapPoints[i];
-		file << "MapPoint {" SEOL;
-		file << fmt::sprintf(
+		*file << "MapPoint {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Index: %i" SEOL
 			TAB "MapVisualFlags: %u" SEOL
 			TAB "MapNavFlags: %u" SEOL
@@ -475,14 +475,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(mp->m_position).c_str(),
 				to_string(mp->m_neighbour).c_str()
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_triggerPoints.size(); ++i)
 	{
 		const TriggerPoint *tp = &m_triggerPoints[i];
-		file << "TriggerPoint {" SEOL;
-		file << fmt::sprintf(
+		*file << "TriggerPoint {" SEOL;
+		*file << fmt::sprintf(
 			TAB "Index: %i" SEOL
 			TAB "TriggerID: %i" SEOL
 			TAB "TriggerAction: \"%s\"" SEOL
@@ -502,14 +502,14 @@ bool Prefab::saveToPip(std::string exportPath) const
 				to_string(tp->m_position).c_str(),
 				to_string(tp->m_neighbours).c_str()
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
 
 	for (size_t i = 0; i < m_intersections.size(); ++i)
 	{
 		const Intersection *is = &m_intersections[i];
-		file << "Intersection {" SEOL;
-		file << fmt::sprintf(
+		*file << "Intersection {" SEOL;
+		*file << fmt::sprintf(
 			TAB "InterCurveID: %i" SEOL
 			TAB "InterPosition: %f" SEOL
 			TAB "InterRadius: %f" SEOL
@@ -519,10 +519,9 @@ bool Prefab::saveToPip(std::string exportPath) const
 				is->m_radius,
 				is->m_flags
 			);
-		file << "}" SEOL;
+		*file << "}" SEOL;
 	}
-
-	file.close();
+	file.reset();
 	return true;
 }
 

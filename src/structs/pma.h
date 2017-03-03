@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : pma.h
  * Project    : ConverterPIX
@@ -19,7 +19,7 @@
 
 namespace prism
 {
-	struct pma_header
+	struct pma_header_t
 	{
 		u32 m_version;				// +0
 		token_t m_name;				// +4
@@ -34,15 +34,15 @@ namespace prism
 		i32 m_delta_rot_offset;		// +40
 
 		static const u32 SUPPORTED_VERSION = 0x03;
-	};	ENSURE_SIZE(pma_header, 44);
+	};	ENSURE_SIZE(pma_header_t, 44);
 
-	struct pma_frame
+	struct pma_frame_t
 	{
 		quat_t m_scale_orient;		// +0
 		quat_t m_rot;				// +16
 		float3 m_trans;				// +32
 		float3 m_scale;				// +44
-	};	ENSURE_SIZE(pma_frame, 56);
+	};	ENSURE_SIZE(pma_frame_t, 56);
 } // namespace prism
 
 #pragma pack(pop)

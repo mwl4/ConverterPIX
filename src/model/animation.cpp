@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : animation.cpp
  * Project    : ConverterPIX
@@ -8,7 +8,9 @@
  *********************************************************************/
 
 #include "animation.h"
-#include <file.h>
+#include <fs/file.h>
+#include <fs/sysfilesystem.h>
+#include <fs/uberfilesystem.h>
 #include <structs/pma.h>
 #include <model/model.h>
 
@@ -34,24 +36,23 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 		m_filePath = m_model->fileDirectory() + "/" + filePath;
 	}
 
-	std::string pmaFilepath = model->basePath() + m_filePath + ".pma";
-
-	File file;
-	if (!file.open(pmaFilepath, "rb"))
+	const std::string pmaFilepath = m_filePath + ".pma";
+	auto file = getUFS()->open(pmaFilepath, FileSystem::read | FileSystem::binary);
+	if (!file)
 	{
 		printf("[anim] Cannot open animation file: \"%s\"! %s\n", pmaFilepath.c_str(), strerror(errno));
 		return false;
 	}
 
-	size_t fileSize = file.getSize();
+	size_t fileSize = file->getSize();
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-	file.read((char *)buffer.get(), sizeof(uint8_t), fileSize);
-	file.close();
+	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
+	file.reset();
 
-	pma_header *header = (pma_header *)(buffer.get());
-	if (header->m_version != pma_header::SUPPORTED_VERSION)
+	pma_header_t *header = (pma_header_t *)(buffer.get());
+	if (header->m_version != pma_header_t::SUPPORTED_VERSION)
 	{
-		printf("[anim] Invalid version of animation file! (have: %i, expected: %i\n", header->m_version, pma_header::SUPPORTED_VERSION);
+		printf("[anim] Invalid version of animation file! (have: %i, expected: %i\n", header->m_version, pma_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
@@ -68,7 +69,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 		m_frames[i].resize(header->m_frames);
 		for (uint32_t j = 0; j < header->m_frames; ++j)
 		{
-			pma_frame *frame = (pma_frame *)(buffer.get() + header->m_frames_offset + i*sizeof(pma_frame) + j*m_bones.size()*sizeof(pma_frame));
+			pma_frame_t *frame = (pma_frame_t *)(buffer.get() + header->m_frames_offset + i*sizeof(pma_frame_t) + j*m_bones.size()*sizeof(pma_frame_t));
 			if(i == 0) m_timeframes[j] = *(float *)(buffer.get() + header->m_lengths_offset + j * sizeof(float));
 			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
 			m_frames[i][j].m_rotation = frame->m_rot;
@@ -93,14 +94,14 @@ void Animation::saveToPia(std::string exportPath) const
 {
 	const std::string filename = m_filePath.substr(m_filePath.rfind('/') + 1);
 	const std::string piafile = exportPath + m_filePath + ".pia";
-	File file;
-	if (!file.open(piafile.c_str(), "wb"))
+	auto file = getSFS()->open(piafile, FileSystem::write | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open file: \"%s\"! %s\n", piafile.c_str(), strerror(errno));
 		return;
 	}
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Header {"						SEOL
 		TAB "FormatVersion: 3"			SEOL
 		TAB "Source: \"%s\""			SEOL
@@ -111,7 +112,7 @@ void Animation::saveToPia(std::string exportPath) const
 			filename.c_str()
 		);
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Global {"						SEOL
 		TAB "Skeleton: \"%s\""			SEOL
 		TAB "TotalTime: %f"				SEOL
@@ -126,8 +127,8 @@ void Animation::saveToPia(std::string exportPath) const
 
 	if (m_movement)
 	{
-		file << "CustomChannel {"			SEOL;
-		file << fmt::sprintf(
+		*file << "CustomChannel {"			SEOL;
+		*file << fmt::sprintf(
 			TAB "Name: \"%s\""				SEOL
 			TAB "StreamCount: %i"			SEOL
 			TAB "KeyframeCount : %i"		SEOL,
@@ -135,54 +136,54 @@ void Animation::saveToPia(std::string exportPath) const
 				2,
 				(int)m_timeframes.size()
 			);
-		file << TAB "Stream {"		SEOL;
+		*file << TAB "Stream {"		SEOL;
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB TAB "Format: FLOAT"		SEOL
 				TAB TAB "Tag: \"_TIME\""	SEOL
 				);
 
 			for (uint32_t j = 0; j < m_timeframes.size(); ++j)
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "%-5i( " FLT_FT " )" SEOL,
 						j, flh(m_timeframes[j])
 					);
 			}
 		}
-		file << TAB "}"				SEOL;
-		file << TAB "Stream {"				SEOL;
+		*file << TAB "}"					SEOL;
+		*file << TAB "Stream {"				SEOL;
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB TAB "Format: FLOAT3"	SEOL
 				TAB TAB "Tag: \"_MOVEMENT\"" SEOL
 				);
 
 			for (uint32_t j = 0; j < m_timeframes.size(); ++j)
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "%-5i( " FLT_FT "  " FLT_FT "  " FLT_FT " )" SEOL,
 						j, flh((*m_movement)[j][0]), flh((*m_movement)[j][1]), flh((*m_movement)[j][2])
 					);
 			}
 		}
-		file << TAB "}"						SEOL;
-		file << "}"							SEOL;
+		*file << TAB "}"					SEOL;
+		*file << "}"						SEOL;
 	}
 
 	for (uint32_t i = 0; i < m_bones.size(); ++i)
 	{
-		const auto bone = m_model->bone(m_bones[i]);
-
 		if (m_bones[i] >= m_model->boneCount())
 		{
 			printf("[anim] %s: Bone index outside bones array! [%i/%i]\n", filename.c_str(), (int)m_bones[i], m_model->boneCount());
 			return;
 		}
 
-		file << "BoneChannel {"			SEOL;
+		const auto bone = m_model->bone(m_bones[i]);
+
+		*file << "BoneChannel {"		SEOL;
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB "Name: \"%s\""		SEOL
 				TAB "StreamCount: %i"	SEOL
 				TAB "KeyframeCount: %i"	SEOL,
@@ -190,26 +191,26 @@ void Animation::saveToPia(std::string exportPath) const
 					2,
 					m_timeframes.size()
 				);
-			file << TAB "Stream {"		SEOL;
+			*file << TAB "Stream {"		SEOL;
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "Format: FLOAT"		SEOL
 					TAB TAB "Tag: \"_TIME\""	SEOL
 					);
 
 				for (uint32_t j = 0; j < m_timeframes.size(); ++j)
 				{
-					file << fmt::sprintf(
+					*file << fmt::sprintf(
 						TAB TAB "%-5i( " FLT_FT " )" SEOL,
 							j, flh(m_timeframes[j])
 						);
 				}
 			}
-			file << TAB "}"				SEOL;
+			*file << TAB "}"			SEOL;
 
-			file << TAB "Stream {"		SEOL;
+			*file << TAB "Stream {"		SEOL;
 			{
-				file << fmt::sprintf(
+				*file << fmt::sprintf(
 					TAB TAB "Format: FLOAT4x4"	SEOL
 					TAB TAB "Tag: \"_MATRIX\""	SEOL
 					);
@@ -222,7 +223,7 @@ void Animation::saveToPia(std::string exportPath) const
 					const glm::vec3 scale = glm_cast(frame->m_scale) * bone->m_signOfDeterminantOfMatrix;
 					const prism::mat4 mat = glm::translate(trans) * glm::mat4_cast(rot) * glm::scale(scale);
 
-					file << fmt::sprintf(
+					*file << fmt::sprintf(
 						TAB TAB  "%-5i(  &%08x  &%08x  &%08x  &%08x"	SEOL
 						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
 						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
@@ -234,12 +235,11 @@ void Animation::saveToPia(std::string exportPath) const
 						);
 				}
 			}
-			file << TAB "}"				SEOL;
+			*file << TAB "}"			SEOL;
 		}
-		file << "}"						SEOL;
+		*file << "}"					SEOL;
 	}
-
-	file.close();
+	file.reset();
 }
 
 /* eof */

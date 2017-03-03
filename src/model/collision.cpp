@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : collision.cpp
  * Project    : ConverterPIX
@@ -10,38 +10,38 @@
 #include "collision.h"
 
 #include <model/model.h>
-#include <file.h>
+#include <fs/file.h>
+#include <fs/uberfilesystem.h>
+#include <fs/sysfilesystem.h>
 
-bool Collision::load(Model *const model, std::string basePath, std::string filePath)
+bool Collision::load(Model *const model, std::string filePath)
 {
-	m_basePath = basePath;
 	m_filePath = filePath;
 	m_model = model;
 
-	std::string pmcPath = m_basePath + m_filePath + ".pmc";
-
-	File file;
-	if (!file.open(pmcPath.c_str(), "rb"))
+	const std::string pmcPath = m_filePath + ".pmc";
+	auto file = getUFS()->open(pmcPath, FileSystem::read | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open collision file: \"%s\"! %s" SEOL, pmcPath.c_str(), strerror(errno));
 		return false;
 	}
 
-	const size_t fileSize = file.getSize();
+	const size_t fileSize = file->getSize();
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
-	file.read((char *)buffer.get(), sizeof(char), fileSize);
-	file.close();
+	file->read((char *)buffer.get(), sizeof(char), fileSize);
+	file.reset();
 
-	const auto header = reinterpret_cast<prism::pmc_header *>(buffer.get());
-	if (header->m_version != prism::pmc_header::SUPPORTED_VERSION)
+	const auto header = reinterpret_cast<prism::pmc_header_t *>(buffer.get());
+	if (header->m_version != prism::pmc_header_t::SUPPORTED_VERSION)
 	{
-		printf("Invalid version of collision file: \"%s\"! (have: %i expected: %i)" SEOL, m_filePath.c_str(), header->m_version, prism::pmc_header::SUPPORTED_VERSION);
+		printf("Invalid version of collision file: \"%s\"! (have: %i expected: %i)" SEOL, m_filePath.c_str(), header->m_version, prism::pmc_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
 	for (size_t i = 0; i < header->m_piece_count; ++i)
 	{
-		const auto piecef = reinterpret_cast<prism::pmc_piece *>(buffer.get() + header->m_piece_offset) + i;
+		const auto piecef = reinterpret_cast<prism::pmc_piece_t *>(buffer.get() + header->m_piece_offset) + i;
 
 		Piece piece;
 		piece.m_verts.resize(piecef->m_verts);
@@ -52,7 +52,7 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 		piece.m_triangles.resize(piecef->m_edges / 3);
 		for (size_t t = 0; t < piece.m_triangles.size(); ++t)
 		{
-			piece.m_triangles[t] = *(reinterpret_cast<prism::pmc_triangle *>(buffer.get() + piecef->m_face_offset) + t);
+			piece.m_triangles[t] = *(reinterpret_cast<prism::pmc_triangle_t *>(buffer.get() + piecef->m_face_offset) + t);
 		}
 		m_vertCount += piece.m_verts.size();
 		m_triangleCount += piece.m_triangles.size();
@@ -61,8 +61,8 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 
 	for (size_t i = 0; i < header->m_variant_count; ++i)
 	{
-		const auto variantName = reinterpret_cast<prism::pmc_variant *>(buffer.get() + header->m_variant_offset) + i;
-		const auto variantDef = reinterpret_cast<prism::pmc_variant_def *>(buffer.get() + header->m_variant_def_offset) + i;
+		const auto variantName = reinterpret_cast<prism::pmc_variant_t *>(buffer.get() + header->m_variant_offset) + i;
+		const auto variantDef = reinterpret_cast<prism::pmc_variant_def_t *>(buffer.get() + header->m_variant_def_offset) + i;
 
 		Variant variant;
 		variant.m_name = variantName->m_name.to_string();
@@ -71,7 +71,7 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 		{
 			assert((variantDef->m_offset + currentOffset) < fileSize);
 
-			const auto locatorf = reinterpret_cast<prism::pmc_locator *>(buffer.get() + variantDef->m_offset + currentOffset);
+			const auto locatorf = reinterpret_cast<prism::pmc_locator_t *>(buffer.get() + variantDef->m_offset + currentOffset);
 			if (locatorf->m_data_size == -1)
 				break;
 
@@ -94,35 +94,35 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 			std::shared_ptr<Locator> locator;
 			switch (locatorf->m_data_size)
 			{
-				case sizeof(prism::pmc_locator_convex):
+				case sizeof(prism::pmc_locator_convex_t):
 				{
 					auto loc = std::make_shared<ConvexLocator>();
-					const auto locf = static_cast<prism::pmc_locator_convex *>(locatorf);
+					const auto locf = static_cast<prism::pmc_locator_convex_t *>(locatorf);
 					loc->m_rotation = locf->m_rotation;
 					loc->m_convexPiece = locf->m_convex_piece;
 					locator = std::move(loc);
 				} break;
-				case sizeof(prism::pmc_locator_cylinder):
+				case sizeof(prism::pmc_locator_cylinder_t):
 				{
 					auto loc = std::make_shared<CylinderLocator>();
-					const auto locf = static_cast<prism::pmc_locator_cylinder *>(locatorf);
+					const auto locf = static_cast<prism::pmc_locator_cylinder_t *>(locatorf);
 					loc->m_rotation = locf->m_rotation;
 					loc->m_radius = locf->m_radius;
 					loc->m_depth = locf->m_depth;
 					locator = std::move(loc);
 				} break;
-				case sizeof(prism::pmc_locator_box):
+				case sizeof(prism::pmc_locator_box_t):
 				{
 					auto loc = std::make_shared<BoxLocator>();
-					const auto locf = static_cast<prism::pmc_locator_box *>(locatorf);
+					const auto locf = static_cast<prism::pmc_locator_box_t *>(locatorf);
 					loc->m_rotation = locf->m_rotation;
 					loc->m_scale = locf->m_scale;
 					locator = std::move(loc);
 				} break;
-				case sizeof(prism::pmc_locator_sphere):
+				case sizeof(prism::pmc_locator_sphere_t):
 				{
 					auto loc = std::make_shared<SphereLocator>();
-					const auto locf = static_cast<prism::pmc_locator_sphere *>(locatorf);
+					const auto locf = static_cast<prism::pmc_locator_sphere_t *>(locatorf);
 					loc->m_radius = locf->m_radius;
 					locator = std::move(loc);
 				} break;
@@ -152,7 +152,6 @@ bool Collision::load(Model *const model, std::string basePath, std::string fileP
 void Collision::destroy()
 {
 	m_model = nullptr;
-	m_basePath.clear();
 	m_filePath.clear();
 	m_pieces.clear();
 	m_variants.clear();
@@ -199,16 +198,15 @@ void Collision::assignLocatorsToParts()
 
 bool Collision::saveToPic(std::string exportPath) const
 {
-	std::string picFilePath = exportPath + m_filePath + ".pic";
-
-	File file;
-	if (!file.open(picFilePath, "wb"))
+	const std::string picFilePath = exportPath + m_filePath + ".pic";
+	auto file = getSFS()->open(picFilePath, FileSystem::write | FileSystem::binary);
+	if (!file)
 	{
 		printf("Cannot open file: \"%s\"! %s" SEOL, picFilePath.c_str(), strerror(errno));
 		return false;
 	}
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Header {"							SEOL
 		TAB "FormatVersion: 2"				SEOL
 		TAB "Source: \"%s\""				SEOL
@@ -219,7 +217,7 @@ bool Collision::saveToPic(std::string exportPath) const
 			m_model->fileName().c_str()
 	);
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Global {"							SEOL
 		TAB "VertexCount: %u"				SEOL
 		TAB "TriangleCount: %u"				SEOL
@@ -235,7 +233,7 @@ bool Collision::saveToPic(std::string exportPath) const
 			(int)m_locators.size()
 	);
 
-	file << fmt::sprintf(
+	*file << fmt::sprintf(
 		"Material {"						SEOL
 		TAB "Alias: \"%s\""					SEOL
 		TAB "Effect: \"%s\""				SEOL
@@ -247,40 +245,40 @@ bool Collision::saveToPic(std::string exportPath) const
 	for (size_t i = 0; i < m_pieces.size(); ++i)
 	{
 		const auto &piece = m_pieces[i];
-		file << fmt::sprintf(
+		*file << fmt::sprintf(
 			"Piece {"						SEOL
 			TAB "Index: %i"					SEOL
 			TAB "Material: 0"				SEOL
 			TAB "VertexCount: %i"			SEOL
-			TAB "TriangleCount: %i"		SEOL
+			TAB "TriangleCount: %i"			SEOL
 			TAB "StreamCount: 1"			SEOL,
 			(int)i, (int)piece.m_verts.size(), (int)piece.m_triangles.size()
 		);
-		file << fmt::sprintf(
+		*file << fmt::sprintf(
 			TAB "Stream {"					SEOL
 			TAB TAB "Format: FLOAT3"		SEOL
 			TAB TAB "Tag: \"_POSITION\""	SEOL
 		);
 		for (size_t j = 0; j < piece.m_verts.size(); ++j)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB TAB "%-5i( %s )"		SEOL,
 				j, prism::to_string(piece.m_verts[j]).c_str()
 			);
 		}
-		file << TAB "}"						SEOL; // Stream {
+		*file << TAB "}"					SEOL; // Stream {
 		
-		file << TAB "Triangles {"			SEOL;
+		*file << TAB "Triangles {"			SEOL;
 		for (size_t j = 0; j < piece.m_triangles.size(); ++j)
 		{
-			file << fmt::sprintf(
+			*file << fmt::sprintf(
 				TAB TAB "%-5i( %-5i %-5i %-5i )" SEOL,
 				(int)j, piece.m_triangles[j].a[2], piece.m_triangles[j].a[1], piece.m_triangles[j].a[0]
 			);
 		}
-		file << TAB "}"						SEOL; // Triangles {
+		*file << TAB "}"					SEOL; // Triangles {
 
-		file << "}"							SEOL; // Piece {
+		*file << "}"						SEOL; // Piece {
 	}
 
 	for (size_t i = 0; i < m_model->getParts().size(); ++i)
@@ -299,7 +297,7 @@ bool Collision::saveToPic(std::string exportPath) const
 		std::vector<int> pieces;
 		/* No idea what are pieces here */
 
-		file << fmt::sprintf(
+		*file << fmt::sprintf(
 			"Part {"						SEOL
 			TAB "Name: \"%s\""				SEOL
 			TAB "PieceCount: %i"			SEOL
@@ -309,26 +307,26 @@ bool Collision::saveToPic(std::string exportPath) const
 				(int)locators.size()
 		);
 
-		file << TAB "Pieces: ";
+		*file << TAB "Pieces: ";
 		for (const auto piece : pieces)
 		{
-			file << fmt::sprintf("%i ", piece);
+			*file << fmt::sprintf("%i ", piece);
 		}
-		file <<								SEOL;
+		*file <<							SEOL;
 
-		file << TAB "Locators: ";
+		*file << TAB "Locators: ";
 		for (const auto loc : locators)
 		{
-			file << fmt::sprintf("%i ", loc);
+			*file << fmt::sprintf("%i ", loc);
 		}
-		file <<								SEOL;
+		*file <<							SEOL;
 
-		file << "}"							SEOL; // Part {
+		*file << "}"						SEOL; // Part {
 	}
 	
 	for (const auto &locator : m_locators)
 	{
-		file << locator->toDefinition() << SEOL;
+		*file << locator->toDefinition() << SEOL;
 	}
 
 	return true;

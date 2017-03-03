@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-c -g -w -static
+CXXFLAGS=-c -g -w -static -I./
 LDFLAGS=-ldl -lpthread -static
 SOURCES=$(wildcard fmt/*.cc)
 OBJECTS=$(SOURCES:.cc=.o)

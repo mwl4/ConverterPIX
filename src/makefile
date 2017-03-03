@@ -2,6 +2,7 @@ CXXCOMPILER=g++
 CXXFLAGS=-c -g -w -O2 -Wall -std=c++14 -msse -msse2 -fpermissive -I./ -I./libs/glm -I./libs/fmt
 LDFLAGS=-g ./libs/libs/libfmt.a
 CXXSOURCE=$(wildcard *.cpp)
+CXXSOURCE+=$(wildcard fs/*.cpp)
 CXXSOURCE+=$(wildcard material/*.cpp)
 CXXSOURCE+=$(wildcard math/*.cpp)
 CXXSOURCE+=$(wildcard model/*.cpp)

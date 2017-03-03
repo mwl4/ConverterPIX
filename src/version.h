@@ -1,5 +1,5 @@
 /*********************************************************************
- *           Copyright (C) 2016 mwl4 - All rights reserved           *
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
  *********************************************************************
  * File       : version.h
  * Project    : ConverterPIX
@@ -9,7 +9,7 @@
 
 #pragma once
 
-#define VERSION				"0.1"
+#define VERSION				"1.0"
 #define PROG_NAME			"ConverterPIX"
 
 #define STRING_VERSION		PROG_NAME " v" VERSION
