@@ -10,6 +10,7 @@ CXXSOURCE+=$(wildcard prefab/*.cpp)
 CXXSOURCE+=$(wildcard structs/*.cpp)
 CXXSOURCE+=$(wildcard texture/*.cpp)
 CXXSOURCE+=$(wildcard utils/*.cpp)
+CXXSOURCE+=$(wildcard cmd/*.cpp)
 
 CXXOBJECTS=$(CXXSOURCE:.cpp=.o)
 EXECUTABLE=../bin/linux/converter_pix_names

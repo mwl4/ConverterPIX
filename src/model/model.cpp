@@ -219,7 +219,9 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 		currentLocator->m_name = token_to_string(locator->m_name);
 
 		if (locator->m_name_block_offset != -1) {
-			currentLocator->m_hookup = (const char *)(buffer + header->m_locator_name_offset + locator->m_name_block_offset);
+			currentLocator->m_hookup = std::string(
+				(const char *)(buffer + header->m_locator_name_offset + locator->m_name_block_offset)
+			).substr(0, header->m_locators_name_size - locator->m_name_block_offset);
 		}
 		else {
 			currentLocator->m_hookup = "";
@@ -425,7 +427,9 @@ bool Model::loadModel0x14(const uint8_t *const buffer)
 		currentLocator->m_name = token_to_string(locator->m_name);
 
 		if (locator->m_hookup_offset != -1) {
-			currentLocator->m_hookup = (const char *)(buffer + header->m_string_pool_offset + locator->m_hookup_offset);
+			currentLocator->m_hookup = std::string(
+				(const char *)(buffer + header->m_string_pool_offset + locator->m_hookup_offset)
+			).substr(0, header->m_string_pool_size - locator->m_hookup_offset);
 		}
 		else {
 			currentLocator->m_hookup = "";
