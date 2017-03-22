@@ -19,7 +19,7 @@ ZipFileSystem::ZipFileSystem(const std::string &root)
 	m_root = getSFS()->open(root, FileSystem::read | FileSystem::binary);
 	if (!m_root)
 	{
-		printf("[zipfs] Unable to open root file (%s)!\n", root.c_str());
+		error("sysfs", root, "Unable to open root file");
 		return;
 	}
 	readZip();
@@ -64,7 +64,7 @@ void ZipFileSystem::readZip()
 	const size_t size = m_root->getSize();
 	if (size <= sizeof(zip::EndOfCentralDirectory))
 	{
-		printf("[zipfs] Too short file \'%s\'.", m_rootFilename.c_str());
+		error("sysfs", m_rootFilename, "Too short file!");
 		return;
 	}
 
@@ -72,7 +72,7 @@ void ZipFileSystem::readZip()
 	std::unique_ptr<uint8_t[]> blockToFindCentralDirEnd(new uint8_t[blockSizeToFindCentralDirEnd]);
 	if (!m_root->blockRead(blockToFindCentralDirEnd.get(), size - blockSizeToFindCentralDirEnd, blockSizeToFindCentralDirEnd))
 	{
-		printf("[zipfs] Failed to read the zip_central_dir_end structure in \'%s\'.", m_rootFilename.c_str());
+		error("sysfs", m_rootFilename, "Failed to read the zip_central_dir_end structure!");
 		return;
 	}
 
@@ -87,25 +87,25 @@ void ZipFileSystem::readZip()
 
 		if (--currentOffset < blockToFindCentralDirEnd.get())
 		{
-			printf("[zipfs] Cannot find the zip_central_dir_end signature in \'%s\'.", m_rootFilename.c_str());
+			error("sysfs", m_rootFilename, "Cannot find the zip_central_dir_end signature!");
 			return;
 		}
 	}
 
 	if (centralDirEnd->signature != zip::EndOfCentralDirectory::SIGNATURE)
 	{
-		printf("[zipfs] Invalid end signature in \'%s\'.", m_rootFilename.c_str());
+		error("sysfs", m_rootFilename, "Invalid end signature!");
 		return;
 	}
 
 	const uint16_t numEntriesLimit = 60000;
 	if (centralDirEnd->numEntries > numEntriesLimit)
 	{
-		printf("[zipfs] The number of files (%u) in file '%s' exceeded limits (%u).", centralDirEnd->numEntries, m_rootFilename.c_str(), numEntriesLimit);
+		error_f("sysfs", m_rootFilename, "The number of files(%u) exceeded limits(%u).", centralDirEnd->numEntries, numEntriesLimit);
 		return;
 	}
 
-
+	// TODO:
 }
 
 /* eof */

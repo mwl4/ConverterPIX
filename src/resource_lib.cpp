@@ -23,7 +23,7 @@ auto ResourceLibrary::obtain(std::string tobjfile) -> Entry
 		}
 		else
 		{
-			printf("Unable to load: \"%s\"!\n", tobjfile.c_str());
+			error("tobj", tobjfile, "Unable to load!");
 			return nullptr;
 		}
 	}

@@ -133,8 +133,8 @@ public:
 	const std::vector<Part> &getParts() const { return m_parts; }
 	const std::vector<Variant> &getVariants() const { return m_variants; }
 
-	bool loadModel0x13(const uint8_t *const buffer);
-	bool loadModel0x14(const uint8_t *const buffer);
+	bool loadModel0x13(const uint8_t *const buffer, const size_t size);
+	bool loadModel0x14(const uint8_t *const buffer, const size_t size);
 };
 
 /* eof */

@@ -40,7 +40,7 @@ bool Prefab::load(std::string filePath)
 	auto file = getUFS()->open(ppdPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open prefab file: \"%s\"! %s" SEOL, ppdPath.c_str(), strerror(errno));
+		error("prefab", m_filePath, "Unable to open file!");
 		return false;
 	}
 
@@ -52,7 +52,7 @@ bool Prefab::load(std::string filePath)
 	ppd_header_t *header = (ppd_header_t *)(buffer.get());
 	if (header->m_version != ppd_header_t::SUPPORTED_VERSION)
 	{
-		printf("Invalid version of prefab file! (have = %i, expected: %i)" SEOL, header->m_version, ppd_header_t::SUPPORTED_VERSION);
+		error_f("prefab", m_filePath, "Invalid version of prefab file! (have: %i, expected: %i)", header->m_version, ppd_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
@@ -211,7 +211,7 @@ bool Prefab::saveToPip(std::string exportPath) const
 	auto file = getSFS()->open(pipFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s" SEOL, pipFilePath.c_str(), strerror(errno));
+		error_f("prefab", pipFilePath, "Unable to save file (%s)", getSFS()->getError());
 		return false;
 	}
 

@@ -65,7 +65,7 @@ bool Material::load(std::string filePath)
 	auto file = getUFS()->open(m_filePath, FileSystem::read | FileSystem::binary);
 	if(!file)
 	{
-		printf("Cannot open material file: \"%s\"! %s\n", m_filePath.c_str(), strerror(errno));
+		error_f("material", m_filePath, "Unable to open material (%s)!", strerror(errno));
 		return false;
 	}
 
@@ -82,14 +82,14 @@ bool Material::load(std::string filePath)
 	size_t begin_material = buffer.find(':'); // material : "effect" { }
 	if (begin_material == std::string::npos)
 	{
-		printf("[mat] Unable to find \':\' in buffer! (%s)\n", m_filePath.c_str());
+		error("material", m_filePath, "Unable to find \':\' in material!");
 		return false;
 	}
 
 	std::string check_mat = removeSpaces(buffer.substr(0, begin_material));
 	if (check_mat != "material")
 	{
-		printf("[mat] Invalid material format! (%s)\n", m_filePath.c_str());
+		error("material", m_filePath, "Invalid material format!");
 		return false;
 	}
 
@@ -98,20 +98,20 @@ bool Material::load(std::string filePath)
 	size_t brace_left = buffer.find('{');
 	if (brace_left == std::string::npos)
 	{
-		printf("[mat] Unable to find left brace! (%s)\n", m_filePath.c_str());
+		error("material", m_filePath, "Unable to find left brace!");
 		return false;
 	}
 	size_t brace_right = buffer.rfind('}');
 	if (brace_right == std::string::npos)
 	{
-		printf("[mat] Unable to find right brace! (%s)\n", m_filePath.c_str());
+		error("material", m_filePath, "Unable to find right brace!");
 		return false;
 	}
 
 	std::string effect = betweenQuotes(removeSpaces(buffer.substr(0, brace_left - 1)));
 	if (effect == "ERROR")
 	{
-		printf("[mat] Quotes effect error! (%s)\n", m_filePath.c_str());
+		error("material", m_filePath, "Quotes effect error!");
 		return false;
 	}
 
@@ -142,7 +142,7 @@ bool Material::load(std::string filePath)
 				size_t braceRight = value.find('}');
 				if (braceRight == std::string::npos)
 				{
-					printf("[mat] Unable to find closing brace! (%s)\n", m_filePath.c_str());
+					error("material", m_filePath, "Unable to find closing brace!");
 					continue;
 				}
 
@@ -198,7 +198,7 @@ bool Material::load(std::string filePath)
 				{
 					if (values.size() > 4)
 					{
-						printf("[mat] Too many values in the attribute! (%s)\n", m_filePath.c_str());
+						error("material", m_filePath, "Too many values in the attribute!");
 						continue;
 					}
 					attrib.m_valueType = Attribute::FLOAT;
@@ -218,11 +218,11 @@ bool Material::load(std::string filePath)
 		}
 	}
 
-	for (auto& tex : m_textures)
+	for (auto &tex : m_textures)
 	{
 		if (!tex.load())
 		{
-			printf("Error in %s material!\n", m_filePath.c_str());
+			error("material", m_filePath, "Error in material!");
 		}
 	}
 

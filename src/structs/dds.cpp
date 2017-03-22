@@ -21,7 +21,7 @@ namespace dds
 		auto file = getSFS()->open(filepath, FileSystem::read | FileSystem::binary);
 		if (!file)
 		{
-			printf("Cannot dds file: \"%s\"! %s" SEOL, filepath.c_str(), strerror(errno));
+			printf("Cannot open dds file: \"%s\"! %s" SEOL, filepath.c_str(), strerror(errno));
 			return;
 		}
 		else

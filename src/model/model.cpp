@@ -139,7 +139,7 @@ bool Model::loadModel()
 	auto file = getUFS()->open(pmgPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open geometry file: \"%s\"! %s" SEOL, pmgPath.c_str(), strerror(errno));
+		error_f("model", m_filePath, "Unable to open geometry file [.pmg] (%s)!", strerror(errno));
 		return false;
 	}
 
@@ -151,30 +151,28 @@ bool Model::loadModel()
 	const auto version = *(const u32 *)(buffer.get());
 	switch (version)
 	{
-		case MAKEFOURCC(0x13, 'g', 'm', 'P'): return loadModel0x13(buffer.get());
-		case MAKEFOURCC(0x14, 'g', 'm', 'P'): return loadModel0x14(buffer.get());
+		case MAKEFOURCC(0x13, 'g', 'm', 'P'): return loadModel0x13(buffer.get(), fileSize);
+		case MAKEFOURCC(0x14, 'g', 'm', 'P'): return loadModel0x14(buffer.get(), fileSize);
 	}
 
-	printf("Invalid version of geometry file: \"%s\" (have: %i signature: %c%c%c, expected: %i or %i)" SEOL,
-		   m_filePath.c_str(), buffer.get()[0], buffer.get()[3], buffer.get()[2], buffer.get()[1],
-		   pmg_0x13::pmg_header_t::SUPPORTED_VERSION, pmg_0x14::pmg_header_t::SUPPORTED_VERSION);
+	error_f("model", m_filePath, "Invalid version of geometry file (have: %i signature: %c%c%c, expected: %i or %i)",
+			buffer.get()[0], buffer.get()[3], buffer.get()[2], buffer.get()[1],
+			pmg_0x13::pmg_header_t::SUPPORTED_VERSION, pmg_0x14::pmg_header_t::SUPPORTED_VERSION);
+
 	return false;
 }
 
-bool Model::loadModel0x13(const uint8_t *const buffer)
+bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 {
 	using namespace prism::pmg_0x13;
 
-	const auto header = (const pmg_header_t *)(buffer);
-	if (header->m_version != pmg_header_t::SUPPORTED_VERSION
-		|| !(header->m_signature[2] == 'P'
-		  && header->m_signature[1] == 'm'
-		  && header->m_signature[0] == 'g'))
+	if (size < sizeof(pmg_header_t))
 	{
-		printf("Invalid version of geometry file: \"%s\" (have: %i signature: %c%c%c, expected: %i)" SEOL, m_filePath.c_str(),
-			   header->m_version, header->m_signature[2], header->m_signature[1], header->m_signature[0], pmg_header_t::SUPPORTED_VERSION);
+		error("model", m_filePath, "Geometry file is malformed!");
 		return false;
 	}
+
+	const auto header = (const pmg_header_t *)(buffer);
 
 	m_pieces.resize(header->m_piece_count);
 	m_bones.resize(header->m_bone_count);
@@ -184,7 +182,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 	auto bone = (const pmg_bone_t *)(buffer + header->m_bone_offset);
 	for (int32_t i = 0; i < header->m_bone_count; ++i, ++bone)
 	{
-		Bone *currentBone = &m_bones[i];
+		Bone *const currentBone = &m_bones[i];
 		currentBone->m_index = i;
 		currentBone->m_name = token_to_string(bone->m_name);
 		currentBone->m_transReversed = bone->m_transformation_reversed;
@@ -194,13 +192,33 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = bone->m_parent;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : -1;
+
+		if (currentBone->m_name.empty())
+		{
+			currentBone->m_name = "noname";
+		}
+
+		std::string name = currentBone->m_name;
+		for (int j = 0;
+			 std::find_if(
+				m_bones.begin(),
+				m_bones.begin() + i,
+				[&](const Bone &bone) -> bool
+				{
+					return bone.m_name == currentBone->m_name;
+				}) != (m_bones.begin() + i);
+			 ++j)
+		{
+			const auto id = std::to_string(j);
+			currentBone->m_name = name.substr(0, 12 - id.length()) + id;
+		}
 	}
 
 	auto part = (const pmg_part_t *)(buffer + header->m_part_offset);
 	for (int32_t i = 0; i < header->m_part_count; ++i, ++part)
 	{
-		Part *currentPart = &m_parts[i];
+		Part *const currentPart = &m_parts[i];
 		currentPart->m_name = token_to_string(part->m_name);
 		currentPart->m_locatorCount = part->m_locator_count;
 		currentPart->m_locatorId = part->m_locators_idx;
@@ -211,7 +229,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 	auto locator = (const pmg_locator_t *)(buffer + header->m_locator_offset);
 	for (int32_t i = 0; i < header->m_locator_count; ++i, ++locator)
 	{
-		Locator *currentLocator = &m_locators[i];
+		Locator *const currentLocator = &m_locators[i];
 		currentLocator->m_index = i;
 		currentLocator->m_position = locator->m_position;
 		currentLocator->m_rotation = locator->m_rotation;
@@ -231,7 +249,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 	auto piece = (const pmg_piece_t *)(buffer + header->m_piece_offset);
 	for (int32_t i = 0; i < header->m_piece_count; ++i, ++piece)
 	{
-		Piece *currentPiece = &m_pieces[i];
+		Piece *const currentPiece = &m_pieces[i];
 		currentPiece->m_index = i;
 		currentPiece->m_texcoordMask = piece->m_uv_mask;
 		currentPiece->m_texcoordCount = piece->m_uv_channels;
@@ -240,9 +258,10 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 
 		if (piece->m_bone_count > Vertex::BONE_COUNT)
 		{
-			printf("Bone count in \'%s\' piece: %i exceeds maximum bone count (%i/%i)! "
-				   "To fix it increase Vertex::BONE_COUNT constant, and recompile software." SEOL,
-				   m_filePath.c_str(), i, piece->m_bone_count, Vertex::BONE_COUNT);
+			error_f("model", m_filePath,
+					"Bone count in piece: %i exceeds maximum bone count (%i/%i)! "
+					"To fix it increase Vertex::BONE_COUNT constant, and recompile software.",
+					i, piece->m_bone_count, Vertex::BONE_COUNT);
 		}
 
 		currentPiece->m_vertices.resize(piece->m_verts);
@@ -369,20 +388,17 @@ bool Model::loadModel0x13(const uint8_t *const buffer)
 	return true;
 }
 
-bool Model::loadModel0x14(const uint8_t *const buffer)
+bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 {
 	using namespace prism::pmg_0x14;
 
-	const auto header = (const pmg_header_t *)(buffer);
-	if (header->m_version != pmg_header_t::SUPPORTED_VERSION
-		|| !(header->m_signature[2] == 'P'
-		  && header->m_signature[1] == 'm'
-		  && header->m_signature[0] == 'g'))
+	if (size < sizeof(pmg_header_t))
 	{
-		printf("Invalid version of geometry file: \"%s\" (have: %i signature: %c%c%c, expected: %i)" SEOL, m_filePath.c_str(),
-			   header->m_version, header->m_signature[2], header->m_signature[1], header->m_signature[0], pmg_header_t::SUPPORTED_VERSION);
+		error("model", m_filePath, "Geometry file is malformed!");
 		return false;
 	}
+
+	const auto header = (const pmg_header_t *)(buffer);
 
 	m_pieces.resize(header->m_piece_count);
 	m_bones.resize(header->m_bone_count);
@@ -392,7 +408,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer)
 	auto bone = (const pmg_bone_data_t *)(buffer + header->m_skeleton_offset);
 	for (int32_t i = 0; i < header->m_bone_count; ++i, ++bone)
 	{
-		Bone *currentBone = &m_bones[i];
+		Bone *const currentBone = &m_bones[i];
 		currentBone->m_index = i;
 		currentBone->m_name = token_to_string(bone->m_name);
 		currentBone->m_transReversed = bone->m_transformation_reversed;
@@ -402,13 +418,33 @@ bool Model::loadModel0x14(const uint8_t *const buffer)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = bone->m_parent;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : -1;
+
+		if (currentBone->m_name.empty())
+		{
+			currentBone->m_name = "noname";
+		}
+
+		std::string name = currentBone->m_name;
+		for (int j = 0;
+			 std::find_if(
+				m_bones.begin(),
+				m_bones.begin() + i,
+				[&](const Bone &bone) -> bool
+				{
+					return bone.m_name == currentBone->m_name;
+				}) != (m_bones.begin() + i);
+			 ++j)
+		{
+			const auto id = std::to_string(j);
+			currentBone->m_name = name.substr(0, 12 - id.length()) + id;
+		}
 	}
 
 	auto part = (const pmg_part_t *)(buffer + header->m_parts_offset);
 	for (int32_t i = 0; i < header->m_part_count; ++i, ++part)
 	{
-		Part *currentPart = &m_parts[i];
+		Part *const currentPart = &m_parts[i];
 		currentPart->m_name = token_to_string(part->m_name);
 		currentPart->m_locatorCount = part->m_locator_count;
 		currentPart->m_locatorId = part->m_locators_idx;
@@ -419,7 +455,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer)
 	auto locator = (const pmg_locator_t *)(buffer + header->m_locators_offset);
 	for (int32_t i = 0; i < header->m_locator_count; ++i, ++locator)
 	{
-		Locator *currentLocator = &m_locators[i];
+		Locator *const currentLocator = &m_locators[i];
 		currentLocator->m_index = i;
 		currentLocator->m_position = locator->m_position;
 		currentLocator->m_rotation = locator->m_rotation;
@@ -439,7 +475,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer)
 	auto piece = (const pmg_piece_t *)(buffer + header->m_pieces_offset);
 	for (int32_t i = 0; i < header->m_piece_count; ++i, ++piece)
 	{
-		Piece *currentPiece = &m_pieces[i];
+		Piece *const currentPiece = &m_pieces[i];
 		currentPiece->m_index = i;
 		currentPiece->m_texcoordMask = piece->m_texcoord_mask;
 		currentPiece->m_texcoordCount = piece->m_texcoord_width;
@@ -576,7 +612,7 @@ bool Model::loadDescriptor()
 	auto file = getUFS()->open(pmdPath, FileSystem::read | FileSystem::binary);
 	if(!file)
 	{
-		printf("Cannot open descriptor file! \"%s\" errno = %X" SEOL, pmdPath.c_str(), errno);
+		error_f("model", m_filePath, "Unable to open descriptor file [.pmd] (%s)!", strerror(errno));
 		return false;
 	}
 
@@ -585,10 +621,16 @@ bool Model::loadDescriptor()
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
 
-	pmd_header_t *header = (pmd_header_t *)(buffer.get());
+	if (fileSize < sizeof(pmd_header_t))
+	{
+		error("model", m_filePath, "Desciptor file is malformed!");
+		return false;
+	}
+
+	const auto header = (pmd_header_t *)(buffer.get());
 	if (header->m_version != pmd_header_t::SUPPORTED_VERSION)
 	{
-		printf("Invalid version of descriptor file! (have: %i, expected: %i)" SEOL, header->m_version, pmd_header_t::SUPPORTED_VERSION);
+		error_f("model", m_filePath, "Invalid version of descriptor file! (have: %i, expected: %i)", header->m_version, pmd_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
@@ -660,7 +702,7 @@ bool Model::loadDescriptor()
 						attrib.m_intValue = attribValue->m_int_value;
 					} break;
 					// TODO: More attributes
-					default: printf("Invalid attribute type <%i>!", attribDef->m_type);
+					default: error_f("model", m_filePath, "Invalid attribute type in descriptor (%i)!", attribDef->m_type);
 				}
 				(*variant)[j].m_attributes.push_back(attrib);
 			}
@@ -685,7 +727,7 @@ bool Model::saveToPim(std::string exportPath) const
 	auto file = getSFS()->open(pimFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s" SEOL, pimFilePath.c_str(), strerror(errno));
+		error_f("model", m_filePath, "Unable to save model file [%s] (%s)!", pimFilePath, strerror(errno));
 		return false;
 	}
 
@@ -1046,7 +1088,7 @@ bool Model::saveToPit(std::string exportPath) const
 	auto file = getSFS()->open(pitFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file! \"%s\" errno = %X" SEOL, pitFilePath.c_str(), errno);
+		error_f("model", m_filePath, "Unable to save trait file [%s] (%s)!", pitFilePath, strerror(errno));
 		return false;
 	}
 
@@ -1132,7 +1174,7 @@ bool Model::saveToPis(std::string exportPath) const
 	auto file = getSFS()->open(pitFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file! \"%s\" errno = %X" SEOL, pitFilePath.c_str(), errno);
+		error_f("model", m_filePath, "Unable to save skeleton file [%s] (%s)!", pitFilePath, strerror(errno));
 		return false;
 	}
 
@@ -1202,8 +1244,9 @@ void Model::saveToMidFormat(std::string exportPath, bool convertTexture) const
 	if (convertTexture) { convertTextures(exportPath); }
 
 	auto state = [](bool x) -> const char * { return x ? "yes" : "no"; };
-	printf("%s: pim:%s pit:%s pis:%s pic:%s pip:%s. vertices: %i materials: %i" SEOL, 
-		   m_fileName.c_str(), state(pim), state(pit), state(pis), state(pic), state(pip), m_vertCount, m_materialCount);
+
+	info_f("model", m_fileName, "pim:%s pit:%s pis:%s pic:%s pip:%s vertices:%i indices:%i materials:%i",
+		   state(pim), state(pit), state(pis), state(pic), state(pip), m_vertCount, m_triangleCount, m_materialCount);
 }
 
 Bone *Model::bone(size_t index)

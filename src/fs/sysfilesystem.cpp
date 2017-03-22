@@ -176,4 +176,9 @@ std::unique_ptr<std::list<std::string>> SysFileSystem::readDir(const std::string
 #endif
 }
 
+std::string SysFileSystem::getError() const
+{
+	return strerror(errno);
+}
+
 /* eof */

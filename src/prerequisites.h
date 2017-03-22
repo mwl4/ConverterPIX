@@ -60,6 +60,8 @@
 #include <fmt/printf.h>
 #include <fmt/posix.h>
 
+#include <callbacks.h>
+
 #define TAB		"     "
 #define SEOL	"\n"
 #define FLT_FT	"&%08x"

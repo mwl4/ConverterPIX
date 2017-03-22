@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="callbacks.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="fs\file.h" />
     <ClInclude Include="fs\filesystem.h" />
@@ -61,6 +62,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="callbacks.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="fs\file.cpp" />
     <ClCompile Include="fs\filesystem.cpp" />

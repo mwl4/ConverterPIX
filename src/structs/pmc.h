@@ -34,7 +34,7 @@ namespace prism
 		u32 m_piece_offset;				// +32
 		u32 m_variant_def_offset;		// +36
 
-		static const u8 SUPPORTED_VERSION = 0x6;
+		static const u32 SUPPORTED_VERSION = 0x6;
 	};	ENSURE_SIZE(pmc_header_t, 40);
 
 	struct pmc_variant_t // sizeof(8)

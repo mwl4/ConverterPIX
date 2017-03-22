@@ -19,7 +19,7 @@ class Bone
 	friend Model;
 	friend Animation;
 private:
-	int32_t m_index;
+	int32_t m_index = 0;
 	std::string m_name;
 	Float4x4 m_transformation;
 	Float4x4 m_transReversed;
@@ -27,8 +27,8 @@ private:
 	Quaternion m_rotation;
 	Float3 m_translation;
 	Float3 m_scale;
-	float m_signOfDeterminantOfMatrix;
-	int32_t m_parent;
+	float m_signOfDeterminantOfMatrix = 1.f;
+	int32_t m_parent = -1;
 };
 
 /* eof */

@@ -25,6 +25,8 @@ public:
 	virtual bool exists(const std::string &filename) override;
 	virtual bool dirExists(const std::string &dirpath) override;
 	virtual std::unique_ptr<std::list<std::string>> readDir(const std::string &path, bool absolutePaths, bool recursive) override;
+
+	std::string getError() const;
 };
 
 /* eof */

@@ -36,7 +36,7 @@ FileSystem *ufsMount(const std::string &root, scs_bool readOnly, int priority)
 	if (root.substr(root.length() - 4) == ".zip")
 	{
 		/* TODO: Create zip file system */
-		printf("Zip filesystem is not supported yet!");
+		error("system", root, "Zip filesystem is not supported yet!");
 		return nullptr;
 	}
 	else if (root.substr(root.length() - 1) == "/")
@@ -44,7 +44,7 @@ FileSystem *ufsMount(const std::string &root, scs_bool readOnly, int priority)
 		auto fs = std::make_unique<SysFileSystem>(root.substr(0, root.length() - 1));
 		return getUFS()->mount(std::move(fs), priority);
 	}
-	printf("Unknown filesystem type!\n");
+	error("system", root, "nknown filesystem type!");
 	return nullptr;
 }
 

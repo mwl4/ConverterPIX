@@ -20,9 +20,9 @@ using namespace prism;
 
 bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 {
-	if (!model->loaded())
+	if (!model || !model->loaded())
 	{
-		printf("[anim] Model is not loaded!");
+		error_f("animation", filePath, "Model (%s) is not loaded!", model->filePath());
 		return false;
 	}
 
@@ -40,7 +40,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 	auto file = getUFS()->open(pmaFilepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("[anim] Cannot open animation file: \"%s\"! %s\n", pmaFilepath.c_str(), strerror(errno));
+		error("animation", m_filePath, "Cannot open animation file!");
 		return false;
 	}
 
@@ -52,7 +52,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 	pma_header_t *header = (pma_header_t *)(buffer.get());
 	if (header->m_version != pma_header_t::SUPPORTED_VERSION)
 	{
-		printf("[anim] Invalid version of animation file! (have: %i, expected: %i\n", header->m_version, pma_header_t::SUPPORTED_VERSION);
+		error_f("animation", m_filePath, "Invalid version of the file! (have: %i, expected: %i)", header->m_version, pma_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
@@ -97,7 +97,7 @@ void Animation::saveToPia(std::string exportPath) const
 	auto file = getSFS()->open(piafile, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s\n", piafile.c_str(), strerror(errno));
+		error_f("animation", piafile, "Unable to save file (%s)", getSFS()->getError());
 		return;
 	}
 
@@ -175,7 +175,7 @@ void Animation::saveToPia(std::string exportPath) const
 	{
 		if (m_bones[i] >= m_model->boneCount())
 		{
-			printf("[anim] %s: Bone index outside bones array! [%i/%i]\n", filename.c_str(), (int)m_bones[i], m_model->boneCount());
+			error_f("animation", m_filePath, "Bone index outside bones array! [%i/%i]", (int)m_bones[i], m_model->boneCount());
 			return;
 		}
 

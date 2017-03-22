@@ -21,7 +21,7 @@ bool TextureObject::load(std::string filepath)
 	auto file = getUFS()->open(m_filepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open tobj file: \"%s\"! %s\n", m_filepath.c_str(), strerror(errno));
+		error("tobj", m_filepath, "Cannot open texture object file");
 		return false;
 	}
 
@@ -29,7 +29,7 @@ bool TextureObject::load(std::string filepath)
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	if (!file->blockRead((char *)buffer.get(), 0, fileSize))
 	{
-		printf("Unable to read in tobj file \"%s\"!", m_filepath.c_str());
+		error("tobj", m_filepath, "Unable to read texture object file");
 		return false;
 	}
 	file.reset();
@@ -37,8 +37,7 @@ bool TextureObject::load(std::string filepath)
 	prism::tobj_header_t *header = (prism::tobj_header_t *)(buffer.get());
 	if (header->m_version != prism::tobj_header_t::SUPPORTED_MAGIC)
 	{
-		printf("Invalid version of tobj file! \"%s\" (have: %i, expected: %i\n",
-			   m_filepath.c_str(), header->m_version, prism::tobj_header_t::SUPPORTED_MAGIC);
+		error_f("tobj", m_filepath, "Invalid version of tobj file! (have: %i, expected: %i)", header->m_version, prism::tobj_header_t::SUPPORTED_MAGIC);
 		return false;
 	}
 
@@ -65,12 +64,7 @@ bool TextureObject::load(std::string filepath)
 	for (uint32_t i = 0, currentTextureOffset = sizeof(prism::tobj_header_t); i < m_texturesCount; ++i)
 	{
 		prism::tobj_texture_t *const texture = (prism::tobj_texture_t *)(buffer.get() + currentTextureOffset);
-
-		char *texture_str = new char[texture->m_length + 1];
-		memcpy(texture_str, (uint8_t *)texture + sizeof(prism::tobj_texture_t), texture->m_length);
-		texture_str[texture->m_length] = '\0';
-		m_textures[i] = texture_str;
-		delete[] texture_str;
+		m_textures[i] = std::string((char *)((uint8_t *)texture + sizeof(prism::tobj_texture_t)), texture->m_length);
 
 		currentTextureOffset += sizeof(prism::tobj_texture_t) + texture->m_length;
 	}
@@ -104,6 +98,7 @@ bool TextureObject::loadDDS(std::string filepath)
 		const uint32_t magic = *(uint32_t *)(buffer.get());
 		if (magic != dds::MAGIC)
 		{
+			//error_f("tobj", m_filepath, )
 			printf("Invalid dds magic (%s): %i expected: %i\n", filepath.c_str(), magic, dds::MAGIC);
 			return false;
 		}
@@ -159,8 +154,7 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 			case TextureObject::MIRROR:				return "mirror";
 			case TextureObject::MIRROR_CLAMP:		return "mirror_clamp";
 			case TextureObject::MIRROR_CLAMP_TO_EDGE:	return "mirror_clamp_to_edge";
-			default:
-			printf("Unknown addr type of tobj file: \"%s\"!\n", m_filepath.c_str());
+			default: printf("Unknown addr type of tobj file: \"%s\"!\n", m_filepath.c_str());
 		}
 		return "UNKNOWN";
 	};

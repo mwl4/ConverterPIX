@@ -23,7 +23,7 @@ bool Collision::load(Model *const model, std::string filePath)
 	auto file = getUFS()->open(pmcPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open collision file: \"%s\"! %s" SEOL, pmcPath.c_str(), strerror(errno));
+		error("collision", m_filePath, "Unable to open collision file!");
 		return false;
 	}
 
@@ -35,7 +35,7 @@ bool Collision::load(Model *const model, std::string filePath)
 	const auto header = reinterpret_cast<prism::pmc_header_t *>(buffer.get());
 	if (header->m_version != prism::pmc_header_t::SUPPORTED_VERSION)
 	{
-		printf("Invalid version of collision file: \"%s\"! (have: %i expected: %i)" SEOL, m_filePath.c_str(), header->m_version, prism::pmc_header_t::SUPPORTED_VERSION);
+		error_f("collision", m_filePath, "Invalid version of collision file! (have: %i expected: %i)", header->m_version, prism::pmc_header_t::SUPPORTED_VERSION);
 		return false;
 	}
 
@@ -127,7 +127,7 @@ bool Collision::load(Model *const model, std::string filePath)
 					locator = std::move(loc);
 				} break;
 				default: {
-					printf("Not known locator type (\"%s\")! size = %i name = %s\n", m_filePath.c_str(), locatorf->m_data_size, locatorf->m_name.to_string().c_str());
+					error_f("collision", m_filePath, "Not known locator type! size = %i name = %s", locatorf->m_data_size, locatorf->m_name.to_string());
 					return false;
 				}
 			}
@@ -165,7 +165,8 @@ void Collision::assignLocatorsToParts()
 	for (auto &loc : m_locators)
 	{
 		std::vector<const Variant *> belongsToVariants;
-		std::for_each(m_variants.begin(), m_variants.end(), [&belongsToVariants, &loc](const Variant &v) {
+		std::for_each(m_variants.begin(), m_variants.end(),
+			[&belongsToVariants, &loc](const Variant &v) {
 			if (std::find(v.m_locators.begin(), v.m_locators.end(), loc) != v.m_locators.end())
 			{
 				belongsToVariants.push_back(&v);
@@ -176,7 +177,8 @@ void Collision::assignLocatorsToParts()
 		{
 			const auto &part = m_model->getParts()[i];
 			std::vector<const Variant *> partBelongsToVariants;
-			std::for_each(m_variants.begin(), m_variants.end(), [&partBelongsToVariants, &part, i](const Variant &v) {
+			std::for_each(m_variants.begin(), m_variants.end(),
+				[&partBelongsToVariants, &part, i](const Variant &v) {
 				if ((*v.m_modelVariant)[i]["visible"].getInt() == 1)
 				{
 					partBelongsToVariants.push_back(&v);
@@ -191,7 +193,7 @@ void Collision::assignLocatorsToParts()
 
 		if (!loc->m_owner)
 		{
-			printf("[coll] Could not find part for locator: %s(%s)\n", loc->m_name.c_str(), loc->type().c_str());
+			error_f("collision", m_filePath, "ould not find part for locator: %s(%s)", loc->m_name, loc->type());
 		}
 	}
 }
@@ -202,7 +204,7 @@ bool Collision::saveToPic(std::string exportPath) const
 	auto file = getSFS()->open(picFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s" SEOL, picFilePath.c_str(), strerror(errno));
+		error_f("collision", picFilePath, "Unable to save file! (%s)", getSFS()->getError());
 		return false;
 	}
 
