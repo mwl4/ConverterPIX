@@ -8,9 +8,6 @@
  *********************************************************************/
 
 #pragma once
-
-#include <prerequisites.h>
-
 #pragma pack(push, 1)
 
 namespace prism

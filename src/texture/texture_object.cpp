@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "texture_object.h"
 
 #include <fs/file.h>
@@ -15,7 +17,7 @@
 #include <structs/tobj.h>
 #include <structs/dds.h>
 
-bool TextureObject::load(std::string filepath)
+bool TextureObject::load(String filepath)
 {
 	m_filepath = filepath;
 	auto file = getUFS()->open(m_filepath, FileSystem::read | FileSystem::binary);
@@ -26,7 +28,7 @@ bool TextureObject::load(std::string filepath)
 	}
 
 	const size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	if (!file->blockRead((char *)buffer.get(), 0, fileSize))
 	{
 		error("tobj", m_filepath, "Unable to read texture object file");
@@ -64,7 +66,7 @@ bool TextureObject::load(std::string filepath)
 	for (uint32_t i = 0, currentTextureOffset = sizeof(prism::tobj_header_t); i < m_texturesCount; ++i)
 	{
 		prism::tobj_texture_t *const texture = (prism::tobj_texture_t *)(buffer.get() + currentTextureOffset);
-		m_textures[i] = std::string((char *)((uint8_t *)texture + sizeof(prism::tobj_texture_t)), texture->m_length);
+		m_textures[i] = String((char *)((uint8_t *)texture + sizeof(prism::tobj_texture_t)), texture->m_length);
 
 		currentTextureOffset += sizeof(prism::tobj_texture_t) + texture->m_length;
 	}
@@ -78,7 +80,7 @@ bool TextureObject::load(std::string filepath)
 	return true;
 }
 
-bool TextureObject::loadDDS(std::string filepath)
+bool TextureObject::loadDDS(String filepath)
 {
 	using namespace dds;
 
@@ -91,7 +93,7 @@ bool TextureObject::loadDDS(std::string filepath)
 	else
 	{
 		const size_t fileSize = file->getSize();
-		std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+		UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 		file->read((char *)buffer.get(), sizeof(char), fileSize);
 		file.reset();
 
@@ -116,7 +118,7 @@ bool TextureObject::loadDDS(std::string filepath)
 	}
 }
 
-bool TextureObject::saveToMidFormats(std::string exportpath)
+bool TextureObject::saveToMidFormats(String exportpath)
 {
 	if (m_converted)
 		return true;
@@ -133,7 +135,7 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 		printf("Unsupported tobj type: \"%s\"!\n", m_filepath.c_str());
 	}
 
-	auto mapType = [](TextureObject::Type type) -> std::string {
+	auto mapType = [](TextureObject::Type type) -> String {
 		switch (type)
 		{
 			case TextureObject::_1D_MAP:	return "1d";
@@ -144,7 +146,7 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 		return "UNKNOWN";
 	};
 
-	auto addrAttribute = [&](TextureObject::Addr addr) -> std::string {
+	auto addrAttribute = [&](TextureObject::Addr addr) -> String {
 		switch (addr)
 		{
 			case TextureObject::REPEAT:				return "repeat";
@@ -158,7 +160,7 @@ bool TextureObject::saveToMidFormats(std::string exportpath)
 		}
 		return "UNKNOWN";
 	};
-	auto filterAttribute = [&](TextureObject::Filter f) -> std::string {
+	auto filterAttribute = [&](TextureObject::Filter f) -> String {
 		switch (f)
 		{
 			case TextureObject::NEAREST:	return "nearest";

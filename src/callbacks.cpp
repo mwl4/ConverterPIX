@@ -9,20 +9,22 @@
 
 #include <prerequisites.h>
 
-void(*info)(const std::string &level, const std::string &file, const std::string &msg)
-	= [](const std::string &level, const std::string &file, const std::string &msg) -> void
+#include "callbacks.h"
+
+void(*info)(const String &level, const String &file, const String &msg)
+	= [](const String &level, const String &file, const String &msg) -> void
 	{
 		printf("[%s] %s: %s\n", level.c_str(), file.c_str(), msg.c_str());
 	};
 
-void(*error)(const std::string &level, const std::string &file, const std::string &msg)
-	= [](const std::string &level, const std::string &file, const std::string &msg) -> void
+void(*error)(const String &level, const String &file, const String &msg)
+	= [](const String &level, const String &file, const String &msg) -> void
 	{
 		printf("<error> [%s] %s: %s\n", level.c_str(), file.c_str(), msg.c_str());
 	};
 
-void(*warning)(const std::string &level, const std::string &file, const std::string &msg)
-	= [](const std::string &level, const std::string &file, const std::string &msg) -> void
+void(*warning)(const String &level, const String &file, const String &msg)
+	= [](const String &level, const String &file, const String &msg) -> void
 	{
 		printf("<warning> [%s] %s: %s\n", level.c_str(), file.c_str(), msg.c_str());
 	};

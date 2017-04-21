@@ -7,11 +7,13 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "piece.h"
 
-std::vector<uint32_t> Piece::texCoords(uint32_t uvChannel) const
+Array<uint32_t> Piece::texCoords(uint32_t uvChannel) const
 {
-	std::vector<uint32_t> result;
+	Array<uint32_t> result;
 	for (uint32_t i = 0; i < 8; ++i)
 	{
 		if (((m_texcoordMask >> (i * 4)) & 0xF) == uvChannel)

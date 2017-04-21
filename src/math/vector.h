@@ -8,9 +8,6 @@
  *********************************************************************/
 
 #pragma once
-
-#include <prerequisites.h>
-
 #pragma pack(push, 1)
 
 namespace prism
@@ -88,23 +85,23 @@ namespace prism
 	}
 
 	template < size_t N >
-	static std::string to_string(const prism::vec_t<float, N> &vec)
+	static String to_string(const prism::vec_t<float, N> &vec)
 	{
-		std::string result;
+		String result;
 		for (int i = 0; i < N; ++i)
 		{
-			result += std::string(i == 0 ? "" : "  ") + fmt::sprintf(FLT_FT, flh(vec[i]));
+			result += String(i == 0 ? "" : "  ") + fmt::sprintf(FLT_FT, flh(vec[i]));
 		}
 		return result;
 	}
 
 	template < size_t N >
-	static std::string to_string(const int (&vec)[N])
+	static String to_string(const int (&vec)[N])
 	{
-		std::string result;
+		String result;
 		for (int i = 0; i < N; ++i)
 		{
-			result += std::string(i == 0 ? "" : " ") + fmt::sprintf("%i", vec[i]).c_str();
+			result += String(i == 0 ? "" : " ") + fmt::sprintf("%i", vec[i]).c_str();
 		}
 		return result;
 	}

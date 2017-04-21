@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 #include <math/quaternion.h>
 
@@ -17,11 +16,11 @@ class Sign
 {
 	friend Prefab;
 private:
-	std::string m_name;
+	String m_name;
 	Float3 m_position;
 	Quaternion m_rotation;
-	std::string m_model;
-	std::string m_part;
+	String m_model;
+	String m_part;
 };
 
 /* eof */

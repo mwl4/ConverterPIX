@@ -9,9 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
-#include <math/vector.h>
-
 #include "node.h"
 #include "curve.h"
 #include "sign.h"
@@ -21,6 +18,8 @@
 #include "terrain_point_variant.h"
 #include "trigger_point.h"
 #include "intersection.h"
+
+#include <math/vector.h>
 
 class TerrainPoint
 {
@@ -33,27 +32,27 @@ private:
 class Prefab
 {
 private:
-	std::vector<Node> m_nodes;
-	std::vector<Curve> m_curves;
-	std::vector<Sign> m_signs;
-	std::vector<Semaphore> m_semaphores;
-	std::vector<SpawnPoint> m_spawnPoints;
-	std::vector<TerrainPoint> m_terrainPoints;
-	std::vector<MapPoint> m_mapPoints;
-	std::vector<TerrainPointVariant> m_terrainPointVariants;
-	std::vector<TriggerPoint> m_triggerPoints;
-	std::vector<Intersection> m_intersections;
+	Array<Node> m_nodes;
+	Array<Curve> m_curves;
+	Array<Sign> m_signs;
+	Array<Semaphore> m_semaphores;
+	Array<SpawnPoint> m_spawnPoints;
+	Array<TerrainPoint> m_terrainPoints;
+	Array<MapPoint> m_mapPoints;
+	Array<TerrainPointVariant> m_terrainPointVariants;
+	Array<TriggerPoint> m_triggerPoints;
+	Array<Intersection> m_intersections;
 
 	bool m_loaded = false;
 
-	std::string m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
-	std::string m_fileName;		// @example anim
-	std::string m_directory;	// @example /vehicle/truck/man_tgx/interior
+	String m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
+	String m_fileName;		// @example anim
+	String m_directory;	// @example /vehicle/truck/man_tgx/interior
 public:
-	bool load(std::string filePath);
+	bool load(String filePath);
 	void destroy();
 
-	bool saveToPip(std::string exportPath) const;
+	bool saveToPip(String exportPath) const;
 };
 
 /* eof */

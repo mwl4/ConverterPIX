@@ -14,18 +14,18 @@
 class ZipFileSystem : public FileSystem
 {
 private:
-	std::string m_rootFilename;
-	std::unique_ptr<File> m_root;
+	String m_rootFilename;
+	UniquePtr<File> m_root;
 public:
-	ZipFileSystem(const std::string &root);
+	ZipFileSystem(const String &root);
 	virtual ~ZipFileSystem();
 
-	virtual std::unique_ptr<File> open(const std::string &filename, FsOpenMode mode) override;
-	virtual bool mkdir(const std::string &directory) override;
-	virtual bool rmdir(const std::string &directory) override;
-	virtual bool exists(const std::string &filename) override;
-	virtual bool dirExists(const std::string &dirpath) override;
-	virtual std::unique_ptr<std::list<std::string>> readDir(const std::string &path, bool absolutePaths, bool recursive) override;
+	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) override;
+	virtual bool mkdir(const String &directory) override;
+	virtual bool rmdir(const String &directory) override;
+	virtual bool exists(const String &filename) override;
+	virtual bool dirExists(const String &dirpath) override;
+	virtual UniquePtr<List<String>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
 	void readZip();
 };

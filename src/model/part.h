@@ -9,13 +9,10 @@
 
 #pragma once
 
-#include <prerequisites.h>
-#include <math/vector.h>
-
 class Part
 {
 public:
-	std::string m_name;
+	String m_name;
 	uint32_t m_locatorCount = 0;
 	uint32_t m_locatorId = 0; // start index
 	uint32_t m_pieceCount = 0;

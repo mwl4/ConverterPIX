@@ -27,7 +27,7 @@ public:
 	virtual size_t read(void *buffer, size_t elementSize, size_t elementCount) override;
 
 	virtual size_t getSize() const override;
-	virtual const char *getLine(std::string &out) override;
+	virtual const char *getLine(String &out) override;
 
 	virtual int seek(uint32_t offset, Attrib attr) override;
 	virtual void rewind() override;

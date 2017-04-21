@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 
 struct Vertex
@@ -51,10 +50,10 @@ private:
 	bool m_color = false;
 	bool m_color2 = false;
 
-	std::vector<Vertex> m_vertices;
-	std::vector<Triangle> m_triangles;
+	Array<Vertex> m_vertices;
+	Array<Triangle> m_triangles;
 public:
-	std::vector<uint32_t> texCoords(uint32_t uvChannel) const;
+	Array<uint32_t> texCoords(uint32_t uvChannel) const;
 };
 
 /* eof */

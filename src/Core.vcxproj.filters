@@ -36,6 +36,9 @@
     <Filter Include="Source Files\fmt">
       <UniqueIdentifier>{ef913f95-7919-4f96-974a-d1c78b02804c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\pix">
+      <UniqueIdentifier>{8b4bac82-5d09-4403-b828-3f5d0b7d71ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="version.h">
@@ -185,6 +188,9 @@
     <ClInclude Include="callbacks.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="pix\pix.h">
+      <Filter>Source Files\pix</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libs\fmt\fmt\format.cc">
@@ -255,6 +261,9 @@
     </ClCompile>
     <ClCompile Include="callbacks.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pix\pix.cpp">
+      <Filter>Source Files\pix</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

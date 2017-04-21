@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "model.h"
 
 #include <fs/file.h>
@@ -25,7 +27,7 @@
 
 using namespace prism;
 
-auto Variant::Part::operator[](std::string attribute) const -> const Attribute &
+auto Variant::Part::operator[](String attribute) const -> const Attribute &
 {
 	const auto it = std::find_if(m_attributes.cbegin(), m_attributes.cend(),
 	[&](const Attribute &attr) {
@@ -35,7 +37,7 @@ auto Variant::Part::operator[](std::string attribute) const -> const Attribute &
 	return (*it);
 }
 
-auto Variant::Part::operator[](std::string attribute) -> Attribute &
+auto Variant::Part::operator[](String attribute) -> Attribute &
 {
 	auto it = std::find_if(m_attributes.begin(), m_attributes.end(),
 	[&](const Attribute &attr) {
@@ -74,9 +76,9 @@ auto Variant::operator[](size_t id) -> Part &
 	return m_parts[id];
 }
 
-std::string Variant::Attribute::toDefinition(const std::string &prefix) const
+String Variant::Attribute::toDefinition(const String &prefix) const
 {
-	std::string result;
+	String result;
 	result += prefix + "Attribute {" SEOL;
 	{
 		result += prefix + fmt::sprintf(TAB "Format: %s" SEOL, m_type == INT ? "INT" : "UNKNOWN");
@@ -106,7 +108,7 @@ void Model::destroy()
 	m_fileName = "";
 }
 
-bool Model::load(std::string filePath)
+bool Model::load(String filePath)
 {
 	if (m_loaded)
 		destroy();
@@ -135,7 +137,7 @@ bool Model::load(std::string filePath)
 
 bool Model::loadModel()
 {
-	std::string pmgPath = m_filePath + ".pmg";
+	String pmgPath = m_filePath + ".pmg";
 	auto file = getUFS()->open(pmgPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
@@ -144,7 +146,7 @@ bool Model::loadModel()
 	}
 
 	const size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(char), fileSize);
 	file.reset();
 
@@ -199,7 +201,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 			currentBone->m_name = "noname";
 		}
 
-		std::string name = currentBone->m_name;
+		String name = currentBone->m_name;
 		for (int j = 0;
 			 std::find_if(
 				m_bones.begin(),
@@ -237,7 +239,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 		currentLocator->m_name = token_to_string(locator->m_name);
 
 		if (locator->m_name_block_offset != -1) {
-			currentLocator->m_hookup = std::string(
+			currentLocator->m_hookup = String(
 				(const char *)(buffer + header->m_locator_name_offset + locator->m_name_block_offset)
 			).substr(0, header->m_locators_name_size - locator->m_name_block_offset);
 		}
@@ -425,7 +427,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 			currentBone->m_name = "noname";
 		}
 
-		std::string name = currentBone->m_name;
+		String name = currentBone->m_name;
 		for (int j = 0;
 			 std::find_if(
 				m_bones.begin(),
@@ -463,7 +465,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 		currentLocator->m_name = token_to_string(locator->m_name);
 
 		if (locator->m_hookup_offset != -1) {
-			currentLocator->m_hookup = std::string(
+			currentLocator->m_hookup = String(
 				(const char *)(buffer + header->m_string_pool_offset + locator->m_hookup_offset)
 			).substr(0, header->m_string_pool_size - locator->m_hookup_offset);
 		}
@@ -607,7 +609,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 
 bool Model::loadDescriptor()
 {
-	const std::string pmdPath = m_filePath + ".pmd";
+	const String pmdPath = m_filePath + ".pmd";
 	
 	auto file = getUFS()->open(pmdPath, FileSystem::read | FileSystem::binary);
 	if(!file)
@@ -617,7 +619,7 @@ bool Model::loadDescriptor()
 	}
 
 	size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
 
@@ -654,10 +656,10 @@ bool Model::loadDescriptor()
 			{
 				if (currentLook->m_materials[j].m_textures.size() > 0)
 				{
-					std::string textureName = std::string(currentLook->m_materials[j].m_textures[0].texture().c_str());
+					String textureName = String(currentLook->m_materials[j].m_textures[0].texture().c_str());
 					textureName = textureName.substr(0, textureName.size() - 5);
 					size_t lastSlash = textureName.rfind('/');
-					if (lastSlash != std::string::npos)
+					if (lastSlash != String::npos)
 					{
 						textureName = textureName.substr(lastSlash + 1);
 					}
@@ -721,9 +723,9 @@ bool Model::loadCollision()
 	return false;
 }
 
-bool Model::saveToPim(std::string exportPath) const
+bool Model::saveToPim(String exportPath) const
 {
-	const std::string pimFilePath = exportPath + m_filePath + ".pim";
+	const String pimFilePath = exportPath + m_filePath + ".pim";
 	auto file = getSFS()->open(pimFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
@@ -853,7 +855,7 @@ bool Model::saveToPim(std::string exportPath) const
 		{
 			for (uint32_t j = 0; j < currentPiece->m_texcoordCount; ++j)
 			{
-				std::vector<uint32_t> texCoords = currentPiece->texCoords(j);
+				Array<uint32_t> texCoords = currentPiece->texCoords(j);
 
 				*file << fmt::sprintf(
 					TAB "Stream {"				SEOL
@@ -1001,7 +1003,7 @@ bool Model::saveToPim(std::string exportPath) const
 		*file << TAB "StreamCount: 1"			SEOL;
 		*file << TAB "SkinStream {"				SEOL;
 		unsigned itemIdx = 0, weightIdx = 0;
-		std::vector<std::string> skinStreams;
+		Array<String> skinStreams;
 
 		for (uint32_t i = 0; i < m_pieces.size(); ++i)
 		{
@@ -1012,7 +1014,7 @@ bool Model::saveToPim(std::string exportPath) const
 			{
 				const Vertex *const vert = &m_pieces[i].m_vertices[j];
 
-				std::string skinStream;
+				String skinStream;
 				skinStream += fmt::sprintf(
 					TAB TAB "%-6i( ( %s )" SEOL,
 					itemIdx, to_string(vert->m_position).c_str()
@@ -1082,9 +1084,9 @@ bool Model::saveToPim(std::string exportPath) const
 	return true;
 }
 
-bool Model::saveToPit(std::string exportPath) const
+bool Model::saveToPit(String exportPath) const
 {
-	const std::string pitFilePath = exportPath + m_filePath + ".pit";
+	const String pitFilePath = exportPath + m_filePath + ".pit";
 	auto file = getSFS()->open(pitFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
@@ -1165,12 +1167,12 @@ bool Model::saveToPit(std::string exportPath) const
 	return true;
 }
 
-bool Model::saveToPis(std::string exportPath) const
+bool Model::saveToPis(String exportPath) const
 {
 	if(m_bones.size() == 0)
 		return false;
 
-	const std::string pitFilePath = exportPath + m_filePath + + ".pis";
+	const String pitFilePath = exportPath + m_filePath + + ".pis";
 	auto file = getSFS()->open(pitFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
@@ -1223,7 +1225,7 @@ bool Model::saveToPis(std::string exportPath) const
 	return true;
 }
 
-void Model::convertTextures(std::string exportPath) const
+void Model::convertTextures(String exportPath) const
 {
 	for (size_t i = 0; i < m_looks.size(); ++i)
 	{
@@ -1234,7 +1236,7 @@ void Model::convertTextures(std::string exportPath) const
 	}
 }
 
-void Model::saveToMidFormat(std::string exportPath, bool convertTexture) const
+void Model::saveToMidFormat(String exportPath, bool convertTexture) const
 {
 	bool pim = saveToPim(exportPath);
 	bool pit = saveToPit(exportPath);

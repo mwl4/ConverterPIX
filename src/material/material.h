@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <structs/pmd.h>
 #include <math/vector.h>
 
@@ -19,11 +18,11 @@ public:
 	class Attribute
 	{
 	private:
-		std::string m_name;
+		String m_name;
 		enum { FLOAT, STRING } m_valueType;
 		uint32_t m_valueCount;
 		prism::float4 m_value;
-		std::string m_stringValue;
+		String m_stringValue;
 	public:
 		Attribute();
 		~Attribute();
@@ -34,13 +33,13 @@ public:
 		friend Material;
 	};
 private:
-	std::string m_effect;
-	std::vector<Texture> m_textures;
-	std::vector<Attribute> m_attributes;
-	std::string m_filePath;		// @example: /material/example.mat
-	std::string m_alias;
+	String m_effect;
+	Array<Texture> m_textures;
+	Array<Attribute> m_attributes;
+	String m_filePath;		// @example: /material/example.mat
+	String m_alias;
 public:
-	bool load(std::string filePath);
+	bool load(String filePath);
 	void destroy();
 
 	/**
@@ -49,32 +48,32 @@ public:
 	 * @param[in] prefix The prefix for each line of generated definition
 	 * @return @c The definition of material
 	 */
-	std::string toDefinition(const std::string &prefix = "") const;
+	String toDefinition(const String &prefix = "") const;
 
-	std::string toDeclaration(const std::string &prefix = "") const;
+	String toDeclaration(const String &prefix = "") const;
 
 	/**
 	 * @brief Creates alias of material
 	 *
 	 * @return @c The alias of material
 	 */
-	std::string alias() const;
+	String alias() const;
 
-	void setAlias(std::string name);
+	void setAlias(String name);
 
-	bool convertTextures(std::string exportPath) const;
+	bool convertTextures(String exportPath) const;
 
 	friend Model;
 };
 
-static bool needl2srgb(std::string attrib)
+static bool needl2srgb(String attrib)
 {
 	/**
 	* @brief The ambient, diffuse, specular, tint, env_factor and water aux are converted from srgb to linear
 	*/
-	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor" };
+	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor", "aux" };
 
-	for (auto& attribb : attributesLinear)
+	for (const auto &attribb : attributesLinear)
 	{
 		if (attrib == attribb)
 		{

@@ -7,10 +7,13 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "sysfilesystem.h"
+
 #include "sysfs_file.h"
 
-SysFileSystem::SysFileSystem(const std::string &root)
+SysFileSystem::SysFileSystem(const String &root)
 	: m_root(root)
 {
 }
@@ -19,10 +22,10 @@ SysFileSystem::~SysFileSystem()
 {
 }
 
-std::unique_ptr<File> SysFileSystem::open(const std::string &filename, FsOpenMode mode)
+UniquePtr<File> SysFileSystem::open(const String &filename, FsOpenMode mode)
 {
-	const std::string smode =
-		std::string(mode & read ? "r" : "")
+	const String smode =
+		String(mode & read ? "r" : "")
 		+ (mode & write ? "w" : "")
 		+ (mode & append ? "a" : "")
 		+ (mode & binary ? "b" : "")
@@ -38,17 +41,17 @@ std::unique_ptr<File> SysFileSystem::open(const std::string &filename, FsOpenMod
 				fp = fopen((m_root + filename).c_str(), smode.c_str());
 				if (!fp)
 				{
-					return std::unique_ptr<File>();
+					return UniquePtr<File>();
 				}
 			}
 			else
 			{
-				return std::unique_ptr<File>();
+				return UniquePtr<File>();
 			}
 		}
 		else
 		{
-			return std::unique_ptr<File>();
+			return UniquePtr<File>();
 		}
 	}
 
@@ -58,9 +61,9 @@ std::unique_ptr<File> SysFileSystem::open(const std::string &filename, FsOpenMod
 	return std::move(file);
 }
 
-bool SysFileSystem::mkdir(const std::string &dir)
+bool SysFileSystem::mkdir(const String &dir)
 {
-	std::string dirr(m_root + dir.c_str());
+	String dirr(m_root + dir.c_str());
 	std::replace_if(dirr.begin(), dirr.end(), [](char ch)->bool { return ch == '\\'; }, '/');
 
 	if (dirExists(dirr.c_str())) {
@@ -83,12 +86,12 @@ bool SysFileSystem::mkdir(const std::string &dir)
 	return true;
 }
 
-bool SysFileSystem::rmdir(const std::string &directory)
+bool SysFileSystem::rmdir(const String &directory)
 {
 	return false;
 }
 
-bool SysFileSystem::exists(const std::string &filename)
+bool SysFileSystem::exists(const String &filename)
 {
 	FILE *fp = fopen((m_root + filename).c_str(), "rb");
 	if (fp)
@@ -99,26 +102,26 @@ bool SysFileSystem::exists(const std::string &filename)
 	return false;
 }
 
-bool SysFileSystem::dirExists(const std::string &dirpath)
+bool SysFileSystem::dirExists(const String &dirpath)
 {
 	struct stat buffer;
 	return (stat(dirpath.c_str(), &buffer) == 0 && ((buffer.st_mode & S_IFDIR) != 0));
 }
 
-std::unique_ptr<std::list<std::string>> SysFileSystem::readDir(const std::string &directory, bool absolutePaths, bool recursive)
+UniquePtr<List<String>> SysFileSystem::readDir(const String &directory, bool absolutePaths, bool recursive)
 {
 #ifdef _WIN32
 	HANDLE dir;
 	WIN32_FIND_DATA file_data;
 
 	if ((dir = FindFirstFileA((m_root + directory + "/*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
-		return std::unique_ptr<std::list<std::string>>();
+		return UniquePtr<List<String>>();
 
-	auto result = std::make_unique<std::list<std::string>>();
+	auto result = std::make_unique<List<String>>();
 	do
 	{
-		const std::string file_name = file_data.cFileName;
-		const std::string full_file_name = directory + "/" + file_name;
+		const String file_name = file_data.cFileName;
+		const String full_file_name = directory + "/" + file_name;
 
 		if (file_name[0] == '.')
 			continue;
@@ -140,7 +143,7 @@ std::unique_ptr<std::list<std::string>> SysFileSystem::readDir(const std::string
 	FindClose(dir);
 	return result;
 #else
-	auto result = std::make_unique<std::list<std::string>>();
+	auto result = std::make_unique<List<String>>();
 	DIR *dir;
 	struct dirent *ent;
 	struct stat st;
@@ -148,8 +151,8 @@ std::unique_ptr<std::list<std::string>> SysFileSystem::readDir(const std::string
 	dir = opendir(directory.c_str());
 	while ((ent = readdir(dir)) != 0)
 	{
-		const std::string file_name = ent->d_name;
-		const std::string full_file_name = directory + "/" + file_name;
+		const String file_name = ent->d_name;
+		const String full_file_name = directory + "/" + file_name;
 
 		if (file_name[0] == '.')
 			continue;
@@ -176,7 +179,7 @@ std::unique_ptr<std::list<std::string>> SysFileSystem::readDir(const std::string
 #endif
 }
 
-std::string SysFileSystem::getError() const
+String SysFileSystem::getError() const
 {
 	return strerror(errno);
 }

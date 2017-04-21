@@ -7,12 +7,14 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "resource_lib.h"
 
 #include <texture/texture_object.h>
 #include <fs/uberfilesystem.h>
 
-auto ResourceLibrary::obtain(std::string tobjfile) -> Entry
+auto ResourceLibrary::obtain(String tobjfile) -> Entry
 {
 	if (m_tobjs.find(tobjfile) == m_tobjs.end())
 	{

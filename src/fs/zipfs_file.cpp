@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "zipfs_file.h"
 
 ZipFsFile::ZipFsFile()
@@ -32,7 +34,7 @@ size_t ZipFsFile::getSize() const
 	return 0;
 }
 
-const char *ZipFsFile::getLine(std::string &out)
+const char *ZipFsFile::getLine(String &out)
 {
 	return nullptr;
 }

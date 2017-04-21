@@ -9,15 +9,15 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
+#include <math/quaternion.h>
 
 class Locator
 {
 	friend Model;
 private:
-	std::string m_name;
-	std::string m_hookup;
+	String m_name;
+	String m_hookup;
 	uint32_t m_index;
 	Float3 m_position;
 	Quaternion m_rotation;

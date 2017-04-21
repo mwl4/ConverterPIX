@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <utils/token.h>
 
 #pragma pack(push, 1)

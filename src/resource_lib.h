@@ -9,18 +9,17 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <material/material.h>
 #include <utils/explicit_singleton.h>
 
 class ResourceLibrary : public ExplicitSingleton<ResourceLibrary>
 {
 public:
-	using Entry = std::shared_ptr<TextureObject>;
+	using Entry = SharedPtr<TextureObject>;
 private:
-	std::unordered_map<std::string, Entry> m_tobjs;
+	UnorderedMap<String, Entry> m_tobjs;
 public:
-	Entry obtain(std::string tobjfile);
+	Entry obtain(String tobjfile);
 	void destroy();
 };
 

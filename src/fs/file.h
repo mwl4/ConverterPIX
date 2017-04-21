@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class File
 {
 public:
@@ -33,7 +31,7 @@ public:
 	virtual size_t read(void *buffer, size_t elementSize, size_t elementCount) = 0;
 
 	virtual size_t getSize() const = 0;
-	virtual const char *getLine(std::string &out) = 0;
+	virtual const char *getLine(String &out) = 0;
 
 	virtual int seek(uint32_t offset, Attrib attr) = 0;
 	virtual void rewind() = 0;
@@ -75,7 +73,7 @@ File &operator<<(File &fp, unsigned char c);
 File &operator<<(File &fp, const char *s);
 File &operator<<(File &fp, const signed char *s);
 File &operator<<(File &fp, const unsigned char *s);
-File &operator<<(File &fp, const std::string &s);
+File &operator<<(File &fp, const String &s);
 
 File &operator>>(File &fp, char &c);
 File &operator>>(File &fp, signed char &c);

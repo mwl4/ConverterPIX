@@ -7,7 +7,10 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "animation.h"
+
 #include <fs/file.h>
 #include <fs/sysfilesystem.h>
 #include <fs/uberfilesystem.h>
@@ -18,7 +21,7 @@
 
 using namespace prism;
 
-bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
+bool Animation::load(SharedPtr<Model> model, String filePath)
 {
 	if (!model || !model->loaded())
 	{
@@ -36,7 +39,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 		m_filePath = m_model->fileDirectory() + "/" + filePath;
 	}
 
-	const std::string pmaFilepath = m_filePath + ".pma";
+	const String pmaFilepath = m_filePath + ".pma";
 	auto file = getUFS()->open(pmaFilepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
@@ -45,7 +48,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 	}
 
 	size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
 
@@ -80,7 +83,7 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 
 	if (header->m_flags == 2)
 	{
-		m_movement = std::make_unique<std::vector<Float3>>(header->m_frames);
+		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
 		for (u32 i = 0; i < header->m_frames; ++i)
 		{
 			(*m_movement)[i] = *((float3 *)(buffer.get() + header->m_delta_trans_offset) + i);
@@ -90,10 +93,10 @@ bool Animation::load(std::shared_ptr<Model> model, std::string filePath)
 	return true;
 }
 
-void Animation::saveToPia(std::string exportPath) const
+void Animation::saveToPia(String exportPath) const
 {
-	const std::string filename = m_filePath.substr(m_filePath.rfind('/') + 1);
-	const std::string piafile = exportPath + m_filePath + ".pia";
+	const String filename = m_filePath.substr(m_filePath.rfind('/') + 1);
+	const String piafile = exportPath + m_filePath + ".pia";
 	auto file = getSFS()->open(piafile, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{

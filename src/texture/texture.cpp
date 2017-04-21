@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "texture.h"
 
 #include <resource_lib.h>

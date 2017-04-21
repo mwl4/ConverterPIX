@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 #include <math/matrix.h>
 #include <math/quaternion.h>
@@ -20,7 +19,7 @@ class Bone
 	friend Animation;
 private:
 	int32_t m_index = 0;
-	std::string m_name;
+	String m_name;
 	Float4x4 m_transformation;
 	Float4x4 m_transReversed;
 	Quaternion m_stretch;

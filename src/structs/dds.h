@@ -8,9 +8,6 @@
  *********************************************************************/
 
 #pragma once
-
-#include <prerequisites.h>
-
 #pragma pack(push, 1)
 
 namespace dds
@@ -74,9 +71,9 @@ namespace dds
 		return ((u32)(u8)(s[0])) | ((u32)(u8)(s[1]) << 8) | ((u32)(u8)(s[2]) << 16) | ((u32)(u8)(s[3]) << 24);
 	}
 
-	inline std::string uint2s(const u32 value)
+	inline String uint2s(const u32 value)
 	{
-		return std::string((const char *)(&value), 4);
+		return String((const char *)(&value), 4);
 	}
 
 	constexpr u32 MAGIC = s2u32("DDS ");
@@ -116,7 +113,7 @@ namespace dds
 	const named_pixel_format FORMAT_R16G16 =
 		{ "R16G16", { sizeof(pixel_format), PF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 } };
 
-	const std::vector<named_pixel_format> formats = {
+	const Array<named_pixel_format> formats = {
 		FORMAT_A8R8G8B8, FORMAT_A1R5G5B5, FORMAT_A4R4G4B4, FORMAT_R8G8B8, FORMAT_R5G6B5, FORMAT_R16G16
 	};
 
@@ -142,7 +139,7 @@ namespace dds
 		return nullptr;
 	}
 
-	void print_debug(std::string filepath);
+	void print_debug(String filepath);
 } // namespace prism
 
 #pragma pack(pop)

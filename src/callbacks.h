@@ -9,26 +9,26 @@
 
 #pragma once
 
-extern void(*info)(const std::string &level, const std::string &file, const std::string &msg);
-extern void(*error)(const std::string &level, const std::string &file, const std::string &msg);
-extern void(*warning)(const std::string &level, const std::string &file, const std::string &msg);
+extern void(*info)(const String &level, const String &file, const String &msg);
+extern void(*error)(const String &level, const String &file, const String &msg);
+extern void(*warning)(const String &level, const String &file, const String &msg);
 
 template < typename ...Args >
-void info_f(const std::string &level, const std::string &file, const std::string &format, Args ...args)
+void info_f(const String &level, const String &file, const String &format, Args ...args)
 {
 	auto msg = fmt::sprintf(format, args...);
 	info(level, file, msg.c_str());
 }
 
 template < typename ...Args >
-void error_f(const std::string &level, const std::string &file, const std::string &format, Args ...args)
+void error_f(const String &level, const String &file, const String &format, Args ...args)
 {
 	auto msg = fmt::sprintf(format, args...);
 	error(level, file, msg.c_str());
 }
 
 template < typename ...Args >
-void warning_f(const std::string &level, const std::string &file, const std::string &format, Args ...args)
+void warning_f(const String &level, const String &file, const String &format, Args ...args)
 {
 	auto msg = fmt::sprintf(format, args...);
 	warning(level, file, msg.c_str());

@@ -9,19 +9,17 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class Texture
 {
 	friend Material;
 private:
-	std::string m_texture;
-	std::string m_textureName;
+	String m_texture;
+	String m_textureName;
 
-	std::shared_ptr<TextureObject> m_texObj;
+	SharedPtr<TextureObject> m_texObj;
 public:
 	bool load();
-	std::string texture() const { return m_texture; }
+	String texture() const { return m_texture; }
 	auto texobj() const -> const decltype(m_texObj) { return m_texObj; }
 };
 

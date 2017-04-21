@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 #include <math/quaternion.h>
 
@@ -23,7 +22,7 @@ private:
 	u32 m_semaphoreId;
 	Float4 m_intervals;
 	float m_cycle;
-	std::string m_profile;
+	String m_profile;
 };
 
 /* eof */

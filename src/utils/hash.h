@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class Hash
 {
 private:
@@ -21,7 +19,7 @@ public:
 		m_value = seed;
 		for (const char *s = data; *s; m_value = m_value * 101 + *s++);
 	}
-	Hash(const std::string &s, uint32_t seed = 0)
+	Hash(const String &s, uint32_t seed = 0)
 		: Hash(s.c_str(), seed)
 	{
 	}

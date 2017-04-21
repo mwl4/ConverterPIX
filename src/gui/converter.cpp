@@ -21,13 +21,10 @@ Converter::~Converter()
 
 bool Converter::Init()
 {
-	LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
 	WNDCLASSEX wcex;
-
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = ::WndProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = GetModuleHandle(NULL);
@@ -38,13 +35,13 @@ bool Converter::Init()
 	wcex.lpszClassName = "converter_pix";
 	wcex.hIconSm = 0;// LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
 
-	if (!RegisterClassEx(&wcex))
+	if (!RegisterClassExA(&wcex))
 	{
-		MessageBox(NULL, "Call to RegisterClassEx failed!", "Win32 Guided Tour", NULL);
+		MessageBoxA(NULL, "Call to RegisterClassEx failed!", "Win32 Guided Tour", NULL);
 		return false;
 	}
 
-	m_window = CreateWindow(
+	m_window = CreateWindowA(
 		"converter_pix",
 		"Converter PIX",
 		WS_OVERLAPPEDWINDOW,
@@ -52,17 +49,17 @@ bool Converter::Init()
 		500, 100,
 		NULL,
 		NULL,
-		GetModuleHandle(NULL),
+		GetModuleHandleA(NULL),
 		NULL
 	);
 
 	if (!m_window)
 	{
-		MessageBox(NULL, "Call to CreateWindow failed!", "Win32 Guided Tour", NULL);
+		MessageBoxA(NULL, "Call to CreateWindow failed!", "Win32 Guided Tour", NULL);
 		return false;
 	}
 
-	SetWindowLong(m_window, GWL_USERDATA, (LONG)this);
+	SetWindowLongA(m_window, GWL_USERDATA, (LONG)this);
 
 	ShowWindow(m_window, TRUE);
 	UpdateWindow(m_window);
@@ -99,8 +96,8 @@ LRESULT Converter::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	auto _this = reinterpret_cast<Converter *>(GetWindowLong(hWnd, GWL_USERDATA));
-	return _this->WndProc(hWnd, message, wParam, lParam);
+	const auto _this = reinterpret_cast<Converter *>(GetWindowLong(hWnd, GWL_USERDATA));
+	return _this ? _this->WndProc(hWnd, message, wParam, lParam) : 0;
 }
 
 /* eof */

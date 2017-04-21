@@ -9,20 +9,19 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 #include "bone.h"
 #include "piece.h"
 #include "part.h"
 #include "locator.h"
+
 #include <material/material.h>
 
 class Look
 {
 	friend Model;
 private:
-	std::string m_name;
-	std::vector<Material> m_materials;
+	String m_name;
+	Array<Material> m_materials;
 };
 
 class Variant
@@ -33,7 +32,7 @@ public:
 		friend Variant;
 		friend Model;
 
-		std::string m_name;
+		String m_name;
 		enum { INT = 0 } m_type;
 		union
 		{
@@ -41,7 +40,7 @@ public:
 			float m_floatValue;
 		};
 	public:
-		Attribute(std::string name) : m_name(name) {}
+		Attribute(String name) : m_name(name) {}
 
 		/**
 		* @brief Creates PIT definition
@@ -49,9 +48,9 @@ public:
 		* @param[in] prefix The prefix for each line of generated definition
 		* @return @c The definition of the attribute
 		*/
-		std::string toDefinition(const std::string &prefix = "") const;
+		String toDefinition(const String &prefix = "") const;
 
-		std::string getName() const { return m_name; }
+		String getName() const { return m_name; }
 		int getInt() const { return m_intValue; }
 		float getFloat() const { return m_floatValue; }
 	};
@@ -61,26 +60,26 @@ public:
 		friend Model;
 
 		const ::Part *m_part = nullptr;
-		std::vector<Attribute> m_attributes;
+		Array<Attribute> m_attributes;
 	public:
-		const Attribute &operator[](std::string attribute) const;
+		const Attribute &operator[](String attribute) const;
 		const Attribute &operator[](size_t attribute) const;
-		Attribute &operator[](std::string attribute);
+		Attribute &operator[](String attribute);
 		Attribute &operator[](size_t attribute);
 
 		const ::Part *part() const { return m_part; }
 	};
 private:
-	std::string m_name;
-	std::vector<Part> m_parts;
+	String m_name;
+	Array<Part> m_parts;
 public:
 	void setPartCount(size_t parts);
 	const Part &operator[](size_t id) const;
 	Part &operator[](size_t id);
 
-	const std::vector<Part> &getParts() const { return m_parts; }
+	const Array<Part> &getParts() const { return m_parts; }
 
-	std::string getName() const { return m_name; }
+	String getName() const { return m_name; }
 
 	friend Model;
 };
@@ -88,50 +87,50 @@ public:
 class Model
 {
 private:
-	std::vector<Bone> m_bones;
-	std::vector<Piece> m_pieces;
-	std::vector<Part> m_parts;
-	std::vector<Locator> m_locators;
-	std::vector<Look> m_looks;
-	std::vector<Variant> m_variants;
+	Array<Bone> m_bones;
+	Array<Piece> m_pieces;
+	Array<Part> m_parts;
+	Array<Locator> m_locators;
+	Array<Look> m_looks;
+	Array<Variant> m_variants;
 
 	uint32_t m_vertCount = 0;
 	uint32_t m_triangleCount = 0;
 	uint32_t m_skinVertCount = 0;
 	uint32_t m_materialCount = 0;
 
-	std::shared_ptr<Prefab> m_prefab;
-	std::shared_ptr<Collision> m_collision;
+	SharedPtr<Prefab> m_prefab;
+	SharedPtr<Collision> m_collision;
 
 	bool m_loaded = false;
 
-	std::string m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
-	std::string m_fileName;		// @example anim
-	std::string m_directory;	// @example /vehicle/truck/man_tgx/interior
+	String m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
+	String m_fileName;		// @example anim
+	String m_directory;	// @example /vehicle/truck/man_tgx/interior
 public:
-	bool load(std::string filePath);
+	bool load(String filePath);
 	void destroy();
 
 	bool loadModel();
 	bool loadDescriptor();
 	bool loadCollision();
 
-	bool saveToPim(std::string exportPath) const;
-	bool saveToPit(std::string exportPath) const;
-	bool saveToPis(std::string exportPath) const;
-	void convertTextures(std::string exportPath) const;
-	void saveToMidFormat(std::string exportPath, bool convertTexture = true) const;
+	bool saveToPim(String exportPath) const;
+	bool saveToPit(String exportPath) const;
+	bool saveToPis(String exportPath) const;
+	void convertTextures(String exportPath) const;
+	void saveToMidFormat(String exportPath, bool convertTexture = true) const;
 
 	bool loaded() const { return m_loaded; }
-	std::string fileName() const { return m_fileName; }
-	std::string filePath() const { return m_filePath; }
-	std::string fileDirectory() const { return m_directory; }
+	String fileName() const { return m_fileName; }
+	String filePath() const { return m_filePath; }
+	String fileDirectory() const { return m_directory; }
 
 	uint32_t boneCount() const { return m_bones.size(); }
 	Bone *bone(size_t index);
 
-	const std::vector<Part> &getParts() const { return m_parts; }
-	const std::vector<Variant> &getVariants() const { return m_variants; }
+	const Array<Part> &getParts() const { return m_parts; }
+	const Array<Variant> &getVariants() const { return m_variants; }
 
 	bool loadModel0x13(const uint8_t *const buffer, const size_t size);
 	bool loadModel0x14(const uint8_t *const buffer, const size_t size);

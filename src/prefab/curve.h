@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 #include <math/quaternion.h>
 
@@ -17,7 +16,7 @@ class Curve
 {
 	friend Prefab;
 private:
-	std::string m_name;
+	String m_name;
 	u32 m_flags;
 	u32 m_leadsToNodes;
 
@@ -35,7 +34,7 @@ private:
 	u32 m_prevLinesCount;
 
 	i32 m_semaphoreId;
-	std::string m_trafficRule;
+	String m_trafficRule;
 };
 
 /* eof */

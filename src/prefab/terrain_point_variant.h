@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class TerrainPointVariant
 {
 	friend Prefab;

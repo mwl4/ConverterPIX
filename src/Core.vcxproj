@@ -32,6 +32,7 @@
     <ClInclude Include="model\model.h" />
     <ClInclude Include="model\part.h" />
     <ClInclude Include="model\piece.h" />
+    <ClInclude Include="pix\pix.h" />
     <ClInclude Include="prefab\curve.h" />
     <ClInclude Include="prefab\intersection.h" />
     <ClInclude Include="prefab\map_point.h" />
@@ -79,6 +80,7 @@
     <ClCompile Include="model\collision.cpp" />
     <ClCompile Include="model\model.cpp" />
     <ClCompile Include="model\piece.cpp" />
+    <ClCompile Include="pix\pix.cpp" />
     <ClCompile Include="prefab\prefab.cpp" />
     <ClCompile Include="resource_lib.cpp" />
     <ClCompile Include="structs\dds.cpp" />

@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include <math/vector.h>
 
 class TriggerPoint
@@ -17,7 +16,7 @@ class TriggerPoint
 	friend Prefab;
 private:
 	u32 m_id;
-	std::string m_action;
+	String m_action;
 	float m_range;
 	float m_reset_delay;
 	float m_reset_dist;

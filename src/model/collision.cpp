@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "collision.h"
 
 #include <model/model.h>
@@ -14,12 +16,12 @@
 #include <fs/uberfilesystem.h>
 #include <fs/sysfilesystem.h>
 
-bool Collision::load(Model *const model, std::string filePath)
+bool Collision::load(Model *const model, String filePath)
 {
 	m_filePath = filePath;
 	m_model = model;
 
-	const std::string pmcPath = m_filePath + ".pmc";
+	const String pmcPath = m_filePath + ".pmc";
 	auto file = getUFS()->open(pmcPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
@@ -28,7 +30,7 @@ bool Collision::load(Model *const model, std::string filePath)
 	}
 
 	const size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(char), fileSize);
 	file.reset();
 
@@ -77,7 +79,7 @@ bool Collision::load(Model *const model, std::string filePath)
 
 			currentOffset += locatorf->m_data_size;
 
-			const auto it = std::find_if(m_locators.begin(), m_locators.end(), [&](std::shared_ptr<Locator> &loc) {
+			const auto it = std::find_if(m_locators.begin(), m_locators.end(), [&](SharedPtr<Locator> &loc) {
 				/* I have not found better method to recognize locators */
 				return loc->m_name == locatorf->m_name.to_string()
 					&& loc->m_type == locatorf->m_type
@@ -91,7 +93,7 @@ bool Collision::load(Model *const model, std::string filePath)
 				continue;
 			}
 
-			std::shared_ptr<Locator> locator;
+			SharedPtr<Locator> locator;
 			switch (locatorf->m_data_size)
 			{
 				case sizeof(prism::pmc_locator_convex_t):
@@ -164,7 +166,7 @@ void Collision::assignLocatorsToParts()
 {
 	for (auto &loc : m_locators)
 	{
-		std::vector<const Variant *> belongsToVariants;
+		Array<const Variant *> belongsToVariants;
 		std::for_each(m_variants.begin(), m_variants.end(),
 			[&belongsToVariants, &loc](const Variant &v) {
 			if (std::find(v.m_locators.begin(), v.m_locators.end(), loc) != v.m_locators.end())
@@ -176,7 +178,7 @@ void Collision::assignLocatorsToParts()
 		for (size_t i = 0; i < m_model->getParts().size(); ++i)
 		{
 			const auto &part = m_model->getParts()[i];
-			std::vector<const Variant *> partBelongsToVariants;
+			Array<const Variant *> partBelongsToVariants;
 			std::for_each(m_variants.begin(), m_variants.end(),
 				[&partBelongsToVariants, &part, i](const Variant &v) {
 				if ((*v.m_modelVariant)[i]["visible"].getInt() == 1)
@@ -198,9 +200,9 @@ void Collision::assignLocatorsToParts()
 	}
 }
 
-bool Collision::saveToPic(std::string exportPath) const
+bool Collision::saveToPic(String exportPath) const
 {
-	const std::string picFilePath = exportPath + m_filePath + ".pic";
+	const String picFilePath = exportPath + m_filePath + ".pic";
 	auto file = getSFS()->open(picFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
@@ -223,26 +225,30 @@ bool Collision::saveToPic(std::string exportPath) const
 		"Global {"							SEOL
 		TAB "VertexCount: %u"				SEOL
 		TAB "TriangleCount: %u"				SEOL
-		TAB "MaterialCount: 1"				SEOL
+		TAB "MaterialCount: %u"				SEOL
 		TAB "PieceCount: %i"				SEOL
 		TAB "PartCount: %i"					SEOL
 		TAB "LocatorCount: %i"				SEOL
 		"}"									SEOL,
 			m_vertCount,
 			m_triangleCount,
+			(m_pieces.empty() ? 0 : 1),
 			(int)m_pieces.size(),
 			(int)m_model->getParts().size(),
 			(int)m_locators.size()
 	);
 
-	*file << fmt::sprintf(
-		"Material {"						SEOL
-		TAB "Alias: \"%s\""					SEOL
-		TAB "Effect: \"%s\""				SEOL
-		"}"									SEOL,
+	if (!m_pieces.empty())
+	{
+		*file << fmt::sprintf(
+			"Material {"						SEOL
+			TAB "Alias: \"%s\""					SEOL
+			TAB "Effect: \"%s\""				SEOL
+			"}"									SEOL,
 			"convex",
 			"dry.void"
-	);
+		);
+	}
 
 	for (size_t i = 0; i < m_pieces.size(); ++i)
 	{
@@ -287,7 +293,7 @@ bool Collision::saveToPic(std::string exportPath) const
 	{
 		const auto &part = m_model->getParts()[i];
 
-		std::vector<int> locators;
+		Array<int> locators;
 		for (size_t j = 0; j < m_locators.size(); ++j)
 		{
 			if (m_locators[j]->m_owner == &part)
@@ -296,7 +302,7 @@ bool Collision::saveToPic(std::string exportPath) const
 			}
 		}
 
-		std::vector<int> pieces;
+		Array<int> pieces;
 		/* No idea what are pieces here */
 
 		*file << fmt::sprintf(
@@ -334,7 +340,7 @@ bool Collision::saveToPic(std::string exportPath) const
 	return true;
 }
 
-std::string Collision::Locator::toDefinition() const
+String Collision::Locator::toDefinition() const
 {
 	return
 		"Locator {" SEOL
@@ -348,28 +354,28 @@ std::string Collision::Locator::toDefinition() const
 	;
 }
 
-std::string Collision::ConvexLocator::toDefinition() const
+String Collision::ConvexLocator::toDefinition() const
 {
 	return Locator::toDefinition() +
 		TAB + fmt::sprintf("ConvexPiece: %i" SEOL, m_convexPiece) +
 	"}";
 }
 
-std::string Collision::CylinderLocator::toDefinition() const
+String Collision::CylinderLocator::toDefinition() const
 {
 	return Locator::toDefinition() + 
 		TAB + fmt::sprintf("Parameters: ( " FLT_FT "  " FLT_FT "  " FLT_FT "  " FLT_FT " )" SEOL, flh(m_radius), flh(m_depth), 0, 0) +
 	"}";
 }
 
-std::string Collision::BoxLocator::toDefinition() const
+String Collision::BoxLocator::toDefinition() const
 {
 	return Locator::toDefinition() +
 		TAB + fmt::sprintf("Parameters: ( %s  " FLT_FT " )" SEOL, prism::to_string(m_scale), 0) +
 	"}";
 }
 
-std::string Collision::SphereLocator::toDefinition() const
+String Collision::SphereLocator::toDefinition() const
 {
 	return Locator::toDefinition() +
 		TAB + fmt::sprintf("Parameters: ( " FLT_FT "  " FLT_FT "  " FLT_FT "  " FLT_FT " )" SEOL, flh(m_radius), 0, 0, 0) +

@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class FileSystem
 {
 public:
@@ -33,12 +31,12 @@ public:
 	FileSystem &operator=(FileSystem &) = delete;
 	FileSystem &operator=(FileSystem &&) = delete;
 
-	virtual std::unique_ptr<File> open(const std::string &filename, FsOpenMode mode) = 0;
-	virtual bool mkdir(const std::string &directory) = 0;
-	virtual bool rmdir(const std::string &directory) = 0;
-	virtual bool exists(const std::string &filename) = 0;
-	virtual bool dirExists(const std::string &dirpath) = 0;
-	virtual std::unique_ptr<std::list<std::string>> readDir(const std::string &path, bool absolutePaths, bool recursive) = 0;
+	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) = 0;
+	virtual bool mkdir(const String &directory) = 0;
+	virtual bool rmdir(const String &directory) = 0;
+	virtual bool exists(const String &filename) = 0;
+	virtual bool dirExists(const String &dirpath) = 0;
+	virtual UniquePtr<List<String>> readDir(const String &path, bool absolutePaths, bool recursive) = 0;
 };
 
 constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const FileSystem::FsOpenMode f)
@@ -54,7 +52,7 @@ class HashFileSystem : public FileSystem
 SysFileSystem *getSFS();
 UberFileSystem *getUFS();
 
-FileSystem *ufsMount(const std::string &root, scs_bool readOnly, int priority);
+FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority);
 void ufsUnmount(FileSystem *fs);
 
 /* eof */

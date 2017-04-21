@@ -7,7 +7,10 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "filesystem.h"
+
 #include "sysfilesystem.h"
 #include "uberfilesystem.h"
 
@@ -31,7 +34,7 @@ UberFileSystem *getUFS()
 	return &fs;
 }
 
-FileSystem *ufsMount(const std::string &root, scs_bool readOnly, int priority)
+FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 {
 	if (root.substr(root.length() - 4) == ".zip")
 	{
@@ -53,7 +56,7 @@ void ufsUnmount(FileSystem *fs)
 	getUFS()->unmount(fs);
 }
 
-std::string directory(const std::string &filepath)
+String directory(const String &filepath)
 {
 	size_t slashpos = filepath.rfind('/');
 	if (slashpos == -1) slashpos = 0;
@@ -62,20 +65,20 @@ std::string directory(const std::string &filepath)
 	return filepath.substr(0, std::max(slashpos, backslackpos)).c_str();
 }
 
-std::string relativePath(const std::string &filepath, const std::string &directory)
+String relativePath(const String &filepath, const String &directory)
 {
-	std::string dir = (directory + "/").c_str();
-	std::string path = filepath.c_str();
+	String dir = (directory + "/").c_str();
+	String path = filepath.c_str();
 
 	std::replace(dir.begin(), dir.end(), '\\', '/');
 	std::replace(path.begin(), path.end(), '\\', '/');
 
-	std::string result;
+	String result;
 
 	size_t up = 0;
 	size_t curpos = 0;
 	size_t lastpos = 0;
-	while ((curpos = dir.find('/', curpos + 1)) != std::string::npos)
+	while ((curpos = dir.find('/', curpos + 1)) != String::npos)
 	{
 		if (up == 0)
 		{

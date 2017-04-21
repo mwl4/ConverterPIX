@@ -8,9 +8,6 @@
  *********************************************************************/
 
 #pragma once
-
-#include <prerequisites.h>
-
 #pragma pack(push, 1)
 
 namespace prism
@@ -45,8 +42,8 @@ namespace prism
 			/* F0 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 };
 	}
 
-	token_t string_to_token(const std::string &s);
-	std::string token_to_string(const prism::token_t &token);
+	token_t string_to_token(const String &s);
+	String token_to_string(const prism::token_t &token);
 
 	using c_token_t = u64;
 
@@ -77,7 +74,7 @@ namespace prism
 		{
 			set(value);
 		}
-		token_t(const std::string &s)
+		token_t(const String &s)
 		{
 			from_string(s);
 		}
@@ -97,15 +94,15 @@ namespace prism
 		{
 			return m_value;
 		}
-		inline void from_string(const std::string &s)
+		inline void from_string(const String &s)
 		{
 			set(string_to_token(s));
 		}
-		inline std::string to_string() const
+		inline String to_string() const
 		{
 			return token_to_string(*this);
 		}
-		inline operator std::string() const
+		inline operator String() const
 		{
 			return to_string();
 		}
@@ -114,7 +111,7 @@ namespace prism
 			set(rhs.m_value);
 			return (*this);
 		}
-		inline token_t &operator=(const std::string &s)
+		inline token_t &operator=(const String &s)
 		{
 			set(s);
 			return (*this);

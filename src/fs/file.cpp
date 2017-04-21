@@ -7,7 +7,10 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "file.h"
+
 #include "uberfilesystem.h"
 #include "sysfilesystem.h"
 
@@ -127,7 +130,7 @@ File &operator<<(File &fp, const unsigned char *s)
 	return fp;
 }
 
-File &operator<<(File &fp, const std::string &s)
+File &operator<<(File &fp, const String &s)
 {
 	fp.write(s.c_str(), sizeof(char), s.length());
 	return fp;

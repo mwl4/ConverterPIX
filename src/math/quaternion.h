@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <prerequisites.h>
 #include "vector.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -75,7 +74,7 @@ namespace prism
 		return glm::quat(quat.m_w, quat.m_x, quat.m_y, quat.m_z);
 	}
 
-	static std::string to_string(const prism::quat_t &quat)
+	static String to_string(const prism::quat_t &quat)
 	{
 		return fmt::sprintf(
 			FLT_FT "  " FLT_FT "  " FLT_FT "  " FLT_FT,

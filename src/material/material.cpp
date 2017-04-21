@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "material.h"
 
 #include <resource_lib.h>
@@ -59,7 +61,7 @@ void Material::destroy()
 	m_attributes.clear();
 }
 
-bool Material::load(std::string filePath)
+bool Material::load(String filePath)
 {
 	m_filePath = filePath;
 	auto file = getUFS()->open(m_filePath, FileSystem::read | FileSystem::binary);
@@ -76,17 +78,17 @@ bool Material::load(std::string filePath)
 	file.reset();
 
 	buff[fileSize] = '\0';
-	std::string buffer = (char *)buff;
+	String buffer = (char *)buff;
 	delete[] buff;
 
 	size_t begin_material = buffer.find(':'); // material : "effect" { }
-	if (begin_material == std::string::npos)
+	if (begin_material == String::npos)
 	{
 		error("material", m_filePath, "Unable to find \':\' in material!");
 		return false;
 	}
 
-	std::string check_mat = removeSpaces(buffer.substr(0, begin_material));
+	String check_mat = removeSpaces(buffer.substr(0, begin_material));
 	if (check_mat != "material")
 	{
 		error("material", m_filePath, "Invalid material format!");
@@ -96,19 +98,19 @@ bool Material::load(std::string filePath)
 	buffer = buffer.substr(begin_material + 1);
 
 	size_t brace_left = buffer.find('{');
-	if (brace_left == std::string::npos)
+	if (brace_left == String::npos)
 	{
 		error("material", m_filePath, "Unable to find left brace!");
 		return false;
 	}
 	size_t brace_right = buffer.rfind('}');
-	if (brace_right == std::string::npos)
+	if (brace_right == String::npos)
 	{
 		error("material", m_filePath, "Unable to find right brace!");
 		return false;
 	}
 
-	std::string effect = betweenQuotes(removeSpaces(buffer.substr(0, brace_left - 1)));
+	String effect = betweenQuotes(removeSpaces(buffer.substr(0, brace_left - 1)));
 	if (effect == "ERROR")
 	{
 		error("material", m_filePath, "Quotes effect error!");
@@ -127,26 +129,27 @@ bool Material::load(std::string filePath)
 	while (std::getline(ssbuffer, buffer))
 	{
 		size_t middle = buffer.find(':');
-		if (middle != std::string::npos)
+		if (middle != String::npos)
 		{
-			std::string name = removeSpaces(buffer.substr(0, middle));
-			std::string value = removeSpaces(buffer.substr(middle + 1));
+			String name = removeSpaces(buffer.substr(0, middle));
+			String nameWithoutIndex = removeSpaces(name.substr(0, name.find('[')));
+			String value = removeSpaces(buffer.substr(middle + 1));
 
-			std::vector<std::string> values;
+			Array<String> values;
 
 			size_t braceLeft = value.find('{');
 			size_t quoteLeft = value.find('\"');
 
-			if (braceLeft != std::string::npos)
+			if (braceLeft != String::npos)
 			{
 				size_t braceRight = value.find('}');
-				if (braceRight == std::string::npos)
+				if (braceRight == String::npos)
 				{
 					error("material", m_filePath, "Unable to find closing brace!");
 					continue;
 				}
 
-				std::string valuesArray = value.substr(braceLeft + 1, braceRight - braceLeft - 1);
+				String valuesArray = value.substr(braceLeft + 1, braceRight - braceLeft - 1);
 				std::replace_if(valuesArray.begin(), valuesArray.end(), [](char ch)->bool { return ch == ','; }, ' ');
 
 				char valuesArray2[128] = { 0 }, tempValue[128] = { 0 };
@@ -158,7 +161,7 @@ bool Material::load(std::string filePath)
 					valuesArrayptr += strlen(tempValue) + 1;
 				}
 			}
-			else if (quoteLeft != std::string::npos)
+			else if (quoteLeft != String::npos)
 			{
 				value = betweenQuotes(value);
 			}
@@ -171,7 +174,7 @@ bool Material::load(std::string filePath)
 				int indexTexture = 0;
 				size_t indexBraceLeft = name.find('[');
 				size_t indexBraceRight = name.find(']');
-				if (indexBraceLeft != std::string::npos && indexBraceRight != std::string::npos)
+				if (indexBraceLeft != String::npos && indexBraceRight != String::npos)
 				{
 					indexTexture = atoi(name.substr(indexBraceLeft + 1, indexBraceRight - 1).c_str());
 				}
@@ -182,18 +185,18 @@ bool Material::load(std::string filePath)
 				return indexTexture;
 			};
 
-			if (name.substr(0, sizeof("texture_name") - 1) == "texture_name")
+			if (nameWithoutIndex == "texture_name")
 			{
 				m_textures[textureProperty()].m_textureName = value.c_str();
 			}
-			else if (name.substr(0, sizeof("texture") - 1) == "texture")
+			else if (nameWithoutIndex == "texture")
 			{
 				m_textures[textureProperty()].m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
 			}
 			else if (name != "queue_bias")
 			{
 				Attribute attrib;
-				attrib.m_name = name.c_str();
+				attrib.m_name = name;
 				if (values.size() > 0)
 				{
 					if (values.size() > 4)
@@ -205,7 +208,7 @@ bool Material::load(std::string filePath)
 					attrib.m_valueCount = values.size();
 					for (uint32_t i = 0; i < attrib.m_valueCount; ++i)
 					{
-						attrib.m_value[i] = needl2srgb(attrib.m_name) ? lin2s((float)atof(values[i].c_str())) : (float)atof(values[i].c_str());
+						attrib.m_value[i] = needl2srgb(nameWithoutIndex) ? lin2s((float)atof(values[i].c_str())) : (float)atof(values[i].c_str());
 					}
 				}
 				else
@@ -229,9 +232,9 @@ bool Material::load(std::string filePath)
 	return true;
 }
 
-std::string Material::toDefinition(const std::string &prefix) const
+String Material::toDefinition(const String &prefix) const
 {
-	std::string result;
+	String result;
 	result += prefix + "Material {\n";
 	{
 		result += prefix + fmt::sprintf(TAB "Alias: \"%s\"\n", alias().c_str());
@@ -268,7 +271,7 @@ std::string Material::toDefinition(const std::string &prefix) const
 			result += prefix + TAB + "Texture {\n";
 			{
 				result += prefix + fmt::sprintf(TAB TAB "Tag: \"texture[%i]:%s\"\n", (int)i, tex->m_textureName.c_str());
-				result += prefix + fmt::sprintf(TAB TAB "Value: \"%s\"\n", std::string(tex->m_texture.c_str()).substr(0, tex->m_texture.length() - 5).c_str());
+				result += prefix + fmt::sprintf(TAB TAB "Value: \"%s\"\n", String(tex->m_texture.c_str()).substr(0, tex->m_texture.length() - 5).c_str());
 			}
 			result += prefix + TAB + "}\n";
 		}
@@ -277,9 +280,9 @@ std::string Material::toDefinition(const std::string &prefix) const
 	return result;
 }
 
-std::string Material::toDeclaration(const std::string &prefix) const
+String Material::toDeclaration(const String &prefix) const
 {
-	std::string result;
+	String result;
 	result += prefix + "Material {\n";
 	{
 		result += prefix + fmt::sprintf(TAB "Alias: \"%s\"\n", alias().c_str());
@@ -289,17 +292,17 @@ std::string Material::toDeclaration(const std::string &prefix) const
 	return result;
 }
 
-std::string Material::alias() const
+String Material::alias() const
 {
 	return m_alias;
 }
 
-void Material::setAlias(std::string name)
+void Material::setAlias(String name)
 {
 	m_alias = name;
 }
 
-bool Material::convertTextures(std::string exportPath) const
+bool Material::convertTextures(String exportPath) const
 {
 	for (auto &texture : m_textures)
 	{

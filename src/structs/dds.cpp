@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <prerequisites.h>
+
 #include "dds.h"
 
 #include <fs/file.h>
@@ -16,7 +18,7 @@
 
 namespace dds
 {
-	void print_debug(std::string filepath)
+	void print_debug(String filepath)
 	{
 		auto file = getSFS()->open(filepath, FileSystem::read | FileSystem::binary);
 		if (!file)
@@ -27,7 +29,7 @@ namespace dds
 		else
 		{
 			const size_t fileSize = file->getSize();
-			std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+			UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 			file->read((char *)buffer.get(), sizeof(char), fileSize);
 			file.reset();
 

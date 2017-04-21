@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "token.h"
 
 namespace prism
@@ -26,9 +28,9 @@ namespace prism
 		return result;
 	}
 
-	std::string token_to_string(const prism::token_t &token)
+	String token_to_string(const prism::token_t &token)
 	{
-		std::string resultStr(16, '\0');
+		String resultStr(16, '\0');
 		_ulldiv_t result;
 		prism::token_t tokenCopy = token;
 		for (size_t i = 0; tokenCopy.get() != 0; ++i)
@@ -45,7 +47,7 @@ namespace prism
 		return (str[index] ? (multiplier * token_data::g_ids[str[index]]) + _string_to_token(str, index + 1, multiplier * 38) : 0);
 	}
 
-	token_t string_to_token(const std::string &s)
+	token_t string_to_token(const String &s)
 	{
 		return _string_to_token(s.c_str());
 	}

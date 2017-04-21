@@ -8,9 +8,6 @@
  *********************************************************************/
 
 #pragma once
-
-#include <prerequisites.h>
-
 #pragma pack(push, 1)
 
 namespace prism
@@ -50,9 +47,9 @@ namespace prism
 		{
 			return m[idx];
 		}
-		std::string toString() const
+		String toString() const
 		{
-			std::string result = " ";
+			String result = " ";
 			for (size_t i = 0; i < N; ++i)
 			{
 				for (size_t j = 0; j < N; ++j)

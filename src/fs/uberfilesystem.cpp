@@ -7,7 +7,10 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "uberfilesystem.h"
+
 #include "file.h"
 
 UberFileSystem::UberFileSystem()
@@ -18,7 +21,7 @@ UberFileSystem::~UberFileSystem()
 {
 }
 
-std::unique_ptr<File> UberFileSystem::open(const std::string &filename, FsOpenMode mode)
+UniquePtr<File> UberFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
@@ -28,20 +31,20 @@ std::unique_ptr<File> UberFileSystem::open(const std::string &filename, FsOpenMo
 			return file;
 		}
 	}
-	return std::unique_ptr<File>();
+	return UniquePtr<File>();
 }
 
-bool UberFileSystem::mkdir(const std::string &directory)
+bool UberFileSystem::mkdir(const String &directory)
 {
 	return false;
 }
 
-bool UberFileSystem::rmdir(const std::string &directory)
+bool UberFileSystem::rmdir(const String &directory)
 {
 	return false;
 }
 
-bool UberFileSystem::exists(const std::string &filename)
+bool UberFileSystem::exists(const String &filename)
 {
 	for (const auto &fs : m_filesystems)
 	{
@@ -51,7 +54,7 @@ bool UberFileSystem::exists(const std::string &filename)
 	return false;
 }
 
-bool UberFileSystem::dirExists(const std::string &dirpath)
+bool UberFileSystem::dirExists(const String &dirpath)
 {
 	for (const auto &fs : m_filesystems)
 	{
@@ -61,9 +64,9 @@ bool UberFileSystem::dirExists(const std::string &dirpath)
 	return false;
 }
 
-std::unique_ptr<std::list<std::string>> UberFileSystem::readDir(const std::string &path, bool absolutePaths, bool recursive)
+UniquePtr<List<String>> UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive)
 {
-	auto result = std::make_unique<std::list<std::string>>();
+	auto result = std::make_unique<List<String>>();
 	for (const auto &fs : m_filesystems)
 	{
 		auto current = fs.second->readDir(path, absolutePaths, recursive);
@@ -75,7 +78,7 @@ std::unique_ptr<std::list<std::string>> UberFileSystem::readDir(const std::strin
 	return result;
 }
 
-FileSystem *UberFileSystem::mount(std::unique_ptr<FileSystem> fs, int priority)
+FileSystem *UberFileSystem::mount(UniquePtr<FileSystem> fs, int priority)
 {
 	m_filesystems[priority] = std::move(fs);
 	return m_filesystems[priority].get();

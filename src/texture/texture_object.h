@@ -9,14 +9,12 @@
 
 #pragma once
 
-#include <prerequisites.h>
-
 class TextureObject
 {
 	friend Model;
 private:
 	uint32_t m_texturesCount = 0;
-	std::string m_textures[6];
+	String m_textures[6];
 	enum Type {
 		_1D_MAP = 1,
 		_2D_MAP = 2,
@@ -42,15 +40,15 @@ private:
 	bool m_noanisotropic = false;
 	bool m_nocompress = false;
 	bool m_customColorSpace = false;
-	std::string m_filepath; // @example /vehicle/truck/share/glass.tobj
+	String m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
 
 	bool m_tsnormal = false;
 	bool m_ui = false;
 public:
-	bool load(std::string filepath);
-	bool loadDDS(std::string filepath);
-	bool saveToMidFormats(std::string exportpath);
+	bool load(String filepath);
+	bool loadDDS(String filepath);
+	bool saveToMidFormats(String exportpath);
 };
 
 /* eof */

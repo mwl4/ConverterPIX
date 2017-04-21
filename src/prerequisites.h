@@ -60,6 +60,32 @@
 #include <fmt/printf.h>
 #include <fmt/posix.h>
 
+using String		= std::string;
+using WString		= std::wstring;
+
+using StringStream	= std::stringstream;
+
+template < typename T >
+using Array			= std::vector<T>;
+
+template < typename T, size_t N >
+using SizedArray	= std::array<T, N>;
+
+template < typename T >
+using List			= std::list<T>;
+
+template < typename KEY_TYPE, typename VALUE_TYPE >
+using Map			= std::map<KEY_TYPE, VALUE_TYPE>;
+
+template < typename KEY_TYPE, typename VALUE_TYPE >
+using UnorderedMap	= std::unordered_map<KEY_TYPE, VALUE_TYPE>;
+
+template < typename T >
+using SharedPtr		= std::shared_ptr<T>;
+
+template < typename T >
+using UniquePtr		= std::unique_ptr<T>;
+
 #include <callbacks.h>
 
 #define TAB		"     "
@@ -150,19 +176,19 @@ static uint32_t flh(float x)
 	return *(uint32_t *)(&x);
 }
 
-static std::string removeSpaces(std::string str)
+static String removeSpaces(String str)
 {
 	str.erase(std::remove_if(str.begin(), str.end(), [](char c)->bool { return !!isspace(c); }), str.end());
 	return str;
 }
 
-static std::string betweenQuotes(std::string str)
+static String betweenQuotes(String str)
 {
 	size_t left = str.find('\"');
-	if (left != std::string::npos)
+	if (left != String::npos)
 	{
 		size_t right = str.find('\"', left + 1);
-		if (right != std::string::npos)
+		if (right != String::npos)
 		{
 			return str.substr(left + 1, right - left - 1);
 		}
@@ -170,9 +196,9 @@ static std::string betweenQuotes(std::string str)
 	return "ERROR";
 }
 
-static void remove(std::string &str, const std::string &substr)
+static void remove(String &str, const String &substr)
 {
-	for (size_t pos = std::string::npos; (pos = str.find(substr)) != std::string::npos;)
+	for (size_t pos = String::npos; (pos = str.find(substr)) != String::npos;)
 	{
 		str.erase(pos, substr.length());
 	}
@@ -184,7 +210,7 @@ static void remove(std::string &str, const std::string &substr)
  * @param[in] filepath The filepath to process (ex. "/vehicle/truck/mercedes.pmg")
  * @return @c The directory of the file (ex. "/vehicle/truck")
 */
-std::string directory(const std::string &filepath);
+String directory(const String &filepath);
 
 /**
  * @brief: Returns relative path of the file from directory
@@ -193,11 +219,11 @@ std::string directory(const std::string &filepath);
  * @param[in] directory The directory to process (ex. "/model/mover/characters/animations/man")
  * @return @c The relative path (ex. "../../../models/generic/m_asia_01_lod3.pis")
 */
-std::string relativePath(const std::string &filepath, const std::string &directory);
+String relativePath(const String &filepath, const String &directory);
 
 bool copyFile(File *const input, File *const output);
 
-static void backslashesToSlashes(std::string &str)
+static void backslashesToSlashes(String &str)
 {
 	std::replace(str.begin(), str.end(), '\\', '/');
 }
@@ -213,5 +239,24 @@ static bool fl_eq(float a, float b)
 	((unsigned)(unsigned char)(ch0) | ((unsigned)(unsigned char)(ch1) << 8) |   \
 	((unsigned)(unsigned char)(ch2) << 16) | ((unsigned)(unsigned char)(ch3) << 24 ))
 #endif
+
+template < typename T >
+struct IsIntegral {
+	enum { value = std::numeric_limits<T>::is_integer };
+};
+
+template < typename T >
+struct IsFloatingPoint {
+	enum {
+		value = std::numeric_limits<T>::is_specialized &&
+		!std::numeric_limits<T>::is_integer
+	};
+};
+
+template < bool C, typename T = void > struct EnableIf { };
+template < typename T > struct EnableIf<true, T> { typedef T type; };
+
+template <typename T>
+struct EnableIfArithmetic : EnableIf<IsIntegral<T>::value || IsFloatingPoint<T>::value, int> {};
 
 /* eof */

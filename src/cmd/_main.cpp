@@ -75,9 +75,9 @@ int main(int argc, char *argv[])
 
 	auto resLib = std::make_unique<ResourceLibrary>();
 
-	std::vector<std::string> basepath;
-	std::string exportpath;
-	std::string filepath;
+	Array<String> basepath;
+	String exportpath;
+	String filepath;
 
 	enum {
 		DIRECTORY_LIST,
@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 		DEBUG_DDS
 	} mode = DIRECTORY_LIST;
 	
-	std::string *parameter = nullptr;
-	std::vector<std::string> optionalArgs;
+	String *parameter = nullptr;
+	Array<String> optionalArgs;
 
 	for (int i = 1; i < argc; ++i)
 	{
-		std::string arg = argv[i];
+		String arg = argv[i];
 		if (parameter)
 		{
 			*parameter = arg;
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 			}
 			if (exportpath.empty())
 			{
-				exportpath = basepath[0] + "_exp";
+				exportpath = basepath.back() + "_exp";
 			}
 			backslashesToSlashes(filepath);
 			auto model = std::make_shared<Model>();
@@ -166,10 +166,10 @@ int main(int argc, char *argv[])
 				if (optionalArgs[i] == "*")
 				{
 					auto files = getUFS()->readDir(model->fileDirectory(), true, false);
-					files->erase(std::remove_if(files->begin(), files->end(), [](const std::string &s) {
+					files->erase(std::remove_if(files->begin(), files->end(), [](const String &s) {
 						return s.substr(s.rfind('.')) != ".pma";
 					}), files->end()); // remove files with no .pma extension
-					std::for_each(files->begin(), files->end(), [&](std::string &s) {
+					std::for_each(files->begin(), files->end(), [&](String &s) {
 						s = s.substr(0, s.rfind('.'));
 					}); // remove extensions
 					optionalArgs.insert(optionalArgs.end(), files->begin(), files->end());
@@ -208,11 +208,11 @@ int main(int argc, char *argv[])
 			auto files = getSFS()->readDir(basepath[0], true, true);
 			for (const auto &f : *files)
 			{
-				const std::string filename = f.substr(basepath[0].length());
-				const std::string extension = f.substr(f.rfind('.'));
+				const String filename = f.substr(basepath[0].length());
+				const String extension = f.substr(f.rfind('.'));
 				if (extension == ".pmg")
 				{
-					const std::string modelPath = filename.substr(0, filename.length() - 4);
+					const String modelPath = filename.substr(0, filename.length() - 4);
 					Model model;
 					if (!model.load(modelPath))
 					{

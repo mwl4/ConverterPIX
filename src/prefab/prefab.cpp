@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "prefab.h"
 
 #include <fs/file.h>
@@ -27,7 +29,7 @@
 
 using namespace prism;
 
-bool Prefab::load(std::string filePath)
+bool Prefab::load(String filePath)
 {
 	if (m_loaded)
 		destroy();
@@ -36,7 +38,7 @@ bool Prefab::load(std::string filePath)
 	m_directory = directory(filePath);
 	m_fileName = filePath.substr(m_directory.length() + 1);
 
-	std::string ppdPath = m_filePath + ".ppd";
+	String ppdPath = m_filePath + ".ppd";
 	auto file = getUFS()->open(ppdPath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
@@ -45,7 +47,7 @@ bool Prefab::load(std::string filePath)
 	}
 
 	size_t fileSize = file->getSize();
-	std::unique_ptr<uint8_t[]> buffer(new uint8_t[fileSize]);
+	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
 
@@ -205,9 +207,9 @@ void Prefab::destroy()
 	m_loaded = false;
 }
 
-bool Prefab::saveToPip(std::string exportPath) const
+bool Prefab::saveToPip(String exportPath) const
 {
-	std::string pipFilePath = exportPath + m_filePath + ".pip";
+	String pipFilePath = exportPath + m_filePath + ".pip";
 	auto file = getSFS()->open(pipFilePath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{

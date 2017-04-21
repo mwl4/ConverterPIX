@@ -7,6 +7,8 @@
  			  : Piotr Krupa (piotrkrupa06@gmail.com)
  *********************************************************************/
 
+#include <prerequisites.h>
+
 #include "sysfs_file.h"
 
 SysFsFile::SysFsFile()
@@ -40,7 +42,7 @@ size_t SysFsFile::getSize() const
 	return result;
 }
 
-const char *SysFsFile::getLine(std::string &out)
+const char *SysFsFile::getLine(String &out)
 {
 	char buffer[1024] = { 0 };
 	const char *result = ::fgets(buffer, sizeof(buffer), m_fp);
