@@ -1,6 +1,20 @@
+ #####################################################################
+ #           Copyright (C) 2017 mwl4 - All rights reserved           #
+ #####################################################################
+
 CXXCOMPILER=g++
-CXXFLAGS=-c -g -w -O2 -Wall -std=c++14 -msse -msse2 -fpermissive -I./ -I./libs/glm -I./libs/fmt
-LDFLAGS=-g ./libs/libs/libfmt.a
+CXXSTANDARD=c++14
+
+CXXFLAGS=-c -g -w -O3 -Wall -msse -msse2 -fpermissive -std=$(CXXSTANDARD)
+
+INCLUDES=-I./
+INCLUDES+=-I./libs/glm
+INCLUDES+=-I./libs/fmt
+
+LDFLAGS=-g
+
+LIBS=./libs/libs/libfmt.a
+
 CXXSOURCE=$(wildcard *.cpp)
 CXXSOURCE+=$(wildcard fs/*.cpp)
 CXXSOURCE+=$(wildcard material/*.cpp)
@@ -13,19 +27,23 @@ CXXSOURCE+=$(wildcard utils/*.cpp)
 CXXSOURCE+=$(wildcard cmd/*.cpp)
 
 CXXOBJECTS=$(CXXSOURCE:.cpp=.o)
+
 EXECUTABLE=../bin/linux/converter_pix_names
-EXECUTABLE1=../bin/linux/converter_pix
+EXECUTABLE_NO_SYMBOLS=../bin/linux/converter_pix
 
-all: 	$(CXXSOURCE) $(EXECUTABLE) st
+NEWLINE="\n"
 
-st: $(EXECUTABLE)
-	strip -s $(EXECUTABLE) -o $(EXECUTABLE1)
+all: $(EXECUTABLE)
+	strip -s $(EXECUTABLE) -o $(EXECUTABLE_NO_SYMBOLS)
+	@echo -e $(NEWLINE) "ConverterPIX has been successfully built!" $(NEWLINE)
 
 $(EXECUTABLE): $(CXXOBJECTS)
-	$(CXXCOMPILER) $(CXXOBJECTS) $(LDFLAGS) -o $@
+	$(CXXCOMPILER) $(CXXOBJECTS) $(LDFLAGS) $(LIBS) -o $@
 
 %.o: %.cpp
-	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
+	$(CXXCOMPILER) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 clean:
-	rm -Rf $(CXXOBJECTS) $(EXECUTABLE) $(EXECUTABLE1)
+	rm -Rf $(CXXOBJECTS) $(EXECUTABLE) $(EXECUTABLE_NO_SYMBOLS)
+
+# eof #
