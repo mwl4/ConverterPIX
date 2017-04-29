@@ -132,7 +132,7 @@ void Animation::saveToPia(String exportPath) const
 			stream.allocateIndexedObjects(m_timeframes.size());
 			for (size_t timeframe = 0; timeframe < m_timeframes.size(); ++timeframe)
 			{
-				stream[timeframe] = m_timeframes[timeframe];
+				stream[timeframe] = Float1(m_timeframes[timeframe]);
 			}
 		}
 		{

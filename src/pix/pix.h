@@ -72,7 +72,7 @@ namespace Pix
 				bool		m_boolean[4];
 			};
 			String				m_string;
-			UniquePtr<Custom>	m_custom;
+			//UniquePtr<Custom>	m_custom;
 		};
 		Array<ValueHolder> m_values;
 
