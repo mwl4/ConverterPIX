@@ -64,9 +64,9 @@ bool UberFileSystem::dirExists(const String &dirpath)
 	return false;
 }
 
-UniquePtr<List<String>> UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive)
+auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
-	auto result = std::make_unique<List<String>>();
+	auto result = std::make_unique<List<Entry>>();
 	for (const auto &fs : m_filesystems)
 	{
 		auto current = fs.second->readDir(path, absolutePaths, recursive);

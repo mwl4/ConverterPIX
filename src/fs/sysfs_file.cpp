@@ -70,4 +70,9 @@ size_t SysFsFile::tell()
 	return (size_t)::ftell(m_fp);
 }
 
+void SysFsFile::flush()
+{
+	::fflush(m_fp);
+}
+
 /* eof */

@@ -204,6 +204,12 @@ static void remove(String &str, const String &substr)
 	}
 }
 
+static String removeSlashAtEnd(const String &s)
+{
+	const char lastch = s[s.length() - 1];
+	return s.substr(0, s.length() - ((lastch == '\\' || lastch == '/') ? 1 : 0));
+}
+
 /**
  * @brief: Returns directory of the file
  * 
@@ -234,6 +240,16 @@ static bool fl_eq(float a, float b)
 	return fabs(a - b) < FLT_EPSILON;
 }
 
+static String valueToQuotedString(const String &value)
+{
+	return "\"" + value + "\"";
+}
+
+static String valueToQuotedString(const char *const value)
+{
+	return valueToQuotedString(String(value));
+}
+
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3) \
 	((unsigned)(unsigned char)(ch0) | ((unsigned)(unsigned char)(ch1) << 8) |   \
@@ -253,8 +269,18 @@ struct IsFloatingPoint {
 	};
 };
 
-template < bool C, typename T = void > struct EnableIf { };
-template < typename T > struct EnableIf<true, T> { typedef T type; };
+//template < typename T >
+//struct IsBoolean {
+//	enum {
+//		value = st::is_same<
+//	};
+//};
+
+template < bool C, typename T = void >
+struct EnableIf { };
+
+template < typename T >
+struct EnableIf<true, T> { typedef T type; };
 
 template <typename T>
 struct EnableIfArithmetic : EnableIf<IsIntegral<T>::value || IsFloatingPoint<T>::value, int> {};

@@ -12,6 +12,8 @@
 class FileSystem
 {
 public:
+	class Entry;
+
 	enum FsOpenMode
 	{
 		OpenModeNone = 0
@@ -36,7 +38,23 @@ public:
 	virtual bool rmdir(const String &directory) = 0;
 	virtual bool exists(const String &filename) = 0;
 	virtual bool dirExists(const String &dirpath) = 0;
-	virtual UniquePtr<List<String>> readDir(const String &path, bool absolutePaths, bool recursive) = 0;
+	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) = 0;
+};
+
+class FileSystem::Entry
+{
+public:
+	Entry() {}
+	Entry(String path, bool directory) : m_path(path), m_directory(directory) {}
+
+	const String &GetPath() const { return m_path; }
+	void SetPath(const String path) { m_path = path; }
+
+	bool IsDirectory() const { return m_directory; }
+
+private:
+	String m_path;
+	bool m_directory;
 };
 
 constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const FileSystem::FsOpenMode f)

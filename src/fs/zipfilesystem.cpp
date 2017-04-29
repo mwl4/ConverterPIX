@@ -57,7 +57,7 @@ bool ZipFileSystem::dirExists(const String &dirpath)
 	return false;
 }
 
-UniquePtr<List<String>> ZipFileSystem::readDir(const String &path, bool absolutePaths, bool recursive)
+auto ZipFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
 	return nullptr;
 }

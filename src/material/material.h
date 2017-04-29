@@ -10,7 +10,10 @@
 #pragma once
 
 #include <structs/pmd.h>
+
 #include <math/vector.h>
+
+#include <pix/pix.h>
 
 class Material
 {
@@ -21,14 +24,14 @@ public:
 		String m_name;
 		enum { FLOAT, STRING } m_valueType;
 		uint32_t m_valueCount;
-		prism::float4 m_value;
+		Double4 m_value;
 		String m_stringValue;
 	public:
 		Attribute();
 		~Attribute();
 
 		void clear();
-		const char *getFormat() const;
+		String getFormat() const;
 
 		friend Material;
 	};
@@ -51,6 +54,9 @@ public:
 	String toDefinition(const String &prefix = "") const;
 
 	String toDeclaration(const String &prefix = "") const;
+
+	Pix::Value toPixDefinition() const;
+	Pix::Value toPixDeclaration() const;
 
 	/**
 	 * @brief Creates alias of material

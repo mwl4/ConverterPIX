@@ -166,13 +166,27 @@ int main(int argc, char *argv[])
 				if (optionalArgs[i] == "*")
 				{
 					auto files = getUFS()->readDir(model->fileDirectory(), true, false);
-					files->erase(std::remove_if(files->begin(), files->end(), [](const String &s) {
-						return s.substr(s.rfind('.')) != ".pma";
-					}), files->end()); // remove files with no .pma extension
-					std::for_each(files->begin(), files->end(), [&](String &s) {
-						s = s.substr(0, s.rfind('.'));
-					}); // remove extensions
-					optionalArgs.insert(optionalArgs.end(), files->begin(), files->end());
+
+					// remove files with no .pma extension
+					files->erase(
+						std::remove_if(files->begin(), files->end(), 
+							[](const FileSystem::Entry &s) {
+								return s.IsDirectory() || s.GetPath().substr(s.GetPath().rfind('.')) != ".pma";
+							}),
+						files->end()
+					);
+
+					// remove extensions
+					std::for_each(files->begin(), files->end(),
+						[&](FileSystem::Entry &s) {
+							s.SetPath(s.GetPath().substr(0, s.GetPath().rfind('.')));
+						}
+					);
+
+					for (const auto &f : (*files))
+					{
+						optionalArgs.push_back(f.GetPath());
+					}
 					continue;
 				}
 				backslashesToSlashes(optionalArgs[i]);
@@ -208,8 +222,11 @@ int main(int argc, char *argv[])
 			auto files = getSFS()->readDir(basepath[0], true, true);
 			for (const auto &f : *files)
 			{
-				const String filename = f.substr(basepath[0].length());
-				const String extension = f.substr(f.rfind('.'));
+				if (f.IsDirectory())
+					continue;
+
+				const String filename = f.GetPath().substr(basepath[0].length());
+				const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
 				if (extension == ".pmg")
 				{
 					const String modelPath = filename.substr(0, filename.length() - 4);

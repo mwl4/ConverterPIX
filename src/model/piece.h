@@ -28,7 +28,7 @@ struct Vertex
 
 struct Triangle
 {
-	uint16_t m_a[3];
+	Int3 m_attach;
 };
 
 class Piece

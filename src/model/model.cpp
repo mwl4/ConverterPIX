@@ -15,6 +15,7 @@
 #include <fs/uberfilesystem.h>
 #include <fs/sysfilesystem.h>
 
+#include <pix/pix.h>
 #include <resource_lib.h>
 #include <texture/texture.h>
 #include <prefab/prefab.h>
@@ -87,6 +88,15 @@ String Variant::Attribute::toDefinition(const String &prefix) const
 	}
 	result += prefix + "}" SEOL;
 	return result;
+}
+
+Pix::Value Variant::Attribute::toPixDefinition() const
+{
+	Pix::Value root;
+	root["Format"] = m_type == INT ? "INT" : "UNKNOWN";
+	root["Tag"] = m_name;
+	root["Value"] = prism::vec_t<int, 1>(m_intValue);
+	return root;
 }
 
 void Model::destroy()
@@ -382,9 +392,9 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 		auto triangle = (const pmg_triangle_t *)(buffer + piece->m_triangle_offset);
 		for (int32_t j = 0; j < (piece->m_edges / 3); ++j, ++triangle)
 		{
-			currentPiece->m_triangles[j].m_a[0] = triangle->a[0];
-			currentPiece->m_triangles[j].m_a[1] = triangle->a[1];
-			currentPiece->m_triangles[j].m_a[2] = triangle->a[2];
+			currentPiece->m_triangles[j].m_attach[0] = triangle->a[0];
+			currentPiece->m_triangles[j].m_attach[1] = triangle->a[1];
+			currentPiece->m_triangles[j].m_attach[2] = triangle->a[2];
 		}
 	}
 	return true;
@@ -599,9 +609,9 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 		auto triangle = (const pmg_index_t *)(buffer + piece->m_index_offset);
 		for (int32_t j = 0; j < (piece->m_edges / 3); ++j, ++triangle)
 		{
-			currentPiece->m_triangles[j].m_a[0] = triangle->a[0];
-			currentPiece->m_triangles[j].m_a[1] = triangle->a[1];
-			currentPiece->m_triangles[j].m_a[2] = triangle->a[2];
+			currentPiece->m_triangles[j].m_attach[0] = triangle->a[0];
+			currentPiece->m_triangles[j].m_attach[1] = triangle->a[1];
+			currentPiece->m_triangles[j].m_attach[2] = triangle->a[2];
 		}
 	}
 	return true;
@@ -732,6 +742,173 @@ bool Model::saveToPim(String exportPath) const
 		error_f("model", m_filePath, "Unable to save model file [%s] (%s)!", pimFilePath, strerror(errno));
 		return false;
 	}
+
+	/*Pix::Value root;
+
+	Pix::Value &header = root["Header"];
+	header["FormatVersion"] = 5;
+	header["Source"] = STRING_VERSION;
+	header["Type"] = "Model";
+	header["Name"] = m_fileName;
+
+	Pix::Value &global = root["Global"];
+	global["VertexCount"] = m_vertCount;
+	global["TriangleCount"] = m_triangleCount;
+	global["MaterialCount"] = m_materialCount;
+	global["PieceCount"] = m_pieces.size();
+	global["PartCount"] = m_parts.size();
+	global["BoneCount"] = m_bones.size();
+	global["LocatorCount"] = m_locators.size();
+	global["Skeleton"] = m_fileName + ".pis";
+
+	if (m_looks.size() > 0)
+	{
+		for (const auto &mat : m_looks[0].m_materials)
+		{
+			root["Material"] = mat.toPixDeclaration();
+		}
+	}
+
+	for (const auto &piece : m_pieces)
+	{
+		Pix::Value &p = root["Piece"];
+		p["Index"] = piece.m_index;
+		p["Material"] = piece.m_material;
+		p["VertexCount"] = piece.m_vertices.size();
+		p["TriangleCount"] = piece.m_triangles.size();
+		p["StreamCount"] = piece.m_streamCount;
+
+		if (piece.m_position)
+		{
+			Pix::Value &stream = p["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+			stream["Tag"] = "_POSITION";
+			stream.allocateIndexedObjects(piece.m_vertices.size());
+			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+			{
+				stream[i] = piece.m_vertices[i].m_position;
+			}
+		}
+
+		if (piece.m_normal)
+		{
+			Pix::Value &stream = p["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+			stream["Tag"] = "_NORMAL";
+			stream.allocateIndexedObjects(piece.m_vertices.size());
+			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+			{
+				stream[i] = piece.m_vertices[i].m_normal;
+			}
+		}
+
+		if (piece.m_tangent)
+		{
+			Pix::Value &stream = p["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+			stream["Tag"] = "_TANGENT";
+			stream.allocateIndexedObjects(piece.m_vertices.size());
+			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+			{
+				stream[i] = piece.m_vertices[i].m_tangent;
+			}
+		}
+
+		if (piece.m_texcoord)
+		{
+			for (uint32_t texcoord = 0; texcoord < piece.m_texcoordCount; ++texcoord)
+			{
+				Pix::Value &stream = p["Stream"];
+				stream["Format"] = Pix::Value::Enumeration("FLOAT2");
+				stream["Tag"] = fmt::sprintf("_UV%i", texcoord);
+
+				Array<uint32_t> texCoords = piece.texCoords(texcoord);
+				stream["AliasCount"] = texCoords.size();
+
+				Array<String> texCoordsString;
+				for (const uint32_t &tex : texCoords)
+				{
+					texCoordsString.push_back(fmt::sprintf("_TEXCOORD%i", tex));
+				}
+				stream["Aliases"] = texCoordsString;
+
+				stream.allocateIndexedObjects(piece.m_vertices.size());
+				for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+				{
+					stream[i] = piece.m_vertices[i].m_texcoords[texcoord];
+				}
+			}
+		}
+
+		if (piece.m_color)
+		{
+			Pix::Value &stream = p["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT4");
+			stream["Tag"] = "_RGBA";
+			stream.allocateIndexedObjects(piece.m_vertices.size());
+			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+			{
+				stream[i] = piece.m_vertices[i].m_color;
+			}
+		}
+
+		Pix::Value &triangles = p["Triangles"];
+		triangles.allocateIndexedObjects(piece.m_triangles.size());
+		for (size_t i = 0; i < piece.m_triangles.size(); ++i)
+		{
+			triangles[i] = piece.m_triangles[i].m_attach;
+		}
+	}
+
+	for (const auto &part : m_parts)
+	{
+		Pix::Value &p = root["Part"];
+		p["Name"] = part.m_name;
+		p["PieceCount"] = part.m_pieceCount;
+		p["LocatorCount"] = part.m_locatorCount;
+
+		Array<int> pieces;
+		for (uint32_t i = 0; i < part.m_pieceCount; ++i)
+		{
+			pieces.push_back(part.m_pieceId + i);
+		}
+		p["Pieces"] = pieces;
+
+		Array<int> locators;
+		for (uint32_t i = 0; i < part.m_locatorCount; ++i)
+		{
+			locators.push_back(part.m_locatorId + i);
+		}
+		p["Locators"] = locators;
+	}
+
+	for (const auto &locator : m_locators)
+	{
+		Pix::Value &l = root["Locator"];
+		l["Name"] = locator.m_name;
+		if (!locator.m_hookup.empty())
+		{
+			l["Hookup"] = locator.m_hookup;
+		}
+		l["Index"] = locator.m_index;
+		l["Position"] = locator.m_position;
+		l["Rotation"] = locator.m_rotation;
+		l["Scale"] = locator.m_scale;
+	}
+
+	if (!m_bones.empty())
+	{
+		Pix::Value &bones = root["Bones"];
+		bones.allocateIndexedObjects(m_bones.size());
+		for (size_t i = 0; i < m_bones.size(); ++i)
+		{
+			bones[i] = m_bones[i].m_name;
+		}
+	}
+
+	Pix::StyledStringWriter writer;
+	printf("result = \n%s\n", writer.write(root).c_str());*/
+
 
 	*file << fmt::sprintf(
 		"Header {"							SEOL
@@ -915,7 +1092,9 @@ bool Model::saveToPim(String exportPath) const
 			{
 				*file << fmt::sprintf(
 					TAB TAB "%-5i( %-5i %-5i %-5i )" SEOL,
-						j, currentPiece->m_triangles[j].m_a[0], currentPiece->m_triangles[j].m_a[1], currentPiece->m_triangles[j].m_a[2]
+						j, currentPiece->m_triangles[j].m_attach[0], 
+						   currentPiece->m_triangles[j].m_attach[1], 
+						   currentPiece->m_triangles[j].m_attach[2]
 					);
 			}
 
@@ -1094,76 +1273,49 @@ bool Model::saveToPit(String exportPath) const
 		return false;
 	}
 
-	*file << fmt::sprintf(
-		"Header {"					SEOL
-		TAB "FormatVersion: 1"		SEOL
-		TAB "Source: \"%s\""		SEOL
-		TAB "Type: \"Trait\""		SEOL
-		TAB "Name: \"%s\""			SEOL
-		"}"							SEOL,
-			STRING_VERSION,
-			m_fileName.c_str()
-		);
+	Pix::Value root;
 
-	*file << fmt::sprintf(
-		"Global {"					SEOL
-		TAB "LookCount: %i"			SEOL
-		TAB "VariantCount: %i"		SEOL
-		TAB "PartCount: %i"			SEOL
-		TAB "MaterialCount: %i"		SEOL
-		"}"							SEOL,
-			(int)m_looks.size(),
-			(int)m_variants.size(),
-			(int)m_parts.size(),
-			m_materialCount
-		);
+	Pix::Value &header = root["Header"];
+	header["FormatVersion"] = 1;
+	header["Source"] = STRING_VERSION;
+	header["Type"] = "Trait";
+	header["Name"] = m_fileName;
 
-	for (uint32_t i = 0; i < m_looks.size(); ++i)
+	Pix::Value &global = root["Global"];
+	global["LookCount"] = m_looks.size();
+	global["VariantCount"] = m_variants.size();
+	global["PartCount"] = m_parts.size();
+	global["MaterialCount"] = m_materialCount;
+
+	for (const auto &l : m_looks)
 	{
-		*file << fmt::sprintf(
-			"Look {"				SEOL
-			TAB "Name: \"%s\""		SEOL,
-				m_looks[i].m_name.c_str()
-			);
-
-		for (uint32_t j = 0; j < (uint32_t)m_looks[i].m_materials.size(); ++j)
+		Pix::Value &look = root["Look"];
+		look["Name"] = l.m_name;
+		for (const auto &mat : l.m_materials)
 		{
-			*file << m_looks[i].m_materials[j].toDefinition(TAB);
+			look["Material"] = mat.toPixDefinition();
 		}
-
-		*file << "}"				SEOL;
 	}
 
-	for (uint32_t i = 0; i < m_variants.size(); ++i)
+	for (const auto &v : m_variants)
 	{
-		*file << fmt::sprintf(
-			"Variant {"				SEOL
-			TAB "Name: \"%s\""		SEOL,
-				m_variants[i].m_name.c_str()
-			);
-
-		for (uint32_t j = 0; j < m_parts.size(); ++j)
+		Pix::Value &variant = root["Variant"];
+		variant["Name"] = v.m_name;
+		for (uint32_t i = 0; i < m_parts.size(); ++i)
 		{
-			*file << fmt::sprintf(
-				TAB "Part {"		SEOL
-				TAB TAB "Name: \"%s\""			SEOL
-				TAB TAB "AttributeCount: %i"	SEOL,
-					m_parts[j].m_name.c_str(),
-					m_variants[i].m_parts[j].m_attributes.size()
-				);
-
-			for (uint32_t k = 0; k < m_variants[i].m_parts[j].m_attributes.size(); ++k)
+			Pix::Value &part = variant["Part"];
+			part["Name"] = m_parts[i].m_name;
+			part["AttributeCount"] = v.m_parts[i].m_attributes.size();
+			for (uint32_t k = 0; k < v.m_parts[i].m_attributes.size(); ++k)
 			{
-				*file << m_variants[i].m_parts[j][k].toDefinition(TAB TAB);
+				part["Attribute"] = v.m_parts[i][k].toPixDefinition();
 			}
-
-			*file << TAB "}"		SEOL;
 		}
-
-		*file << "}"				SEOL;
 	}
 
-	file.reset();
+	Pix::StyledFileWriter writer;
+	writer.write(file.get(), root);
+	file->flush();
 	return true;
 }
 

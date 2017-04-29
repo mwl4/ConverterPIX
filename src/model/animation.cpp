@@ -16,6 +16,7 @@
 #include <fs/uberfilesystem.h>
 #include <structs/pma.h>
 #include <model/model.h>
+#include <pix/pix.h>
 
 #include <glm/gtx/transform.hpp>
 
@@ -40,7 +41,7 @@ bool Animation::load(SharedPtr<Model> model, String filePath)
 	}
 
 	const String pmaFilepath = m_filePath + ".pma";
-	auto file = getUFS()->open(pmaFilepath, FileSystem::read | FileSystem::binary);
+	UniquePtr<File> file = getUFS()->open(pmaFilepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
 		error("animation", m_filePath, "Cannot open animation file!");
@@ -95,154 +96,102 @@ bool Animation::load(SharedPtr<Model> model, String filePath)
 
 void Animation::saveToPia(String exportPath) const
 {
-	const String filename = m_filePath.substr(m_filePath.rfind('/') + 1);
 	const String piafile = exportPath + m_filePath + ".pia";
-	auto file = getSFS()->open(piafile, FileSystem::write | FileSystem::binary);
+	UniquePtr<File> file = getSFS()->open(piafile, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
 		error_f("animation", piafile, "Unable to save file (%s)", getSFS()->getError());
 		return;
 	}
 
-	*file << fmt::sprintf(
-		"Header {"						SEOL
-		TAB "FormatVersion: 3"			SEOL
-		TAB "Source: \"%s\""			SEOL
-		TAB "Type: \"Animation\""		SEOL
-		TAB "Name: \"%s\""				SEOL
-		"}"								SEOL,
-			STRING_VERSION,
-			filename.c_str()
-		);
+	Pix::Value root;
 
-	*file << fmt::sprintf(
-		"Global {"						SEOL
-		TAB "Skeleton: \"%s\""			SEOL
-		TAB "TotalTime: %f"				SEOL
-		TAB "BoneChannelCount: %i"		SEOL
-		TAB "CustomChannelCount: %i"	SEOL
-		"}"								SEOL,
-			relativePath((m_model->filePath() + ".pis"), directory(m_filePath)).c_str(),
-			m_totalLength,
-			(int)m_bones.size(),
-			0
-		);
+	Pix::Value &header = root["Header"];
+	header["FormatVersion"] = 3;
+	header["Source"] = STRING_VERSION;
+	header["Type"] = "Animation";
+	header["Name"] = m_filePath.substr(m_filePath.rfind('/') + 1);
+
+	Pix::Value &global = root["Global"];
+	global["Skeleton"] = relativePath((m_model->filePath() + ".pis"), directory(m_filePath));
+	global["TotalTime"] = double{ m_totalLength };
+	global["BoneChannelCount"] = (int)m_bones.size();
+	global["CustomChannelCount"] = m_movement ? 1 : 0;
 
 	if (m_movement)
 	{
-		*file << "CustomChannel {"			SEOL;
-		*file << fmt::sprintf(
-			TAB "Name: \"%s\""				SEOL
-			TAB "StreamCount: %i"			SEOL
-			TAB "KeyframeCount : %i"		SEOL,
-				"Prism Movement",
-				2,
-				(int)m_timeframes.size()
-			);
-		*file << TAB "Stream {"		SEOL;
-		{
-			*file << fmt::sprintf(
-				TAB TAB "Format: FLOAT"		SEOL
-				TAB TAB "Tag: \"_TIME\""	SEOL
-				);
+		Pix::Value &channel = root["CustomChannel"];
+		channel["Name"] = "Prism Movement";
+		channel["StreamCount"] = 2;
+		channel["KeyframeCount"] = m_timeframes.size();
 
-			for (uint32_t j = 0; j < m_timeframes.size(); ++j)
+		{
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT");
+			stream["Tag"] = "_TIME";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t timeframe = 0; timeframe < m_timeframes.size(); ++timeframe)
 			{
-				*file << fmt::sprintf(
-					TAB TAB "%-5i( " FLT_FT " )" SEOL,
-						j, flh(m_timeframes[j])
-					);
+				stream[timeframe] = m_timeframes[timeframe];
 			}
 		}
-		*file << TAB "}"					SEOL;
-		*file << TAB "Stream {"				SEOL;
 		{
-			*file << fmt::sprintf(
-				TAB TAB "Format: FLOAT3"	SEOL
-				TAB TAB "Tag: \"_MOVEMENT\"" SEOL
-				);
-
-			for (uint32_t j = 0; j < m_timeframes.size(); ++j)
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+			stream["Tag"] = "_MOVEMENT";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t keyframe = 0; keyframe < m_timeframes.size(); ++keyframe)
 			{
-				*file << fmt::sprintf(
-					TAB TAB "%-5i( " FLT_FT "  " FLT_FT "  " FLT_FT " )" SEOL,
-						j, flh((*m_movement)[j][0]), flh((*m_movement)[j][1]), flh((*m_movement)[j][2])
-					);
+				stream[keyframe] = (*m_movement)[keyframe];
 			}
 		}
-		*file << TAB "}"					SEOL;
-		*file << "}"						SEOL;
 	}
 
-	for (uint32_t i = 0; i < m_bones.size(); ++i)
+	for (size_t boneIndex = 0; boneIndex < m_bones.size(); ++boneIndex)
 	{
-		if (m_bones[i] >= m_model->boneCount())
+		if (m_bones[boneIndex] >= m_model->boneCount())
 		{
-			error_f("animation", m_filePath, "Bone index outside bones array! [%i/%i]", (int)m_bones[i], m_model->boneCount());
+			error_f("animation", m_filePath, "Bone index outside bones array! [%i/%i]", (int)m_bones[boneIndex], m_model->boneCount());
 			return;
 		}
 
-		const auto bone = m_model->bone(m_bones[i]);
+		const auto bone = m_model->bone(m_bones[boneIndex]);
 
-		*file << "BoneChannel {"		SEOL;
+		Pix::Value &channel = root["BoneChannel"];
+		channel["Name"] = bone->m_name;
+		channel["StreamCount"] = 2;
+		channel["KeyframeCount"] = m_timeframes.size();
+
 		{
-			*file << fmt::sprintf(
-				TAB "Name: \"%s\""		SEOL
-				TAB "StreamCount: %i"	SEOL
-				TAB "KeyframeCount: %i"	SEOL,
-					bone->m_name.c_str(),
-					2,
-					m_timeframes.size()
-				);
-			*file << TAB "Stream {"		SEOL;
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT");
+			stream["Tag"] = "_TIME";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t timeframe = 0; timeframe < m_timeframes.size(); ++timeframe)
 			{
-				*file << fmt::sprintf(
-					TAB TAB "Format: FLOAT"		SEOL
-					TAB TAB "Tag: \"_TIME\""	SEOL
-					);
-
-				for (uint32_t j = 0; j < m_timeframes.size(); ++j)
-				{
-					*file << fmt::sprintf(
-						TAB TAB "%-5i( " FLT_FT " )" SEOL,
-							j, flh(m_timeframes[j])
-						);
-				}
+				stream[timeframe] = Float1(m_timeframes[timeframe]);
 			}
-			*file << TAB "}"			SEOL;
-
-			*file << TAB "Stream {"		SEOL;
-			{
-				*file << fmt::sprintf(
-					TAB TAB "Format: FLOAT4x4"	SEOL
-					TAB TAB "Tag: \"_MATRIX\""	SEOL
-					);
-
-				for (uint32_t j = 0; j < m_timeframes.size(); ++j)
-				{
-					const Frame *frame = &m_frames[i][j];
-					const glm::vec3 trans = glm_cast(frame->m_translation);
-					const glm::quat rot = glm_cast(frame->m_rotation);
-					const glm::vec3 scale = glm_cast(frame->m_scale) * bone->m_signOfDeterminantOfMatrix;
-					const prism::mat4 mat = glm::translate(trans) * glm::mat4_cast(rot) * glm::scale(scale);
-
-					*file << fmt::sprintf(
-						TAB TAB  "%-5i(  &%08x  &%08x  &%08x  &%08x"	SEOL
-						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
-						TAB TAB "        &%08x  &%08x  &%08x  &%08x"	SEOL
-						TAB TAB "        &%08x  &%08x  &%08x  &%08x )"	SEOL,
-							j,  flh(mat[0][0]), flh(mat[1][0]), flh(mat[2][0]), flh(mat[3][0]),
-								flh(mat[0][1]), flh(mat[1][1]), flh(mat[2][1]), flh(mat[3][1]),
-								flh(mat[0][2]), flh(mat[1][2]), flh(mat[2][2]), flh(mat[3][2]),
-								flh(mat[0][3]), flh(mat[1][3]), flh(mat[2][3]), flh(mat[3][3])
-						);
-				}
-			}
-			*file << TAB "}"			SEOL;
 		}
-		*file << "}"					SEOL;
+		{
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT4x4");
+			stream["Tag"] = "_MATRIX";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t keyframe = 0; keyframe < m_timeframes.size(); ++keyframe)
+			{
+				const Frame *frame = &m_frames[boneIndex][keyframe];
+				const glm::vec3 trans = glm_cast(frame->m_translation);
+				const glm::quat rot = glm_cast(frame->m_rotation);
+				const glm::vec3 scale = glm_cast(frame->m_scale) * bone->m_signOfDeterminantOfMatrix;
+				const prism::mat4 mat = glm::translate(trans) * glm::mat4_cast(rot) * glm::scale(scale);
+				stream[keyframe] = mat;
+			}
+		}
 	}
-	file.reset();
+
+	Pix::StyledFileWriter writer;
+	writer.write(file.get(), root);
+	file->flush();
 }
 
 /* eof */

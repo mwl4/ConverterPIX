@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <fs/file.h>
+
 #include <math/vector.h>
 #include <math/quaternion.h>
 #include <math/matrix.h>
@@ -24,163 +26,292 @@ namespace Pix
 		enum class Type
 		{
 			Null = 0,
-			Int, Int2, Int3, Int4,
-			UInt, UInt2, UInt3, UInt4,
-			Real, Real2, Real3, Real4, Real4x4,
+			Int,
+			UInt,
+			Float,
+			FloatMatrix,
+			Double,
 			Boolean,
 			String,
+			Enum,
 			Object
 		};
-	//private:
-		struct ValueHolder
+
+		Type m_type;
+
+		class Enumeration
 		{
-			union
+		public:
+			explicit Enumeration(const String &s)
+				: m_name(s)
 			{
-				LargestInt	m_int;
-				LargestInt	m_int2[2];
-				LargestInt	m_int3[3];
-				LargestInt	m_int4[4];
+			}
 
-				LargestUInt	m_uint;
-				LargestUInt	m_uint2[2];
-				LargestUInt	m_uint3[3];
-				LargestUInt	m_uint4[4];
-
-				float		m_real;
-				float		m_real2[2];
-				float		m_real3[3];
-				float		m_real4[4];
-				float		m_real4x4[4][4];
-
-				bool		m_boolean;
-				bool		m_boolean[2];
-				bool		m_boolean[3];
-				bool		m_boolean[4];
-			};
-			String			m_string;
+		public:
+			String m_name;
 		};
 
-		struct : ValueHolder
+		class Custom
 		{
-			Array<ValueHolder> m_array;
+		public:
+			virtual String Get() const = 0;
+		};
 
-			struct Object
+	private:
+		struct ValueHolder
+		{
+			size_t	m_valueCount = 0;
+			bool	m_parentheses = false;
+			union
 			{
-				String m_name;
-				UniquePtr<Value> m_value;
+				LargestInt	m_int[4];
+				LargestUInt	m_uint[4];
+				double		m_double[4];
+				float		m_float[4];
+				float		m_float4x4[4][4];
+				bool		m_boolean[4];
 			};
-			Array<Object> m_object;
-		} m_value;
+			String				m_string;
+			UniquePtr<Custom>	m_custom;
+		};
+		Array<ValueHolder> m_values;
 
-		bool m_isArray = false;
-		bool m_isIndexedArray = false;
-		Type m_type;
-		
+		struct ObjectsHolder
+		{
+			struct NamedObject;
+
+			Array<NamedObject>	m_named;
+			Array<Value>		m_indexed;
+		} m_objects;
+
 	public:
 		Value(Type type = Type::Null);
 
 		template < typename T >
 		Value(T value, typename EnableIfArithmetic<T>::type = 0)
 		{
+			ValueHolder valueHolder;
+			valueHolder.m_valueCount = 1;
 			if (IsFloatingPoint<T>::value)
 			{
-				m_type = Type::Real;
-				m_value.m_real = static_cast<decltype(m_value.m_real)>(value);
+				if (std::is_same<T, float>::value)
+				{
+					m_type = Type::Float;
+					valueHolder.m_float[0] = static_cast<float>(value);
+				}
+				else
+				{
+					m_type = Type::Double;
+					valueHolder.m_double[0] = static_cast<double>(value);
+				}
 			}
 			else if (std::numeric_limits<T>::is_signed)
 			{
 				m_type = Type::Int;
-				m_value.m_int = static_cast<LargestInt>(value);
+				valueHolder.m_int[0] = static_cast<LargestInt>(value);
 			}
 			else
 			{
 				m_type = Type::UInt;
-				m_value.m_uint = static_cast<LargestUInt>(value);
+				valueHolder.m_uint[0] = static_cast<LargestUInt>(value);
 			}
+			m_values.push_back(valueHolder);
 		}
 
 		template < typename T, size_t N >
-		Value(const prism::vec_t<T, N> &value, typename EnableIfArithmetic<T>::type = 0)
+		Value(const prism::vec_t<T, N> &value, size_t valueCount = N, typename EnableIfArithmetic<T>::type = 0)
 		{
+			ValueHolder valueHolder;
+			valueHolder.m_valueCount = valueCount;
+			valueHolder.m_parentheses = true;
 			if (IsFloatingPoint<T>::value)
 			{
-				switch (N)
+				if (std::is_same<T, float>::value)
 				{
-					case 4: m_value.m_real4[3] = value[3];
-					case 3: m_value.m_real3[2] = value[2];
-					case 2: m_value.m_real2[1] = value[1];
-					case 1: m_value.m_real = value[0];
+					m_type = Type::Float;
+					for (size_t i = 0; i < valueCount; ++i)
+					{
+						valueHolder.m_float[i] = static_cast<float>(value.m_a[i]);
+					}
 				}
-				switch (N)
+				else
 				{
-					case 4: m_type = Type::Real4; break;
-					case 3: m_type = Type::Real3; break;
-					case 2: m_type = Type::Real2; break;
-					case 1: m_type = Type::Real; break;
+					m_type = Type::Double;
+					for (size_t i = 0; i < valueCount; ++i)
+					{
+						valueHolder.m_double[i] = static_cast<double>(value.m_a[i]);
+					}
 				}
 			}
 			else if (std::numeric_limits<T>::is_signed)
 			{
-				switch (N)
+				for (size_t i = 0; i < valueCount; ++i)
 				{
-					case 4: m_value.m_int4[3] = value[3];
-					case 3: m_value.m_int3[2] = value[2];
-					case 2: m_value.m_int2[1] = value[1];
-					case 1: m_value.m_int = value[0];
+					valueHolder.m_int[i] = static_cast<LargestInt>(value.m_a[i]);
 				}
-				switch (N)
-				{
-					case 4: m_type = Type::Int4; break;
-					case 3: m_type = Type::Int3; break;
-					case 2: m_type = Type::Int2; break;
-					case 1: m_type = Type::Int; break;
-				}
+				m_type = Type::Int;
 			}
 			else
 			{
-				switch (N)
+				for (size_t i = 0; i < valueCount; ++i)
 				{
-					case 4: m_value.m_uint4[3] = value[3];
-					case 3: m_value.m_uint3[2] = value[2];
-					case 2: m_value.m_uint2[1] = value[1];
-					case 1: m_value.m_uint = value[0];
+					valueHolder.m_uint[i] = static_cast<LargestUInt>(value.m_a[i]);
 				}
-				switch (N)
+				m_type = Type::UInt;
+			}
+			m_values.push_back(valueHolder);
+		}
+
+		template < size_t N >
+		Value(const prism::mat_sq_t<float, N> &value)
+		{
+			ValueHolder valueHolder;
+			valueHolder.m_valueCount = N;
+			valueHolder.m_parentheses = true;
+			for (size_t i = 0; i < N; ++i)
+			{
+				for (size_t j = 0; j < N; ++j)
 				{
-					case 4: m_type = Type::UInt4; break;
-					case 3: m_type = Type::UInt3; break;
-					case 2: m_type = Type::UInt2; break;
-					case 1: m_type = Type::UInt; break;
+					valueHolder.m_float4x4[i][j] = value.m[j][i];
 				}
+			}
+			m_type = Type::FloatMatrix;
+			m_values.push_back(valueHolder);
+		}
+
+		template < typename T >
+		Value(const Array<T> &values, typename EnableIfArithmetic<T>::type = 0)
+		{
+			for (const auto &value : values)
+			{
+				ValueHolder valueHolder;
+				valueHolder.m_valueCount = 1;
+				if (IsFloatingPoint<T>::value)
+				{
+					valueHolder.m_float[0] = static_cast<float>(value);
+					m_type = Type::Float;
+				}
+				else if (std::numeric_limits<T>::is_signed)
+				{
+					valueHolder.m_int[0] = static_cast<LargestInt>(value);
+					m_type = Type::Int;
+				}
+				else
+				{
+					valueHolder.m_uint[0] = static_cast<LargestUInt>(value);
+					m_type = Type::UInt;
+				}
+				m_values.push_back(valueHolder);
 			}
 		}
 
 		template < size_t N >
 		Value(const prism::vec_t<bool, N> &value)
 		{
-
+			ValueHolder valueHolder;
+			valueHolder.m_valueCount = N;
+			valueHolder.m_parentheses = true;
+			for (size_t i = 0; i < N; ++i)
+			{
+				valueHolder.m_boolean[i] = value.m_a[i];
+			}
 		}
 
+		Value(const char *const value);
 		Value(const String &value);
+		Value(const Enumeration &value);
 		Value(bool value);
+		Value(const Array<String> &value);
+		Value(Quaternion quat);
 		Value(const Value &rhs);
+		~Value();
 
 		Value &operator=(const Value &rhs);
 
 		Type type() const { return m_type; }
-		bool isArray() const { return m_isArray; }
 
-		LargestInt asInt() const;
-		LargestUInt asUInt() const;
+		Value &addObject(const String &name);
 
-		float asFloat() const;
-		double asDouble() const;
-		bool asBool() const;
+		Value &operator[](const String &name);
+		Value &operator[](const size_t index);
 
+		void allocateIndexedObjects(const size_t size);
 
-
-
+		friend class Writer;
+		friend class StyledWriter;
+		friend class FileWriter;
+		friend class StyledFileWriter;
 	};
-}
+
+	struct Value::ObjectsHolder::NamedObject
+	{
+		String m_name;
+		Value m_value;
+
+		NamedObject(const String &name)
+			: m_name(name)
+		{
+		}
+	};
+
+	class Writer
+	{
+	public:
+		Writer();
+		virtual ~Writer();
+
+	protected:
+		virtual void push(const String &value) = 0;
+	};
+
+	class StyledWriter : public Writer
+	{
+	public:
+		StyledWriter(String indentation = String(4, ' '), String newLine = "\n");
+		virtual ~StyledWriter();
+
+	protected:
+		void writeValue(const Value &value);
+
+		void indent();
+		void unindent();
+		void writeWithIndent(const String &value);
+
+	protected:
+		String m_indent;
+		size_t m_indentSize = 0;
+		String m_defaultIndentation;
+		String m_defaultNewLine;
+	};
+
+	class StyledStringWriter : public StyledWriter
+	{
+	public:
+		String write(const Value &value);
+
+	protected:
+		virtual void push(const String &value) override;
+
+	private:
+		String m_data;
+	};
+
+	class StyledFileWriter : public StyledWriter
+	{
+	public:
+		StyledFileWriter();
+		virtual ~StyledFileWriter();
+
+	public:
+		void write(File *const file, const Value &value);
+
+	protected:
+		virtual void push(const String &value) override;
+
+	private:
+		File *m_file = nullptr;
+	};
+
+} // namespace Pix
 
 /* eof */

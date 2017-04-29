@@ -53,4 +53,8 @@ size_t ZipFsFile::tell()
 	return 0;
 }
 
+void ZipFsFile::flush()
+{
+}
+
 /* eof */

@@ -25,7 +25,7 @@ public:
 	virtual bool rmdir(const String &directory) override;
 	virtual bool exists(const String &filename) override;
 	virtual bool dirExists(const String &dirpath) override;
-	virtual UniquePtr<List<String>> readDir(const String &path, bool absolutePaths, bool recursive) override;
+	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
 	void readZip();
 };

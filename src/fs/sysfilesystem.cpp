@@ -34,7 +34,7 @@ UniquePtr<File> SysFileSystem::open(const String &filename, FsOpenMode mode)
 	FILE *fp = fopen((m_root + filename).c_str(), smode.c_str());
 	if (!fp)
 	{
-		if (!dirExists(directory(filename)) && mode & write)
+		if (!dirExists(directory(filename)) && (mode & write))
 		{
 			if (mkdir(directory(filename)))
 			{
@@ -108,38 +108,40 @@ bool SysFileSystem::dirExists(const String &dirpath)
 	return (stat(dirpath.c_str(), &buffer) == 0 && ((buffer.st_mode & S_IFDIR) != 0));
 }
 
-UniquePtr<List<String>> SysFileSystem::readDir(const String &directory, bool absolutePaths, bool recursive)
+auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
+	String directoryNoSlash = removeSlashAtEnd(directory);
+
 #ifdef _WIN32
 	HANDLE dir;
-	WIN32_FIND_DATA file_data;
+	WIN32_FIND_DATA fileData;
 
-	if ((dir = FindFirstFileA((m_root + directory + "/*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
-		return UniquePtr<List<String>>();
+	if ((dir = FindFirstFileA((m_root + directoryNoSlash + "/*").c_str(), &fileData)) == INVALID_HANDLE_VALUE)
+		return UniquePtr<List<Entry>>();
 
-	auto result = std::make_unique<List<String>>();
+	auto result = std::make_unique<List<Entry>>();
 	do
 	{
-		const String file_name = file_data.cFileName;
-		const String full_file_name = directory + "/" + file_name;
+		const String fileName = fileData.cFileName;
+		const String fullFileName = directoryNoSlash + "/" + fileName;
 
-		if (file_name[0] == '.')
+		if (fileName[0] == '.')
 			continue;
 
-		if ((file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		const bool isDirectory = !!(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+		if (isDirectory)
 		{
 			if (recursive)
 			{
-				auto subdir = readDir(full_file_name, absolutePaths, recursive);
+				auto subdir = readDir(fullFileName, absolutePaths, recursive);
 				if (subdir)
 				{
 					result->insert(result->begin(), subdir->begin(), subdir->end());
 				}
 			}
-			continue;
 		}
-		result->push_back(absolutePaths ? full_file_name : file_name);
-	} while (FindNextFileA(dir, &file_data));
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory));
+	} while (FindNextFileA(dir, &fileData));
 	FindClose(dir);
 	return result;
 #else
@@ -148,31 +150,31 @@ UniquePtr<List<String>> SysFileSystem::readDir(const String &directory, bool abs
 	struct dirent *ent;
 	struct stat st;
 
-	dir = opendir(directory.c_str());
+	dir = opendir(directoryNoSlash.c_str());
 	while ((ent = readdir(dir)) != 0)
 	{
-		const String file_name = ent->d_name;
-		const String full_file_name = directory + "/" + file_name;
+		const String fileName = ent->d_name;
+		const String fullFileName = directoryNoSlash + "/" + fileName;
 
-		if (file_name[0] == '.')
+		if (fileName[0] == '.')
 			continue;
 
-		if (stat(full_file_name.c_str(), &st) == -1)
+		if (stat(fullFileName.c_str(), &st) == -1)
 			continue;
 
-		if ((st.st_mode & S_IFDIR) != 0)
+		const bool isDirectory = !!(st.st_mode & S_IFDIR);
+		if (isDirectory)
 		{
 			if (recursive)
 			{
-				auto subdir = readDir(full_file_name, absolutePaths, recursive);
+				auto subdir = readDir(fullFileName, absolutePaths, recursive);
 				if (subdir)
 				{
 					result->insert(result->begin(), subdir->begin(), subdir->end());
 				}
 			}
-			continue;
 		}
-		result->push_back(absolutePaths ? full_file_name : file_name);
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory));
 	}
 	closedir(dir);
 	return result;

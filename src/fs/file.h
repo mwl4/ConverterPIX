@@ -37,6 +37,8 @@ public:
 	virtual void rewind() = 0;
 	virtual size_t tell() = 0;
 
+	virtual void flush() = 0;
+
 	bool blockRead(void *buffer, unsigned int offset, size_t size);
 
 	File &operator<<(bool val);

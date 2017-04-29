@@ -34,6 +34,8 @@ public:
 	virtual void rewind() override;
 	virtual size_t tell() override;
 
+	virtual void flush() override;
+
 	friend class SysFileSystem;
 };
 

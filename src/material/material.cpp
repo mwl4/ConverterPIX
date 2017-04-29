@@ -34,7 +34,7 @@ void Material::Attribute::clear()
 	m_value = 0.f;
 }
 
-const char *Material::Attribute::getFormat() const
+String Material::Attribute::getFormat() const
 {
 	if (m_valueType == STRING)
 	{
@@ -290,6 +290,49 @@ String Material::toDeclaration(const String &prefix) const
 	}
 	result += prefix + "}\n";
 	return result;
+}
+
+Pix::Value Material::toPixDefinition() const
+{
+	Pix::Value root;
+	root["Alias"] = alias();
+	root["Effect"] = m_effect;
+	root["Flags"] = 0;
+	root["AttributeCount"] = m_attributes.size();
+	root["TextureCount"] = m_textures.size();
+
+	for (size_t i = 0; i < m_attributes.size(); ++i)
+	{
+		const Attribute *const attr = &m_attributes[i];
+		Pix::Value &attribute = root["Attribute"];
+		attribute["Format"] = attr->getFormat();
+		attribute["Tag"] = attr->m_name;
+		if (attr->m_valueType == Attribute::FLOAT)
+		{
+			attribute["Value"] = Pix::Value(attr->m_value, attr->m_valueCount);
+		}
+		else
+		{
+			attribute["Value"] = attr->m_stringValue;
+		}
+	}
+
+	for (size_t i = 0; i < m_textures.size(); ++i)
+	{
+		const Texture *const tex = &m_textures[i];
+		Pix::Value &texture = root["Texture"];
+		texture["Tag"] = fmt::sprintf("texture[%i]:%s", (int)i, tex->m_textureName);
+		texture["Value"] = tex->m_texture.substr(0, tex->m_texture.length() - 5); // -5 -> .tobj removing
+	}
+	return root;
+}
+
+Pix::Value Material::toPixDeclaration() const
+{
+	Pix::Value root;
+	root["Alias"] = alias();
+	root["Effect"] = m_effect;
+	return root;
 }
 
 String Material::alias() const
