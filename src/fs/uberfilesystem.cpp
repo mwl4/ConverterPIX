@@ -66,12 +66,16 @@ bool UberFileSystem::dirExists(const String &dirpath)
 
 auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
-	auto result = std::make_unique<List<Entry>>();
+	UniquePtr<List<Entry>> result;
 	for (const auto &fs : m_filesystems)
 	{
 		auto current = fs.second->readDir(path, absolutePaths, recursive);
 		if (current)
 		{
+			if (!result)
+			{
+				result = std::make_unique<List<Entry>>();
+			}
 			result->insert(result->begin(), current->begin(), current->end());
 		}
 	}
