@@ -687,6 +687,7 @@ bool Model::loadDescriptor()
 		}
 	}
 
+	m_parts.resize(header->m_part_count);
 	m_variants.resize(header->m_variant_count);
 
 	for (uint32_t i = 0; i < m_variants.size(); ++i)
