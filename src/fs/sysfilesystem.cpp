@@ -22,6 +22,11 @@ SysFileSystem::~SysFileSystem()
 {
 }
 
+String SysFileSystem::root() const
+{
+	return m_root;
+}
+
 UniquePtr<File> SysFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	const String smode =
@@ -140,7 +145,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 				}
 			}
 		}
-		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory));
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, this));
 	} while (FindNextFileA(dir, &fileData));
 	FindClose(dir);
 	return result;
@@ -174,7 +179,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 				}
 			}
 		}
-		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory));
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, this));
 	}
 	closedir(dir);
 	return result;

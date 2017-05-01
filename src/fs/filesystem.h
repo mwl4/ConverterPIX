@@ -33,6 +33,7 @@ public:
 	FileSystem &operator=(FileSystem &) = delete;
 	FileSystem &operator=(FileSystem &&) = delete;
 
+	virtual String root() const = 0;
 	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) = 0;
 	virtual bool mkdir(const String &directory) = 0;
 	virtual bool rmdir(const String &directory) = 0;
@@ -44,17 +45,27 @@ public:
 class FileSystem::Entry
 {
 public:
-	Entry() {}
-	Entry(String path, bool directory) : m_path(path), m_directory(directory) {}
+	Entry()
+	{
+	}
 
-	const String &GetPath() const { return m_path; }
-	void SetPath(const String path) { m_path = path; }
+	Entry(String path, bool directory, FileSystem *filesystem)
+		: m_path(path)
+		, m_directory(directory)
+		, m_filesystem(filesystem)
+	{
+	}
 
-	bool IsDirectory() const { return m_directory; }
+	inline const String &GetPath() const { return m_path; }
+	inline void SetPath(const String path) { m_path = path; }
+
+	inline bool IsDirectory() const { return m_directory; }
+	inline FileSystem *GetFileSystem() const { return m_filesystem; }
 
 private:
 	String m_path;
 	bool m_directory;
+	FileSystem *m_filesystem = nullptr;
 };
 
 constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const FileSystem::FsOpenMode f)

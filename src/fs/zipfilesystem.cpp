@@ -32,6 +32,11 @@ ZipFileSystem::~ZipFileSystem()
 {
 }
 
+String ZipFileSystem::root() const
+{
+	return m_rootFilename;
+}
+
 UniquePtr<File> ZipFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	return nullptr;

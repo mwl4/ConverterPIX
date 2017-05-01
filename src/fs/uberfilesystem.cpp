@@ -21,6 +21,11 @@ UberFileSystem::~UberFileSystem()
 {
 }
 
+String UberFileSystem::root() const
+{
+	return "/";
+}
+
 UniquePtr<File> UberFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
@@ -67,8 +72,9 @@ bool UberFileSystem::dirExists(const String &dirpath)
 auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
 	UniquePtr<List<Entry>> result;
-	for (const auto &fs : m_filesystems)
+	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
+		const auto &fs = (*it);
 		auto current = fs.second->readDir(path, absolutePaths, recursive);
 		if (current)
 		{
@@ -76,7 +82,22 @@ auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 			{
 				result = std::make_unique<List<Entry>>();
 			}
-			result->insert(result->begin(), current->begin(), current->end());
+			for (const auto &c : (*current))
+			{
+				bool existsAlready = false;
+				for (const auto &r : (*result))
+				{
+					if (c.GetPath() == r.GetPath())
+					{
+						existsAlready = true;
+						break;
+					}
+				}
+				if (!existsAlready)
+				{
+					result->push_back(c);
+				}
+			}
 		}
 	}
 	return result;
