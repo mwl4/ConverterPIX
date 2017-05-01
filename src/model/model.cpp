@@ -189,7 +189,6 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 	m_pieces.resize(header->m_piece_count);
 	m_bones.resize(header->m_bone_count);
 	m_locators.resize(header->m_locator_count);
-	m_parts.resize(header->m_part_count);
 
 	auto bone = (const pmg_bone_t *)(buffer + header->m_bone_offset);
 	for (int32_t i = 0; i < header->m_bone_count; ++i, ++bone)

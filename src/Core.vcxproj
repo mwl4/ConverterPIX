@@ -72,9 +72,15 @@
     <ClCompile Include="fs\uberfilesystem.cpp" />
     <ClCompile Include="fs\zipfilesystem.cpp" />
     <ClCompile Include="fs\zipfs_file.cpp" />
-    <ClCompile Include="libs\fmt\fmt\format.cc" />
-    <ClCompile Include="libs\fmt\fmt\ostream.cc" />
-    <ClCompile Include="libs\fmt\fmt\posix.cc" />
+    <ClCompile Include="libs\fmt\fmt\format.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="libs\fmt\fmt\ostream.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="libs\fmt\fmt\posix.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="material\material.cpp" />
     <ClCompile Include="model\animation.cpp" />
     <ClCompile Include="model\collision.cpp" />
@@ -82,6 +88,9 @@
     <ClCompile Include="model\piece.cpp" />
     <ClCompile Include="pix\pix.cpp" />
     <ClCompile Include="prefab\prefab.cpp" />
+    <ClCompile Include="prerequisites.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="resource_lib.cpp" />
     <ClCompile Include="structs\dds.cpp" />
     <ClCompile Include="texture\texture.cpp" />
@@ -141,8 +150,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -151,6 +159,7 @@
       <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <PrecompiledHeaderFile>prerequisites.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

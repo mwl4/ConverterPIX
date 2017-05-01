@@ -265,5 +265,8 @@
     <ClCompile Include="pix\pix.cpp">
       <Filter>Source Files\pix</Filter>
     </ClCompile>
+    <ClCompile Include="prerequisites.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
