@@ -141,28 +141,28 @@ int main(int argc, char *argv[])
 		ufsMount(base, true, priority++);
 	}
 
-	//int stop;
-	//scanf("%i", &stop);
-	auto dir = getUFS()->readDir("/", true, true);
-	if (dir)
-	{
-		/*for (const auto &d : (*dir))
-		{
-			printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
-		}*/
-	}
-	//auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
-	//if (file)
+	////int stop;
+	////scanf("%i", &stop);
+	//auto dir = getUFS()->readDir("/", true, true);
+	//if (dir)
 	//{
-	//	UniquePtr<char[]> buffer(new char[20]);
-	//	if (file->blockRead(buffer.get(), 0, 20))
+	//	/*for (const auto &d : (*dir))
 	//	{
-	//		//buffer[file->getSize()] = '\0';
-	//		//printf("file = %s\n", buffer.get());
-	//	}
-	//	
+	//		printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
+	//	}*/
 	//}
-	return 0;
+	////auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
+	////if (file)
+	////{
+	////	UniquePtr<char[]> buffer(new char[20]);
+	////	if (file->blockRead(buffer.get(), 0, 20))
+	////	{
+	////		//buffer[file->getSize()] = '\0';
+	////		//printf("file = %s\n", buffer.get());
+	////	}
+	////	
+	////}
+	//return 0;
 
 	long long startTime =
 		std::chrono::duration_cast<std::chrono::milliseconds>
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
 		std::chrono::duration_cast<std::chrono::milliseconds>
 		(std::chrono::system_clock::now().time_since_epoch()).count();
 
-	printf("Time : %llums\n", endTime - startTime);
+	//printf("Time : %llums\n", endTime - startTime);
 
 	return 0;
 }
