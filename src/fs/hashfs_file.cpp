@@ -53,7 +53,7 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 
 	if (!(m_header->m_flags & HASHFS_COMPRESSED))
 	{
-		if (m_filesystem->ioRead(buffer, elementSize * elementCount, m_header->m_offset + m_position))
+		if (m_filesystem->ioRead(buffer, elementSize * elementCount, (size_t)(m_header->m_offset + m_position)))
 		{
 			size_t result = std::min(elementSize * elementCount, m_header->m_size - m_position);
 			m_position += elementSize * elementCount;
@@ -82,7 +82,7 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 				break;
 			}
 
-			if (!m_filesystem->ioRead(inbuffer, bytes, m_header->m_offset + m_position))
+			if (!m_filesystem->ioRead(inbuffer, bytes, (size_t)(m_header->m_offset + m_position)))
 			{
 				error("hashfs", m_filepath, "Unable to read from filesystem file");
 				return 0;
