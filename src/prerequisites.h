@@ -60,6 +60,8 @@
 #include <fmt/printf.h>
 #include <fmt/posix.h>
 
+#include <zlib/zlib.h>
+
 using String		= std::string;
 using WString		= std::wstring;
 
@@ -96,6 +98,21 @@ using UniquePtr		= std::unique_ptr<T>;
 #define MAX_PATH 260
 #endif
 
+#define ENABLE_FLAG(variable, flag)		variable |= flag
+#define DISABLE_FLAG(variable, flag)	variable &= ~flag
+#define CHECK_FLAG(variable, flag)		(variable & flag)
+
+#define STRINGIZE_DETAIL(x)				#x
+#define STRINGIZE(x)					STRINGIZE_DETAIL(x)
+#define CONCAT2(prefix, suffix)			prefix##suffix
+#define CONCAT(prefix, suffix)			CONCAT2(prefix, suffix)
+#define STATIC_CHECK(expr)				typedef int CONCAT(some_requirement_failed_at_, __LINE__)[(expr) ? 1 : -1]
+
+#define pad(size)		uint8_t CONCAT(pad_, __LINE__)[size]
+#define pad_bool(name)	uint8_t pad_bool_##name[3]
+
+#define bool32(name)	scs_bool name; pad_bool(name)
+
 #define ENSURE_SIZE(structure, expected) static_assert(sizeof(structure) == expected, "Invalid size")
 #define COMMA ,
 
@@ -106,6 +123,8 @@ namespace prism
 	template <typename T, size_t N>
 	class mat_sq_t;
 	class token_t;
+
+	u64 city_hash_64(const char *const data, size_t size);
 } // namespace prism
 
 class FileSystem;
@@ -153,11 +172,7 @@ class ResourceLibrary;
  * @param[in] x The srgb value
  * @return @c The linear value
 */
-static float s2lin(float x)
-{
-	const float a = 0.055f;
-	return ((x <= 0.04045f) ? (x * (1.f / 12.92f)) : (pow((x + a) * (1.f / (1.f + a)), 2.4f)));
-}
+float s2lin(float x);
 
 /**
  * @brief: Converts linear to srgb color space
@@ -165,50 +180,19 @@ static float s2lin(float x)
  * @param[in] x The linear value
  * @return @c The srgb value
 */
-static float lin2s(float x)
-{
-	const float a = 0.055f;
-	return ((x <= 0.0031308f) ? (x * 12.92f) : ((1.f + a) * pow(x, 1.f / 2.4f) - a));
-}
+float lin2s(float x);
 
-static uint32_t flh(float x)
+inline uint32_t flh(float x)
 {
 	return *(uint32_t *)(&x);
 }
 
-static String removeSpaces(String str)
-{
-	str.erase(std::remove_if(str.begin(), str.end(), [](char c)->bool { return !!isspace(c); }), str.end());
-	return str;
-}
+String removeSpaces(String str);
+String betweenQuotes(String str);
+void remove(String &str, const String &substr);
 
-static String betweenQuotes(String str)
-{
-	size_t left = str.find('\"');
-	if (left != String::npos)
-	{
-		size_t right = str.find('\"', left + 1);
-		if (right != String::npos)
-		{
-			return str.substr(left + 1, right - left - 1);
-		}
-	}
-	return "ERROR";
-}
-
-static void remove(String &str, const String &substr)
-{
-	for (size_t pos = String::npos; (pos = str.find(substr)) != String::npos;)
-	{
-		str.erase(pos, substr.length());
-	}
-}
-
-static String removeSlashAtEnd(const String &s)
-{
-	const char lastch = s[s.length() - 1];
-	return s.substr(0, s.length() - ((lastch == '\\' || lastch == '/') ? 1 : 0));
-}
+String removeSlashAtEnd(const String &s);
+String makeSlashAtEnd(const String &s);
 
 /**
  * @brief: Returns directory of the file
@@ -229,26 +213,13 @@ String relativePath(const String &filepath, const String &directory);
 
 bool copyFile(File *const input, File *const output);
 
-static void backslashesToSlashes(String &str)
-{
-	std::replace(str.begin(), str.end(), '\\', '/');
-}
+void backslashesToSlashes(String &str);
 
 /* float equal */
-static bool fl_eq(float a, float b)
-{
-	return fabs(a - b) < FLT_EPSILON;
-}
+bool fl_eq(float a, float b);
 
-static String valueToQuotedString(const String &value)
-{
-	return "\"" + value + "\"";
-}
-
-static String valueToQuotedString(const char *const value)
-{
-	return valueToQuotedString(String(value));
-}
+String valueToQuotedString(const String &value);
+String valueToQuotedString(const char *const value);
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3) \

@@ -67,11 +67,11 @@ bool Material::load(String filePath)
 	auto file = getUFS()->open(m_filePath, FileSystem::read | FileSystem::binary);
 	if(!file)
 	{
-		error_f("material", m_filePath, "Unable to open material (%s)!", strerror(errno));
+		error_f("material", m_filePath, "Unable to open material!");
 		return false;
 	}
 
-	size_t fileSize = file->getSize();
+	size_t fileSize = file->size();
 
 	uint8_t *buff = new uint8_t[fileSize + 1]; // +1 for null terminator
 	file->read((char *)buff, sizeof(uint8_t), fileSize);

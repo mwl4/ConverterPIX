@@ -33,7 +33,7 @@ size_t SysFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	return ::fread(buffer, elementSize, elementCount, m_fp);
 }
 
-size_t SysFsFile::getSize() const
+size_t SysFsFile::size() const
 {
 	long current = ::ftell(m_fp);
 	::fseek(m_fp, 0, SEEK_END);
@@ -42,22 +42,9 @@ size_t SysFsFile::getSize() const
 	return result;
 }
 
-const char *SysFsFile::getLine(String &out)
+bool SysFsFile::seek(uint32_t offset, Attrib attr)
 {
-	char buffer[1024] = { 0 };
-	const char *result = ::fgets(buffer, sizeof(buffer), m_fp);
-	if (result)
-	{
-		out = buffer;
-		return out.c_str();
-	}
-	out = "";
-	return nullptr;
-}
-
-int SysFsFile::seek(uint32_t offset, Attrib attr)
-{
-	return ::fseek(m_fp, offset, attr);
+	return ::fseek(m_fp, offset, attr) == 0;
 }
 
 void SysFsFile::rewind()

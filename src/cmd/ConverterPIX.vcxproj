@@ -67,7 +67,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -91,6 +91,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Core.vcxproj">
       <Project>{7af227e8-e1b1-4364-a66f-3752d1b23713}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libs\cityhash\cityhash.vcxproj">
+      <Project>{75a85a1a-359c-4c0f-9440-024c62f43c50}</Project>
     </ProjectReference>
     <ProjectReference Include="..\libs\zlib\zlib.vcxproj">
       <Project>{33134f61-c1ad-4b6f-9cea-503a9f140c52}</Project>

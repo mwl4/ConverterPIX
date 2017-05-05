@@ -162,7 +162,13 @@ Value &Value::operator[](const String &name)
 
 Value &Value::operator[](const size_t index)
 {
-	return m_objects.m_indexed[index];
+	return m_objects.m_indexed.data()[index];
+}
+
+void Value::allocateNamedObjects(const size_t size)
+{
+	m_type = Type::Object;
+	m_objects.m_named.reserve(size);
 }
 
 void Value::allocateIndexedObjects(const size_t size)
@@ -179,7 +185,7 @@ Writer::~Writer()
 {
 }
 
-StyledWriter::StyledWriter(String indentation/*= "    "*/, String newLine/*= "\n"*/)
+StyledWriter::StyledWriter(String indentation/* = String(4, ' ')*/, String newLine/* = "\n"*/)
 {
 	m_defaultIndentation = indentation;
 	m_defaultNewLine = newLine;
@@ -354,17 +360,42 @@ void StyledFileWriter::push(const String &value)
 	(*m_file) << value;
 }
 
-String toString(const float value[], const size_t count)
+inline void floatToBuffer(char *const buffer, uint32_t fl)
+{
+#define TO_HEX(i) (i <= 9 ? '0' + i : 'A' - 10 + i)
+	buffer[0] = '&';
+	buffer[1] = TO_HEX(((fl & 0xF0000000) >> 28));
+	buffer[2] = TO_HEX(((fl & 0x0F000000) >> 24));
+	buffer[3] = TO_HEX(((fl & 0x00F00000) >> 20));
+	buffer[4] = TO_HEX(((fl & 0x000F0000) >> 16));
+	buffer[5] = TO_HEX(((fl & 0x0000F000) >> 12));
+	buffer[6] = TO_HEX(((fl & 0x00000F00) >> 8));
+	buffer[7] = TO_HEX(((fl & 0x000000F0) >> 4));
+	buffer[8] = TO_HEX(((fl & 0x0000000F)));
+	buffer[9] = '\0';
+#undef TO_HEX
+}
+
+inline String toString(const float value[], const size_t count)
 {
 	String result;
+	result.reserve(64);
+
 	for (size_t i = 0; i < count; ++i)
 	{
-		result += ((i != 0 ? "  " : "") + fmt::sprintf(FLT_FT, flh(value[i])));
+		if (i != 0)
+		{
+			result.append("  ");
+		}
+
+		char buffer[10];
+		floatToBuffer(buffer, flh(value[i]));
+		result.append(buffer);
 	}
 	return result;
 }
 
-String toString(const double value[], const size_t count)
+inline String toString(const double value[], const size_t count)
 {
 	String result;
 	for (size_t i = 0; i < count; ++i)
@@ -374,7 +405,7 @@ String toString(const double value[], const size_t count)
 	return result;
 }
 
-String toString(const Pix::Value::LargestInt value[], const size_t count)
+inline String toString(const Pix::Value::LargestInt value[], const size_t count)
 {
 	const String format = count > 1 ? "%-5lli" : "%lli";
 	String result;

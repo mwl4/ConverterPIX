@@ -110,8 +110,8 @@ private:
 	uint32_t m_skinVertCount = 0;
 	uint32_t m_materialCount = 0;
 
-	SharedPtr<Prefab> m_prefab;
-	SharedPtr<Collision> m_collision;
+	UniquePtr<Prefab> m_prefab;
+	UniquePtr<Collision> m_collision;
 
 	bool m_loaded = false;
 
@@ -120,11 +120,15 @@ private:
 	String m_directory;		// @example /vehicle/truck/man_tgx/interior
 
 public:
+	Model();
+	~Model();
+
 	bool load(String filePath);
 	void destroy();
 
 	bool loadModel();
 	bool loadDescriptor();
+	bool loadPrefab();
 	bool loadCollision();
 
 	bool saveToPim(String exportPath) const;
@@ -144,6 +148,7 @@ public:
 	const Array<Part> &getParts() const { return m_parts; }
 	const Array<Variant> &getVariants() const { return m_variants; }
 
+private:
 	bool loadModel0x13(const uint8_t *const buffer, const size_t size);
 	bool loadModel0x14(const uint8_t *const buffer, const size_t size);
 };

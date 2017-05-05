@@ -29,19 +29,14 @@ size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	return 0;
 }
 
-size_t ZipFsFile::getSize() const
+size_t ZipFsFile::size() const
 {
 	return 0;
 }
 
-const char *ZipFsFile::getLine(String &out)
+bool ZipFsFile::seek(uint32_t offset, Attrib attr)
 {
-	return nullptr;
-}
-
-int ZipFsFile::seek(uint32_t offset, Attrib attr)
-{
-	return 0;
+	return false;
 }
 
 void ZipFsFile::rewind()

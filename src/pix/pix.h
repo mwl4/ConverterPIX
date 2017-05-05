@@ -71,8 +71,7 @@ namespace Pix
 				float		m_float4x4[4][4];
 				bool		m_boolean[4];
 			};
-			String				m_string;
-			//UniquePtr<Custom>	m_custom;
+			String	m_string;
 		};
 		Array<ValueHolder> m_values;
 
@@ -235,7 +234,9 @@ namespace Pix
 		Value &operator[](const String &name);
 		Value &operator[](const size_t index);
 
+		void allocateNamedObjects(const size_t size);
 		void allocateIndexedObjects(const size_t size);
+		inline Array<Value> &getIndexedObjects() { return m_objects.m_indexed; }
 
 		friend class Writer;
 		friend class StyledWriter;

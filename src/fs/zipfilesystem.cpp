@@ -16,6 +16,8 @@
 
 #include <structs/zip.h>
 
+#include <zlib/zlib.h>
+
 ZipFileSystem::ZipFileSystem(const String &root)
 {
 	m_rootFilename = root;
@@ -69,7 +71,7 @@ auto ZipFileSystem::readDir(const String &path, bool absolutePaths, bool recursi
 
 void ZipFileSystem::readZip()
 {
-	const size_t size = m_root->getSize();
+	const size_t size = m_root->size();
 	if (size <= sizeof(zip::EndOfCentralDirectory))
 	{
 		error("sysfs", m_rootFilename, "Too short file!");
@@ -112,6 +114,8 @@ void ZipFileSystem::readZip()
 		error_f("sysfs", m_rootFilename, "The number of files(%u) exceeded limits(%u).", centralDirEnd->numEntries, numEntriesLimit);
 		return;
 	}
+
+	
 
 	// TODO:
 }

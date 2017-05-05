@@ -73,11 +73,6 @@ constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const
 	return static_cast<FileSystem::FsOpenMode>((unsigned)t | (unsigned)f);
 }
 
-class HashFileSystem : public FileSystem
-{
-	/* TODO: Implement */
-};
-
 SysFileSystem *getSFS();
 UberFileSystem *getUFS();
 

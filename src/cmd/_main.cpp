@@ -20,6 +20,8 @@
 #include <fs/sysfilesystem.h>
 #include <fs/uberfilesystem.h>
 
+#include <chrono>
+
 void print_help()
 {
 	printf(" Parameters:\n"
@@ -136,9 +138,35 @@ int main(int argc, char *argv[])
 	for (const auto &base : basepath)
 	{
 		static int priority = 1;
-		bool noneedslash = (base[base.length() - 1] == '/') || (base[base.length() - 1] == '\\');
-		ufsMount(noneedslash ? base : base + '/', true, priority++);
+		ufsMount(base, true, priority++);
 	}
+
+	//int stop;
+	//scanf("%i", &stop);
+	auto dir = getUFS()->readDir("/", true, true);
+	if (dir)
+	{
+		/*for (const auto &d : (*dir))
+		{
+			printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
+		}*/
+	}
+	//auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
+	//if (file)
+	//{
+	//	UniquePtr<char[]> buffer(new char[20]);
+	//	if (file->blockRead(buffer.get(), 0, 20))
+	//	{
+	//		//buffer[file->getSize()] = '\0';
+	//		//printf("file = %s\n", buffer.get());
+	//	}
+	//	
+	//}
+	return 0;
+
+	long long startTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>
+		(std::chrono::system_clock::now().time_since_epoch()).count();
 
 	switch (mode)
 	{
@@ -220,6 +248,8 @@ int main(int argc, char *argv[])
 				exportpath = basepath[0] + "_exp";
 			}
 			auto files = getSFS()->readDir(basepath[0], true, true);
+			int i = 0;
+			int size = files->size();
 			for (const auto &f : *files)
 			{
 				if (f.IsDirectory())
@@ -237,6 +267,7 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
+						printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
 						model.saveToMidFormat(exportpath, false);
 					}
 				}
@@ -246,9 +277,11 @@ int main(int argc, char *argv[])
 					if (tobj.load(filename))
 					{
 						tobj.saveToMidFormats(exportpath);
+						printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
 						printf("%s: tobj: yes\n", filename.substr(directory(filename).length() + 1).c_str());
 					}
 				}
+				++i;
 			}
 			printf("\nBase converted: %s\n", exportpath.c_str());
 		} break;
@@ -279,6 +312,13 @@ int main(int argc, char *argv[])
 			}
 		} break;
 	}
+
+	long long endTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>
+		(std::chrono::system_clock::now().time_since_epoch()).count();
+
+	printf("Time : %llums\n", endTime - startTime);
+
 	return 0;
 }
 

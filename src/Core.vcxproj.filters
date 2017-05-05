@@ -191,6 +191,18 @@
     <ClInclude Include="pix\pix.h">
       <Filter>Source Files\pix</Filter>
     </ClInclude>
+    <ClInclude Include="fs\hashfilesystem.h">
+      <Filter>Source Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="fs\hashfs_file.h">
+      <Filter>Source Files\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\hashfs.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\string_tokenizer.h">
+      <Filter>Source Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libs\fmt\fmt\format.cc">
@@ -267,6 +279,15 @@
     </ClCompile>
     <ClCompile Include="prerequisites.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\hashfilesystem.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="fs\hashfs_file.cpp">
+      <Filter>Source Files\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\string_tokenizer.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

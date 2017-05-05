@@ -246,8 +246,12 @@ File &operator>>(File &fp, unsigned char *s)
 
 bool File::blockRead(void *buffer, unsigned int offset, size_t size)
 {
-	if (seek(offset, Attrib::SeekSet) != 0) {
-		return false;
+	if (tell() != offset)
+	{
+		if (!seek(offset, Attrib::SeekSet))
+		{
+			return false;
+		}
 	}
 	return read(buffer, 1, size) == size;
 }

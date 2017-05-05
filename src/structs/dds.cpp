@@ -28,7 +28,7 @@ namespace dds
 		}
 		else
 		{
-			const size_t fileSize = file->getSize();
+			const size_t fileSize = file->size();
 			UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 			file->read((char *)buffer.get(), sizeof(char), fileSize);
 			file.reset();

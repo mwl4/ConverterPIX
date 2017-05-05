@@ -28,75 +28,31 @@
 
 using namespace prism;
 
-auto Variant::Part::operator[](String attribute) const -> const Attribute &
+Model::Model()
 {
-	const auto it = std::find_if(m_attributes.cbegin(), m_attributes.cend(),
-	[&](const Attribute &attr) {
-		return attr.getName() == attribute;
-	});
-	assert(it != m_attributes.cend());
-	return (*it);
 }
 
-auto Variant::Part::operator[](String attribute) -> Attribute &
+Model::~Model()
 {
-	auto it = std::find_if(m_attributes.begin(), m_attributes.end(),
-	[&](const Attribute &attr) {
-		return attr.getName() == attribute;
-	});
-	assert(it != m_attributes.end());
-	return (*it);
 }
 
-auto Variant::Part::operator[](size_t attribute) const -> const Attribute &
+bool Model::load(String filePath)
 {
-	assert(attribute < m_attributes.size());
-	return m_attributes[attribute];
-}
+	if (m_loaded)
+		destroy();
 
-auto Variant::Part::operator[](size_t attribute) -> Attribute &
-{
-	assert(attribute < m_attributes.size());
-	return m_attributes[attribute];
-}
+	m_filePath = filePath;
+	m_directory = directory(filePath);
+	m_fileName = filePath.substr(m_directory.length() + 1);
 
-void Variant::setPartCount(size_t parts)
-{
-	m_parts.resize(parts);
-}
+	if (!loadDescriptor()) return false;
+	if (!loadModel()) return false;
 
-auto Variant::operator[](size_t id) const -> const Part &
-{
-	assert(id >= 0 && id < m_parts.size());
-	return m_parts[id];
-}
+	loadPrefab();
+	loadCollision();
 
-auto Variant::operator[](size_t id) -> Part &
-{
-	assert(id >= 0 && id < m_parts.size());
-	return m_parts[id];
-}
-
-String Variant::Attribute::toDefinition(const String &prefix) const
-{
-	String result;
-	result += prefix + "Attribute {" SEOL;
-	{
-		result += prefix + fmt::sprintf(TAB "Format: %s" SEOL, m_type == INT ? "INT" : "UNKNOWN");
-		result += prefix + fmt::sprintf(TAB "Tag: \"%s\"" SEOL, m_name.c_str());
-		result += prefix + fmt::sprintf(TAB "Value: ( %i )" SEOL, m_intValue);
-	}
-	result += prefix + "}" SEOL;
-	return result;
-}
-
-Pix::Value Variant::Attribute::toPixDefinition() const
-{
-	Pix::Value root;
-	root["Format"] = m_type == INT ? "INT" : "UNKNOWN";
-	root["Tag"] = m_name;
-	root["Value"] = prism::vec_t<int, 1>(m_intValue);
-	return root;
+	m_loaded = true;
+	return true;
 }
 
 void Model::destroy()
@@ -118,33 +74,6 @@ void Model::destroy()
 	m_fileName = "";
 }
 
-bool Model::load(String filePath)
-{
-	if (m_loaded)
-		destroy();
-
-	m_filePath = filePath;
-	m_directory = directory(filePath);
-	m_fileName = filePath.substr(m_directory.length() + 1);
-
-	if (!loadDescriptor()) return false;
-	if (!loadModel()) return false;
-
-	if (getUFS()->exists(m_filePath + ".ppd"))
-	{
-		m_prefab = std::make_shared<Prefab>();
-		if (!m_prefab->load(filePath))
-		{
-			m_prefab.reset();
-		}
-	}
-
-	loadCollision();
-	
-	m_loaded = true;
-	return true;
-}
-
 bool Model::loadModel()
 {
 	String pmgPath = m_filePath + ".pmg";
@@ -155,7 +84,7 @@ bool Model::loadModel()
 		return false;
 	}
 
-	const size_t fileSize = file->getSize();
+	const size_t fileSize = file->size();
 	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(char), fileSize);
 	file.reset();
@@ -627,7 +556,7 @@ bool Model::loadDescriptor()
 		return false;
 	}
 
-	size_t fileSize = file->getSize();
+	size_t fileSize = file->size();
 	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
@@ -723,12 +652,32 @@ bool Model::loadDescriptor()
 	return true;
 }
 
+bool Model::loadPrefab()
+{
+	if (getUFS()->exists(m_filePath + ".ppd"))
+	{
+		m_prefab = std::make_unique<Prefab>();
+		if (!m_prefab->load(m_filePath))
+		{
+			m_prefab.reset();
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
 bool Model::loadCollision()
 {
 	if (getUFS()->exists(m_filePath + ".pmc"))
 	{
-		m_collision = std::make_shared<Collision>();
-		return m_collision->load(this, m_filePath);
+		m_collision = std::make_unique<Collision>();
+		if (!m_collision->load(this, m_filePath))
+		{
+			m_collision.reset();
+			return false;
+		}
+		return true;
 	}
 	return false;
 }
@@ -743,172 +692,200 @@ bool Model::saveToPim(String exportPath) const
 		return false;
 	}
 
-	/*Pix::Value root;
+	//Pix::Value root;
 
-	Pix::Value &header = root["Header"];
-	header["FormatVersion"] = 5;
-	header["Source"] = STRING_VERSION;
-	header["Type"] = "Model";
-	header["Name"] = m_fileName;
+	//root.allocateNamedObjects( // optimization stuff
+	//	  1 // header
+	//	+ 1 // global
+	//	+ (m_looks.size() > 0 ? m_looks[0].m_materials.size() : 0)
+	//	+ m_pieces.size()
+	//	+ m_parts.size()
+	//	+ m_locators.size()
+	//	+ m_bones.size()
+	//	+ 1 // skin
+	//);
 
-	Pix::Value &global = root["Global"];
-	global["VertexCount"] = m_vertCount;
-	global["TriangleCount"] = m_triangleCount;
-	global["MaterialCount"] = m_materialCount;
-	global["PieceCount"] = m_pieces.size();
-	global["PartCount"] = m_parts.size();
-	global["BoneCount"] = m_bones.size();
-	global["LocatorCount"] = m_locators.size();
-	global["Skeleton"] = m_fileName + ".pis";
+	//Pix::Value &header = root["Header"];
+	//header["FormatVersion"] = 5;
+	//header["Source"] = STRING_VERSION;
+	//header["Type"] = "Model";
+	//header["Name"] = m_fileName;
 
-	if (m_looks.size() > 0)
-	{
-		for (const auto &mat : m_looks[0].m_materials)
-		{
-			root["Material"] = mat.toPixDeclaration();
-		}
-	}
+	//Pix::Value &global = root["Global"];
+	//global["VertexCount"] = m_vertCount;
+	//global["TriangleCount"] = m_triangleCount;
+	//global["MaterialCount"] = m_materialCount;
+	//global["PieceCount"] = m_pieces.size();
+	//global["PartCount"] = m_parts.size();
+	//global["BoneCount"] = m_bones.size();
+	//global["LocatorCount"] = m_locators.size();
+	//global["Skeleton"] = m_fileName + ".pis";
 
-	for (const auto &piece : m_pieces)
-	{
-		Pix::Value &p = root["Piece"];
-		p["Index"] = piece.m_index;
-		p["Material"] = piece.m_material;
-		p["VertexCount"] = piece.m_vertices.size();
-		p["TriangleCount"] = piece.m_triangles.size();
-		p["StreamCount"] = piece.m_streamCount;
+	//if (m_looks.size() > 0)
+	//{
+	//	for (const auto &mat : m_looks[0].m_materials)
+	//	{
+	//		root["Material"] = mat.toPixDeclaration();
+	//	}
+	//}
 
-		if (piece.m_position)
-		{
-			Pix::Value &stream = p["Stream"];
-			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
-			stream["Tag"] = "_POSITION";
-			stream.allocateIndexedObjects(piece.m_vertices.size());
-			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
-			{
-				stream[i] = piece.m_vertices[i].m_position;
-			}
-		}
+	//for (const auto &piece : m_pieces)
+	//{
+	//	Pix::Value &p = root["Piece"];
+	//	p["Index"] = piece.m_index;
+	//	p["Material"] = piece.m_material;
+	//	p["VertexCount"] = piece.m_vertices.size();
+	//	p["TriangleCount"] = piece.m_triangles.size();
+	//	p["StreamCount"] = piece.m_streamCount;
+	//	p.allocateNamedObjects(10); // optimization stuff
 
-		if (piece.m_normal)
-		{
-			Pix::Value &stream = p["Stream"];
-			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
-			stream["Tag"] = "_NORMAL";
-			stream.allocateIndexedObjects(piece.m_vertices.size());
-			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
-			{
-				stream[i] = piece.m_vertices[i].m_normal;
-			}
-		}
+	//	if (piece.m_position)
+	//	{
+	//		Pix::Value &stream = p["Stream"];
+	//		stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+	//		stream["Tag"] = "_POSITION";
+	//		stream.allocateIndexedObjects(piece.m_vertices.size());
+	//		for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+	//		{
+	//			stream[i] = piece.m_vertices[i].m_position;
+	//		}
+	//	}
 
-		if (piece.m_tangent)
-		{
-			Pix::Value &stream = p["Stream"];
-			stream["Format"] = Pix::Value::Enumeration("FLOAT3");
-			stream["Tag"] = "_TANGENT";
-			stream.allocateIndexedObjects(piece.m_vertices.size());
-			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
-			{
-				stream[i] = piece.m_vertices[i].m_tangent;
-			}
-		}
+	//	if (piece.m_normal)
+	//	{
+	//		Pix::Value &stream = p["Stream"];
+	//		stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+	//		stream["Tag"] = "_NORMAL";
+	//		stream.allocateIndexedObjects(piece.m_vertices.size());
+	//		for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+	//		{
+	//			stream[i] = piece.m_vertices[i].m_normal;
+	//		}
+	//	}
 
-		if (piece.m_texcoord)
-		{
-			for (uint32_t texcoord = 0; texcoord < piece.m_texcoordCount; ++texcoord)
-			{
-				Pix::Value &stream = p["Stream"];
-				stream["Format"] = Pix::Value::Enumeration("FLOAT2");
-				stream["Tag"] = fmt::sprintf("_UV%i", texcoord);
+	//	if (piece.m_tangent)
+	//	{
+	//		Pix::Value &stream = p["Stream"];
+	//		stream["Format"] = Pix::Value::Enumeration("FLOAT3");
+	//		stream["Tag"] = "_TANGENT";
+	//		stream.allocateIndexedObjects(piece.m_vertices.size());
+	//		for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+	//		{
+	//			stream[i] = piece.m_vertices[i].m_tangent;
+	//		}
+	//	}
 
-				Array<uint32_t> texCoords = piece.texCoords(texcoord);
-				stream["AliasCount"] = texCoords.size();
+	//	if (piece.m_texcoord)
+	//	{
+	//		for (uint32_t texcoord = 0; texcoord < piece.m_texcoordCount; ++texcoord)
+	//		{
+	//			Pix::Value &stream = p["Stream"];
+	//			stream["Format"] = Pix::Value::Enumeration("FLOAT2");
+	//			stream["Tag"] = fmt::sprintf("_UV%i", texcoord);
 
-				Array<String> texCoordsString;
-				for (const uint32_t &tex : texCoords)
-				{
-					texCoordsString.push_back(fmt::sprintf("_TEXCOORD%i", tex));
-				}
-				stream["Aliases"] = texCoordsString;
+	//			Array<uint32_t> texCoords = piece.texCoords(texcoord);
+	//			stream["AliasCount"] = texCoords.size();
 
-				stream.allocateIndexedObjects(piece.m_vertices.size());
-				for (size_t i = 0; i < piece.m_vertices.size(); ++i)
-				{
-					stream[i] = piece.m_vertices[i].m_texcoords[texcoord];
-				}
-			}
-		}
+	//			Array<String> texCoordsString;
+	//			for (const uint32_t &tex : texCoords)
+	//			{
+	//				texCoordsString.push_back(fmt::sprintf("_TEXCOORD%i", tex));
+	//			}
+	//			stream["Aliases"] = texCoordsString;
 
-		if (piece.m_color)
-		{
-			Pix::Value &stream = p["Stream"];
-			stream["Format"] = Pix::Value::Enumeration("FLOAT4");
-			stream["Tag"] = "_RGBA";
-			stream.allocateIndexedObjects(piece.m_vertices.size());
-			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
-			{
-				stream[i] = piece.m_vertices[i].m_color;
-			}
-		}
+	//			stream.allocateIndexedObjects(piece.m_vertices.size());
+	//			for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+	//			{
+	//				stream[i] = piece.m_vertices[i].m_texcoords[texcoord];
+	//			}
+	//		}
+	//	}
 
-		Pix::Value &triangles = p["Triangles"];
-		triangles.allocateIndexedObjects(piece.m_triangles.size());
-		for (size_t i = 0; i < piece.m_triangles.size(); ++i)
-		{
-			triangles[i] = piece.m_triangles[i].m_attach;
-		}
-	}
+	//	if (piece.m_color)
+	//	{
+	//		Pix::Value &stream = p["Stream"];
+	//		stream["Format"] = Pix::Value::Enumeration("FLOAT4");
+	//		stream["Tag"] = "_RGBA";
+	//		stream.allocateIndexedObjects(piece.m_vertices.size());
+	//		for (size_t i = 0; i < piece.m_vertices.size(); ++i)
+	//		{
+	//			stream[i] = piece.m_vertices[i].m_color;
+	//		}
+	//	}
 
-	for (const auto &part : m_parts)
-	{
-		Pix::Value &p = root["Part"];
-		p["Name"] = part.m_name;
-		p["PieceCount"] = part.m_pieceCount;
-		p["LocatorCount"] = part.m_locatorCount;
+	//	Pix::Value &triangles = p["Triangles"];
+	//	triangles.allocateIndexedObjects(piece.m_triangles.size());
+	//	for (size_t i = 0; i < piece.m_triangles.size(); ++i)
+	//	{
+	//		triangles[i] = piece.m_triangles[i].m_attach;
+	//	}
+	//}
 
-		Array<int> pieces;
-		for (uint32_t i = 0; i < part.m_pieceCount; ++i)
-		{
-			pieces.push_back(part.m_pieceId + i);
-		}
-		p["Pieces"] = pieces;
+	//for (const auto &part : m_parts)
+	//{
+	//	Pix::Value &p = root["Part"];
+	//	p["Name"] = part.m_name;
+	//	p["PieceCount"] = part.m_pieceCount;
+	//	p["LocatorCount"] = part.m_locatorCount;
 
-		Array<int> locators;
-		for (uint32_t i = 0; i < part.m_locatorCount; ++i)
-		{
-			locators.push_back(part.m_locatorId + i);
-		}
-		p["Locators"] = locators;
-	}
+	//	Array<int> pieces;
+	//	for (uint32_t i = 0; i < part.m_pieceCount; ++i)
+	//	{
+	//		pieces.push_back(part.m_pieceId + i);
+	//	}
+	//	p["Pieces"] = pieces;
 
-	for (const auto &locator : m_locators)
-	{
-		Pix::Value &l = root["Locator"];
-		l["Name"] = locator.m_name;
-		if (!locator.m_hookup.empty())
-		{
-			l["Hookup"] = locator.m_hookup;
-		}
-		l["Index"] = locator.m_index;
-		l["Position"] = locator.m_position;
-		l["Rotation"] = locator.m_rotation;
-		l["Scale"] = locator.m_scale;
-	}
+	//	Array<int> locators;
+	//	for (uint32_t i = 0; i < part.m_locatorCount; ++i)
+	//	{
+	//		locators.push_back(part.m_locatorId + i);
+	//	}
+	//	p["Locators"] = locators;
+	//}
 
-	if (!m_bones.empty())
-	{
-		Pix::Value &bones = root["Bones"];
-		bones.allocateIndexedObjects(m_bones.size());
-		for (size_t i = 0; i < m_bones.size(); ++i)
-		{
-			bones[i] = m_bones[i].m_name;
-		}
-	}
+	//for (const auto &locator : m_locators)
+	//{
+	//	Pix::Value &l = root["Locator"];
+	//	l["Name"] = locator.m_name;
+	//	if (!locator.m_hookup.empty())
+	//	{
+	//		l["Hookup"] = locator.m_hookup;
+	//	}
+	//	l["Index"] = locator.m_index;
+	//	l["Position"] = locator.m_position;
+	//	l["Rotation"] = locator.m_rotation;
+	//	l["Scale"] = locator.m_scale;
+	//}
 
-	Pix::StyledStringWriter writer;
-	printf("result = \n%s\n", writer.write(root).c_str());*/
+	//if (!m_bones.empty())
+	//{
+	//	Pix::Value &bones = root["Bones"];
+	//	bones.allocateIndexedObjects(m_bones.size());
+	//	for (size_t i = 0; i < m_bones.size(); ++i)
+	//	{
+	//		bones[i] = m_bones[i].m_name;
+	//	}
+	//}
 
+	//if (m_skinVertCount > 0)
+	//{
+	//	Pix::Value &skin = root["Skin"];
+	//	skin["StreamCount"] = 1;
+	//	Pix::Value &skinStream = skin["SkinStream"];
+	//	skinStream["Format"] = Pix::Value::Enumeration("FLOAT3");
+	//	skinStream["Tag"] = "_POSITION";
+	//	skinStream["ItemCount"] = 1;
+	//	skinStream["TotalWeightCount"] = 1;
+	//	skinStream["TotalCloneCount"] = 1;
+	//	skinStream.allocateIndexedObjects(m_skinVertCount);
+	//	for (size_t i = 0; i < m_skinVertCount; ++i)
+	//	{
+	//		skinStream[i] = 
+	//	}
+	//}
+
+	//Pix::StyledFileWriter writer;
+	//writer.write(file.get(), root);
 
 	*file << fmt::sprintf(
 		"Header {"							SEOL
@@ -1407,6 +1384,77 @@ Bone *Model::bone(size_t index)
 {
 	assert(index >= 0 && index < m_bones.size());
 	return &m_bones[index];
+}
+
+auto Variant::Part::operator[](String attribute) const -> const Attribute &
+{
+	const auto it = std::find_if(m_attributes.cbegin(), m_attributes.cend(),
+	[&](const Attribute &attr) {
+		return attr.getName() == attribute;
+	});
+	assert(it != m_attributes.cend());
+	return (*it);
+}
+
+auto Variant::Part::operator[](String attribute) -> Attribute &
+{
+	auto it = std::find_if(m_attributes.begin(), m_attributes.end(),
+	[&](const Attribute &attr) {
+		return attr.getName() == attribute;
+	});
+	assert(it != m_attributes.end());
+	return (*it);
+}
+
+auto Variant::Part::operator[](size_t attribute) const -> const Attribute &
+{
+	assert(attribute < m_attributes.size());
+	return m_attributes[attribute];
+}
+
+auto Variant::Part::operator[](size_t attribute) -> Attribute &
+{
+	assert(attribute < m_attributes.size());
+	return m_attributes[attribute];
+}
+
+void Variant::setPartCount(size_t parts)
+{
+	m_parts.resize(parts);
+}
+
+auto Variant::operator[](size_t id) const -> const Part &
+{
+	assert(id >= 0 && id < m_parts.size());
+	return m_parts[id];
+}
+
+auto Variant::operator[](size_t id) -> Part &
+{
+	assert(id >= 0 && id < m_parts.size());
+	return m_parts[id];
+}
+
+String Variant::Attribute::toDefinition(const String &prefix) const
+{
+	String result;
+	result += prefix + "Attribute {" SEOL;
+	{
+		result += prefix + fmt::sprintf(TAB "Format: %s" SEOL, m_type == INT ? "INT" : "UNKNOWN");
+		result += prefix + fmt::sprintf(TAB "Tag: \"%s\"" SEOL, m_name.c_str());
+		result += prefix + fmt::sprintf(TAB "Value: ( %i )" SEOL, m_intValue);
+	}
+	result += prefix + "}" SEOL;
+	return result;
+}
+
+Pix::Value Variant::Attribute::toPixDefinition() const
+{
+	Pix::Value root;
+	root["Format"] = Pix::Value::Enumeration(m_type == INT ? "INT" : "UNKNOWN");
+	root["Tag"] = m_name;
+	root["Value"] = prism::vec_t<int, 1>(m_intValue);
+	return root;
 }
 
 /* eof */

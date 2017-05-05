@@ -15,6 +15,8 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="fs\file.h" />
     <ClInclude Include="fs\filesystem.h" />
+    <ClInclude Include="fs\hashfilesystem.h" />
+    <ClInclude Include="fs\hashfs_file.h" />
     <ClInclude Include="fs\sysfilesystem.h" />
     <ClInclude Include="fs\sysfs_file.h" />
     <ClInclude Include="fs\uberfilesystem.h" />
@@ -46,6 +48,7 @@
     <ClInclude Include="prerequisites.h" />
     <ClInclude Include="resource_lib.h" />
     <ClInclude Include="structs\dds.h" />
+    <ClInclude Include="structs\hashfs.h" />
     <ClInclude Include="structs\pma.h" />
     <ClInclude Include="structs\pmc.h" />
     <ClInclude Include="structs\pmd.h" />
@@ -58,6 +61,7 @@
     <ClInclude Include="texture\texture_object.h" />
     <ClInclude Include="utils\explicit_singleton.h" />
     <ClInclude Include="utils\hash.h" />
+    <ClInclude Include="utils\string_tokenizer.h" />
     <ClInclude Include="utils\token.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="version.h" />
@@ -67,6 +71,8 @@
     <ClCompile Include="config.cpp" />
     <ClCompile Include="fs\file.cpp" />
     <ClCompile Include="fs\filesystem.cpp" />
+    <ClCompile Include="fs\hashfilesystem.cpp" />
+    <ClCompile Include="fs\hashfs_file.cpp" />
     <ClCompile Include="fs\sysfilesystem.cpp" />
     <ClCompile Include="fs\sysfs_file.cpp" />
     <ClCompile Include="fs\uberfilesystem.cpp" />
@@ -99,6 +105,7 @@
     <ClCompile Include="structs\dds.cpp" />
     <ClCompile Include="texture\texture.cpp" />
     <ClCompile Include="texture\texture_object.cpp" />
+    <ClCompile Include="utils\string_tokenizer.cpp" />
     <ClCompile Include="utils\token.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -164,7 +171,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>

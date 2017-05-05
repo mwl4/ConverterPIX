@@ -29,14 +29,10 @@ public:
 
 	virtual size_t write(const void *buffer, size_t elementSize, size_t elementCount) = 0;
 	virtual size_t read(void *buffer, size_t elementSize, size_t elementCount) = 0;
-
-	virtual size_t getSize() const = 0;
-	virtual const char *getLine(String &out) = 0;
-
-	virtual int seek(uint32_t offset, Attrib attr) = 0;
+	virtual size_t size() const = 0;
+	virtual bool seek(uint32_t offset, Attrib attr) = 0;
 	virtual void rewind() = 0;
 	virtual size_t tell() = 0;
-
 	virtual void flush() = 0;
 
 	bool blockRead(void *buffer, unsigned int offset, size_t size);

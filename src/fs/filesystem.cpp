@@ -13,6 +13,7 @@
 
 #include "sysfilesystem.h"
 #include "uberfilesystem.h"
+#include "hashfilesystem.h"
 
 FileSystem::FileSystem()
 {
@@ -42,12 +43,18 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 		error("system", root, "Zip filesystem is not supported yet!");
 		return nullptr;
 	}
-	else if (root.substr(root.length() - 1) == "/")
+	else if (root.substr(root.length() - 4) == ".scs")
 	{
-		auto fs = std::make_unique<SysFileSystem>(root.substr(0, root.length() - 1));
+		auto fs = std::make_unique<HashFileSystem>(root);
 		return getUFS()->mount(std::move(fs), priority);
 	}
-	error("system", root, "nknown filesystem type!");
+	else
+	{
+		String rootdirectory = makeSlashAtEnd(root);
+		auto fs = std::make_unique<SysFileSystem>(rootdirectory.substr(0, rootdirectory.length() - 1));
+		return getUFS()->mount(std::move(fs), priority);
+	}
+	error("system", root, "Unknown filesystem type!");
 	return nullptr;
 }
 

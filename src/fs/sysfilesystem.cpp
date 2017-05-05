@@ -141,7 +141,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 				auto subdir = readDir(fullFileName, absolutePaths, recursive);
 				if (subdir)
 				{
-					result->insert(result->begin(), subdir->begin(), subdir->end());
+					result->insert(result->end(), subdir->begin(), subdir->end());
 				}
 			}
 		}
