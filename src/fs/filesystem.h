@@ -34,6 +34,7 @@ public:
 	FileSystem &operator=(FileSystem &&) = delete;
 
 	virtual String root() const = 0;
+	virtual String name() const = 0;
 	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) = 0;
 	virtual bool mkdir(const String &directory) = 0;
 	virtual bool rmdir(const String &directory) = 0;

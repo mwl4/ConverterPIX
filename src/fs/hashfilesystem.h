@@ -1,16 +1,11 @@
- /******************************************************************************
- *
- *  Project:	mbd_reader @ core
- *  File:		/fs/hashfilesystem.hxx
- *
- *  Copyright (C) 2013 - 2017, TruckersMP Team.
- *  All rights reserved.
- *
- *   This software is ditributed WITHOUT ANY WARRANTY; without even
- *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the copyright file for more information.
- *
- *****************************************************************************/
+/*********************************************************************
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
+ *********************************************************************
+ * File       : hashfilesystem.h
+ * Project    : ConverterPIX
+ * Developers : Michal Wojtowicz (mwl450@gmail.com)
+ 			  : Piotr Krupa (piotrkrupa06@gmail.com)
+ *********************************************************************/
 
 #pragma once
 
@@ -30,6 +25,7 @@ public:
 	HashFileSystem &operator=(HashFileSystem &&rhs) = delete;
 
 	virtual String root() const override;
+	virtual String name() const override;
 	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) override;
 	virtual bool mkdir(const String &directory) override;
 	virtual bool rmdir(const String &directory) override;
@@ -48,7 +44,7 @@ private:
 
 private:
 	bool readHashFS();
-	prism::hashfs_entry_t *findEntry(String path);
+	prism::hashfs_entry_t *findEntry(const String &path);
 };
 
 /* eof */

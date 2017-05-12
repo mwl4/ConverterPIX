@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		SINGLE_TOBJ,
 		DEBUG_DDS
 	} mode = DIRECTORY_LIST;
-	
+
 	String *parameter = nullptr;
 	Array<String> optionalArgs;
 
@@ -141,27 +141,27 @@ int main(int argc, char *argv[])
 		ufsMount(base, true, priority++);
 	}
 
-	////int stop;
-	////scanf("%i", &stop);
-	//auto dir = getUFS()->readDir("/", true, true);
-	//if (dir)
+	/*int stop;
+	scanf("%i", &stop);
+	auto dir = getUFS()->readDir("/", true, true);
+	if (dir)
+	{
+		for (const auto &d : (*dir))
+		{
+			printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
+		}
+	}*/
+	//auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
+	//if (file)
 	//{
-	//	/*for (const auto &d : (*dir))
+	//	UniquePtr<char[]> buffer(new char[20]);
+	//	if (file->blockRead(buffer.get(), 0, 20))
 	//	{
-	//		printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
-	//	}*/
+	//		//buffer[file->getSize()] = '\0';
+	//		//printf("file = %s\n", buffer.get());
+	//	}
+	//
 	//}
-	////auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
-	////if (file)
-	////{
-	////	UniquePtr<char[]> buffer(new char[20]);
-	////	if (file->blockRead(buffer.get(), 0, 20))
-	////	{
-	////		//buffer[file->getSize()] = '\0';
-	////		//printf("file = %s\n", buffer.get());
-	////	}
-	////	
-	////}
 	//return 0;
 
 	long long startTime =
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 
 					// remove files with no .pma extension
 					files->erase(
-						std::remove_if(files->begin(), files->end(), 
+						std::remove_if(files->begin(), files->end(),
 							[](const FileSystem::Entry &s) {
 								return s.IsDirectory() || s.GetPath().substr(s.GetPath().rfind('.')) != ".pma";
 							}),

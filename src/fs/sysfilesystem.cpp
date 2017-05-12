@@ -27,6 +27,11 @@ String SysFileSystem::root() const
 	return m_root;
 }
 
+String SysFileSystem::name() const
+{
+	return "sysfs";
+}
+
 UniquePtr<File> SysFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	const String smode =

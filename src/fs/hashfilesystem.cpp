@@ -1,16 +1,11 @@
- /******************************************************************************
- *
- *  Project:	mbd_reader @ core
- *  File:		/fs/hashfilesystem.cxx
- *
- *  Copyright (C) 2013 - 2017, TruckersMP Team.
- *  All rights reserved.
- *
- *   This software is ditributed WITHOUT ANY WARRANTY; without even
- *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the copyright file for more information.
- *
- *****************************************************************************/
+/*********************************************************************
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
+ *********************************************************************
+ * File       : hashfilesystem.cpp
+ * Project    : ConverterPIX
+ * Developers : Michal Wojtowicz (mwl450@gmail.com)
+ 			  : Piotr Krupa (piotrkrupa06@gmail.com)
+ *********************************************************************/
 
 #include <prerequisites.h>
 
@@ -41,6 +36,11 @@ HashFileSystem::~HashFileSystem()
 String HashFileSystem::root() const
 {
 	return m_rootFilename;
+}
+
+String HashFileSystem::name() const
+{
+	return "hashfs";
 }
 
 UniquePtr<File> HashFileSystem::open(const String &filename, FsOpenMode mode)
@@ -163,7 +163,7 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 				}
 			}
 		}
-		else
+		else // file
 		{
 			String filepath = removeSlashAtEnd(dirpath) + "/" + line.c_str();
 			result->push_back(Entry(filepath, false, this));
@@ -216,20 +216,21 @@ bool HashFileSystem::readHashFS()
 	return true;
 }
 
-prism::hashfs_entry_t *HashFileSystem::findEntry(String path)
+prism::hashfs_entry_t *HashFileSystem::findEntry(const String &path)
 {
 	using namespace prism;
 
+	String pathToFind;
 	if (m_header.m_salt != 0)
 	{
-		path = fmt::sprintf("%u%s", m_header.m_salt, (path.c_str() + 1));
+		pathToFind = fmt::sprintf("%u%s", m_header.m_salt, (path.c_str() + 1));
 	}
 	else
 	{
-		path = path.c_str() + 1;
+		pathToFind = path.c_str() + 1;
 	}
 
-	const u64 hash = city_hash_64(path.c_str(), path.length());
+	const u64 hash = city_hash_64(pathToFind.c_str(), pathToFind.length());
 
 	size_t index, l = 0, r = m_entries.size();
 	while (l <= r) // binary search

@@ -20,6 +20,7 @@ public:
 	virtual ~SysFileSystem();
 
 	virtual String root() const override;
+	virtual String name() const override;
 	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) override;
 	virtual bool mkdir(const String &directory) override;
 	virtual bool rmdir(const String &directory) override;

@@ -39,6 +39,11 @@ String ZipFileSystem::root() const
 	return m_rootFilename;
 }
 
+String ZipFileSystem::name() const
+{
+	return "zipfs";
+}
+
 UniquePtr<File> ZipFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	return nullptr;
@@ -74,7 +79,7 @@ void ZipFileSystem::readZip()
 	const size_t size = m_root->size();
 	if (size <= sizeof(zip::EndOfCentralDirectory))
 	{
-		error("sysfs", m_rootFilename, "Too short file!");
+		error("zipfs", m_rootFilename, "Too short file!");
 		return;
 	}
 
@@ -82,7 +87,7 @@ void ZipFileSystem::readZip()
 	UniquePtr<uint8_t[]> blockToFindCentralDirEnd(new uint8_t[blockSizeToFindCentralDirEnd]);
 	if (!m_root->blockRead(blockToFindCentralDirEnd.get(), size - blockSizeToFindCentralDirEnd, blockSizeToFindCentralDirEnd))
 	{
-		error("sysfs", m_rootFilename, "Failed to read the zip_central_dir_end structure!");
+		error("zipfs", m_rootFilename, "Failed to read the zip_central_dir_end structure!");
 		return;
 	}
 
@@ -97,21 +102,21 @@ void ZipFileSystem::readZip()
 
 		if (--currentOffset < blockToFindCentralDirEnd.get())
 		{
-			error("sysfs", m_rootFilename, "Cannot find the zip_central_dir_end signature!");
+			error("zipfs", m_rootFilename, "Cannot find the zip_central_dir_end signature!");
 			return;
 		}
 	}
 
 	if (centralDirEnd->signature != zip::EndOfCentralDirectory::SIGNATURE)
 	{
-		error("sysfs", m_rootFilename, "Invalid end signature!");
+		error("zipfs", m_rootFilename, "Invalid end signature!");
 		return;
 	}
 
 	const uint16_t numEntriesLimit = 60000;
 	if (centralDirEnd->numEntries > numEntriesLimit)
 	{
-		error_f("sysfs", m_rootFilename, "The number of files(%u) exceeded limits(%u).", centralDirEnd->numEntries, numEntriesLimit);
+		error_f("zipfs", m_rootFilename, "The number of files(%u) exceeded limits(%u).", centralDirEnd->numEntries, numEntriesLimit);
 		return;
 	}
 

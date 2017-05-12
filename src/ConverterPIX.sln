@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI ConverterPIX", "gui\GUI
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cityhash", "libs\cityhash\cityhash.vcxproj", "{75A85A1A-359C-4C0F-9440-024C62F43C50}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{D86FC0C4-1146-4480-BD0D-E1764B35C39E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -60,5 +62,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{33134F61-C1AD-4B6F-9CEA-503A9F140C52} = {D86FC0C4-1146-4480-BD0D-E1764B35C39E}
+		{75A85A1A-359C-4C0F-9440-024C62F43C50} = {D86FC0C4-1146-4480-BD0D-E1764B35C39E}
 	EndGlobalSection
 EndGlobal

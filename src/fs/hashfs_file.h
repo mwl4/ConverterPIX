@@ -1,16 +1,11 @@
- /******************************************************************************
- *
- *  Project:	mbd_reader @ core
- *  File:		/fs/hashfs_file.hxx
- *
- *  Copyright (C) 2013 - 2017, TruckersMP Team.
- *  All rights reserved.
- *
- *   This software is ditributed WITHOUT ANY WARRANTY; without even
- *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the copyright file for more information.
- *
- *****************************************************************************/
+/*********************************************************************
+ *           Copyright (C) 2017 mwl4 - All rights reserved           *
+ *********************************************************************
+ * File       : hashfs_file.h
+ * Project    : ConverterPIX
+ * Developers : Michal Wojtowicz (mwl450@gmail.com)
+ 			  : Piotr Krupa (piotrkrupa06@gmail.com)
+ *********************************************************************/
 
 #pragma once
 

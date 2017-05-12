@@ -26,11 +26,16 @@ String UberFileSystem::root() const
 	return "/";
 }
 
+String UberFileSystem::name() const
+{
+	return "uberfs";
+}
+
 UniquePtr<File> UberFileSystem::open(const String &filename, FsOpenMode mode)
 {
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
-		auto file = (*it).second->open(filename, mode);
+		UniquePtr<File> file = (*it).second->open(filename, mode);
 		if (file)
 		{
 			return file;
@@ -103,7 +108,7 @@ auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	return result;
 }
 
-FileSystem *UberFileSystem::mount(UniquePtr<FileSystem> fs, int priority)
+FileSystem *UberFileSystem::mount(UniquePtr<FileSystem> fs, Priority priority)
 {
 	m_filesystems[priority] = std::move(fs);
 	return m_filesystems[priority].get();
