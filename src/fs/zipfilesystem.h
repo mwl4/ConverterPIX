@@ -13,9 +13,6 @@
 
 class ZipFileSystem : public FileSystem
 {
-private:
-	String m_rootFilename;
-	UniquePtr<File> m_root;
 public:
 	ZipFileSystem(const String &root);
 	virtual ~ZipFileSystem();
@@ -30,6 +27,10 @@ public:
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
 	void readZip();
+
+private:
+	String m_rootFilename;
+	UniquePtr<File> m_root;
 };
 
 /* eof */

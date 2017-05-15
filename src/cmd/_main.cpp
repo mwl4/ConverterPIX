@@ -58,6 +58,9 @@ void print_help()
 	);
 }
 
+bool convertSingleModel(String filepath, String exportpath, Array<String> optionalArgs);
+bool convertWholeBase(String basepath, String exportpath);
+
 int main(int argc, char *argv[])
 {
 	printf("\n"
@@ -79,13 +82,15 @@ int main(int argc, char *argv[])
 
 	Array<String> basepath;
 	String exportpath;
-	String filepath;
+	String path;
 
 	enum {
 		DIRECTORY_LIST,
 		SINGLE_MODEL,
 		SINGLE_TOBJ,
-		DEBUG_DDS
+		DEBUG_DDS,
+		EXTRACT_FILE,
+		EXTRACT_DIRECTORY,
 	} mode = DIRECTORY_LIST;
 
 	String *parameter = nullptr;
@@ -108,12 +113,12 @@ int main(int argc, char *argv[])
 		else if (arg == "-m")
 		{
 			mode = SINGLE_MODEL;
-			parameter = &filepath;
+			parameter = &path;
 		}
 		else if (arg == "-t")
 		{
 			mode = SINGLE_TOBJ;
-			parameter = &filepath;
+			parameter = &path;
 		}
 		else if (arg == "-b")
 		{
@@ -127,7 +132,17 @@ int main(int argc, char *argv[])
 		else if (arg == "-d")
 		{
 			mode = DEBUG_DDS;
-			parameter = &filepath;
+			parameter = &path;
+		}
+		else if (arg == "-extract_f")
+		{
+			mode = EXTRACT_FILE;
+			parameter = &path;
+		}
+		else if (arg == "-extract_d")
+		{
+			mode = EXTRACT_DIRECTORY;
+			parameter = &path;
 		}
 		else
 		{
@@ -140,29 +155,6 @@ int main(int argc, char *argv[])
 		static int priority = 1;
 		ufsMount(base, true, priority++);
 	}
-
-	/*int stop;
-	scanf("%i", &stop);
-	auto dir = getUFS()->readDir("/", true, true);
-	if (dir)
-	{
-		for (const auto &d : (*dir))
-		{
-			printf("[%s] %s\n", d.IsDirectory() ? "D" : "F", d.GetPath().c_str());
-		}
-	}*/
-	//auto file = getUFS()->open("/vehicle/truck/mercedes_actros_2014/truck.pmg", FileSystem::read);
-	//if (file)
-	//{
-	//	UniquePtr<char[]> buffer(new char[20]);
-	//	if (file->blockRead(buffer.get(), 0, 20))
-	//	{
-	//		//buffer[file->getSize()] = '\0';
-	//		//printf("file = %s\n", buffer.get());
-	//	}
-	//
-	//}
-	//return 0;
 
 	long long startTime =
 		std::chrono::duration_cast<std::chrono::milliseconds>
@@ -181,53 +173,7 @@ int main(int argc, char *argv[])
 			{
 				exportpath = basepath.back() + "_exp";
 			}
-			backslashesToSlashes(filepath);
-			auto model = std::make_shared<Model>();
-			if (!model->load(filepath))
-			{
-				printf("Failed to load: %s\n", filepath.c_str());
-				return 1;
-			}
-			model->saveToMidFormat(exportpath, true);
-			for (size_t i = 0; i < optionalArgs.size(); ++i)
-			{
-				if (optionalArgs[i] == "*")
-				{
-					auto files = getUFS()->readDir(model->fileDirectory(), true, false);
-
-					// remove files with no .pma extension
-					files->erase(
-						std::remove_if(files->begin(), files->end(),
-							[](const FileSystem::Entry &s) {
-								return s.IsDirectory() || s.GetPath().substr(s.GetPath().rfind('.')) != ".pma";
-							}),
-						files->end()
-					);
-
-					// remove extensions
-					std::for_each(files->begin(), files->end(),
-						[&](FileSystem::Entry &s) {
-							s.SetPath(s.GetPath().substr(0, s.GetPath().rfind('.')));
-						}
-					);
-
-					for (const auto &f : (*files))
-					{
-						optionalArgs.push_back(f.GetPath());
-					}
-					continue;
-				}
-				backslashesToSlashes(optionalArgs[i]);
-				Animation anim;
-				if (!anim.load(model, optionalArgs[i]))
-				{
-					printf("Failed to load: %s\n", optionalArgs[i].c_str());
-				}
-				else
-				{
-					anim.saveToPia(exportpath);
-				}
-			}
+			convertSingleModel(path, exportpath, optionalArgs);
 		} break;
 		case DIRECTORY_LIST:
 		{
@@ -240,50 +186,13 @@ int main(int argc, char *argv[])
 			{
 				basepath.push_back(optionalArgs[0]);
 				static int priority = 1;
-				bool noneedslash = (optionalArgs[0][optionalArgs[0].length() - 1] == '/') || (optionalArgs[0][optionalArgs[0].length() - 1] == '\\');
-				ufsMount(noneedslash ? optionalArgs[0] : optionalArgs[0] + '/', true, priority++);
+				ufsMount(basepath[0], true, priority++);
 			}
 			if (exportpath.empty())
 			{
 				exportpath = basepath[0] + "_exp";
 			}
-			auto files = getSFS()->readDir(basepath[0], true, true);
-			int i = 0;
-			int size = files->size();
-			for (const auto &f : *files)
-			{
-				if (f.IsDirectory())
-					continue;
-
-				const String filename = f.GetPath().substr(basepath[0].length());
-				const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
-				if (extension == ".pmg")
-				{
-					const String modelPath = filename.substr(0, filename.length() - 4);
-					Model model;
-					if (!model.load(modelPath))
-					{
-						printf("Failed to load: %s\n", modelPath.c_str());
-					}
-					else
-					{
-						printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
-						model.saveToMidFormat(exportpath, false);
-					}
-				}
-				else if (extension == ".tobj")
-				{
-					TextureObject tobj;
-					if (tobj.load(filename))
-					{
-						tobj.saveToMidFormats(exportpath);
-						printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
-						printf("%s: tobj: yes\n", filename.substr(directory(filename).length() + 1).c_str());
-					}
-				}
-				++i;
-			}
-			printf("\nBase converted: %s\n", exportpath.c_str());
+			convertWholeBase(basepath[0], exportpath);
 		} break;
 		case SINGLE_TOBJ:
 		{
@@ -296,19 +205,86 @@ int main(int argc, char *argv[])
 			{
 				exportpath = basepath[0] + "_exp";
 			}
-			backslashesToSlashes(filepath);
+			backslashesToSlashes(path);
 			TextureObject tobj;
-			if (tobj.load(filepath))
+			if (tobj.load(path))
 			{
 				tobj.saveToMidFormats(exportpath);
-				printf("%s: tobj: yes\n", filepath.substr(directory(filepath).length() + 1).c_str());
+				printf("%s: tobj: yes\n", path.substr(directory(path).length() + 1).c_str());
 			}
 		} break;
 		case DEBUG_DDS:
 		{
-			if (!filepath.empty())
+			if (!path.empty())
 			{
-				dds::print_debug(filepath);
+				dds::print_debug(path);
+			}
+		} break;
+		case EXTRACT_FILE:
+		{
+			if (basepath.empty())
+			{
+				printf("Not specified base path!");
+				return 1;
+			}
+			if (exportpath.empty())
+			{
+				exportpath = basepath[0] + "_exp";
+			}
+			auto file = getUFS()->open(path, FileSystem::read);
+			if (file)
+			{
+				auto output = getSFS()->open(exportpath + path, FileSystem::write);
+				if (output)
+				{
+					copyFile(file.get(), output.get());
+				}
+				else
+				{
+					printf("Unable to open file to write: %s\n", (exportpath + path).c_str());
+				}
+			}
+			else
+			{
+				printf("Unable to open file to read: %s\n", path.c_str());
+			}
+		} break;
+		case EXTRACT_DIRECTORY:
+		{
+			if (basepath.empty())
+			{
+				printf("Not specified base path!");
+				return 1;
+			}
+			if (exportpath.empty())
+			{
+				exportpath = basepath[0] + "_exp";
+			}
+			auto files = getUFS()->readDir(path, true, true);
+			for (const auto &f : *files)
+			{
+				if (f.IsDirectory())
+				{
+					continue;
+				}
+
+				auto file = getUFS()->open(f.GetPath(), FileSystem::read);
+				if (file)
+				{
+					auto output = getSFS()->open(exportpath + f.GetPath(), FileSystem::write);
+					if (output)
+					{
+						copyFile(file.get(), output.get());
+					}
+					else
+					{
+						printf("Unable to open file to write: %s\n", (exportpath + f.GetPath()).c_str());
+					}
+				}
+				else
+				{
+					printf("Unable to open file to read: %s\n", f.GetPath().c_str());
+				}
 			}
 		} break;
 	}
@@ -320,6 +296,100 @@ int main(int argc, char *argv[])
 	//printf("Time : %llums\n", endTime - startTime);
 
 	return 0;
+}
+
+bool convertSingleModel(String filepath, String exportpath, Array<String> optionalArgs)
+{
+	backslashesToSlashes(filepath);
+	auto model = std::make_shared<Model>();
+	if (!model->load(filepath))
+	{
+		printf("Failed to load: %s\n", filepath.c_str());
+		return false;
+	}
+	model->saveToMidFormat(exportpath, true);
+	for (size_t i = 0; i < optionalArgs.size(); ++i)
+	{
+		if (optionalArgs[i] == "*")
+		{
+			auto files = getUFS()->readDir(model->fileDirectory(), true, false);
+
+			// remove files with no .pma extension
+			files->erase(
+				std::remove_if(files->begin(), files->end(),
+					[](const FileSystem::Entry &s) {
+						return s.IsDirectory() || s.GetPath().substr(s.GetPath().rfind('.')) != ".pma";
+					}
+				), files->end()
+			);
+
+			// remove extensions
+			std::for_each(files->begin(), files->end(),
+				[&](FileSystem::Entry &s) {
+					s.SetPath(s.GetPath().substr(0, s.GetPath().rfind('.')));
+				}
+			);
+
+			for (const auto &f : (*files))
+			{
+				optionalArgs.push_back(f.GetPath());
+			}
+			continue;
+		}
+		backslashesToSlashes(optionalArgs[i]);
+		Animation anim;
+		if (!anim.load(model, optionalArgs[i]))
+		{
+			printf("Failed to load: %s\n", optionalArgs[i].c_str());
+		}
+		else
+		{
+			anim.saveToPia(exportpath);
+		}
+	}
+	return true;
+}
+
+bool convertWholeBase(String basepath, String exportpath)
+{
+	auto files = getSFS()->readDir(basepath, true, true);
+	int i = 0;
+	int size = files->size();
+	for (const auto &f : *files)
+	{
+		if (f.IsDirectory())
+			continue;
+
+		const String filename = f.GetPath().substr(basepath.length());
+		const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
+		if (extension == ".pmg")
+		{
+			const String modelPath = filename.substr(0, filename.length() - 4);
+			Model model;
+			if (!model.load(modelPath))
+			{
+				printf("Failed to load: %s\n", modelPath.c_str());
+			}
+			else
+			{
+				printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
+				model.saveToMidFormat(exportpath, false);
+			}
+		}
+		else if (extension == ".tobj")
+		{
+			TextureObject tobj;
+			if (tobj.load(filename))
+			{
+				tobj.saveToMidFormats(exportpath);
+				printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
+				printf("%s: tobj: yes\n", filename.substr(directory(filename).length() + 1).c_str());
+			}
+		}
+		++i;
+	}
+	printf("\nBase converted: %s\n", exportpath.c_str());
+	return false;
 }
 
 /* eof */

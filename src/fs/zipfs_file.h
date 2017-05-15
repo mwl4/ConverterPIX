@@ -13,7 +13,6 @@
 
 class ZipFsFile : public File
 {
-private:
 public:
 	ZipFsFile();
 	ZipFsFile(const ZipFsFile &) = delete;

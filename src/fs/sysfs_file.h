@@ -13,8 +13,6 @@
 
 class SysFsFile : public File
 {
-private:
-	FILE *m_fp = nullptr;
 public:
 	SysFsFile();
 	SysFsFile(const SysFsFile &) = delete;
@@ -31,6 +29,9 @@ public:
 	virtual void rewind() override;
 	virtual size_t tell() override;
 	virtual void flush() override;
+
+private:
+	FILE *m_fp = nullptr;
 
 	friend class SysFileSystem;
 };

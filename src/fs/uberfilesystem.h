@@ -15,8 +15,7 @@ class UberFileSystem : public FileSystem
 {
 public:
 	using Priority = int;
-private:
-	std::map<Priority, UniquePtr<FileSystem>> m_filesystems;
+
 public:
 	UberFileSystem();
 	virtual ~UberFileSystem();
@@ -32,6 +31,9 @@ public:
 
 	FileSystem *mount(UniquePtr<FileSystem> fs, Priority priority);
 	void unmount(FileSystem *fs);
+
+private:
+	std::map<Priority, UniquePtr<FileSystem>> m_filesystems;
 };
 
 /* eof */

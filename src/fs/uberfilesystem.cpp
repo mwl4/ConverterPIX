@@ -80,27 +80,30 @@ auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
 		const auto &fs = (*it);
-		auto current = fs.second->readDir(path, absolutePaths, recursive);
-		if (current)
+		if(fs.second->dirExists(path))
 		{
-			if (!result)
+			auto current = fs.second->readDir(path, absolutePaths, recursive);
+			if (current)
 			{
-				result = std::make_unique<List<Entry>>();
-			}
-			for (const auto &c : (*current))
-			{
-				bool existsAlready = false;
-				for (const auto &r : (*result))
+				if (!result)
 				{
-					if (c.GetPath() == r.GetPath())
-					{
-						existsAlready = true;
-						break;
-					}
+					result = std::make_unique<List<Entry>>();
 				}
-				if (!existsAlready)
+				for (const auto &c : (*current))
 				{
-					result->push_back(c);
+					bool existsAlready = false;
+					for (const auto &r : (*result))
+					{
+						if (c.GetPath() == r.GetPath())
+						{
+							existsAlready = true;
+							break;
+						}
+					}
+					if (!existsAlready)
+					{
+						result->push_back(c);
+					}
 				}
 			}
 		}

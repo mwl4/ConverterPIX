@@ -48,6 +48,11 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 
 	if (!(m_header->m_flags & HASHFS_COMPRESSED))
 	{
+		if (m_position >= m_header->m_size)
+		{
+			return 0;
+		}
+
 		if (m_filesystem->ioRead(buffer, elementSize * elementCount, (size_t)(m_header->m_offset + m_position)))
 		{
 			size_t result = std::min(elementSize * elementCount, m_header->m_size - m_position);
@@ -56,7 +61,7 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 			{
 				m_position = m_header->m_size;
 			}
-			return elementSize * elementCount;
+			return result;
 		}
 		else
 		{

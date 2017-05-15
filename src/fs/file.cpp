@@ -261,8 +261,7 @@ bool copyFile(File *const input, File *const output)
 	input->rewind();
 	const int bufferSize = 1 * 1024 * 1024;
 	uint8_t *buffer = new uint8_t[bufferSize];
-	for (size_t readed = 0;
-		(readed = input->read((char *)buffer, 1, bufferSize)) != 0;)
+	for (size_t readed = 0; (readed = input->read((char *)buffer, 1, bufferSize)) != 0;)
 	{
 		output->write(buffer, 1, readed);
 	}

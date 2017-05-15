@@ -13,8 +13,6 @@
 
 class SysFileSystem : public FileSystem
 {
-private:
-	String m_root; // does not contain / at end
 public:
 	SysFileSystem(const String &root);
 	virtual ~SysFileSystem();
@@ -29,6 +27,9 @@ public:
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
 	String getError() const;
+
+private:
+	String m_root; // does not contain / at end
 };
 
 /* eof */

@@ -53,6 +53,12 @@ UniquePtr<File> HashFileSystem::open(const String &filename, FsOpenMode mode)
 		return UniquePtr<File>();
 	}
 
+	if (entry->m_flags & HASHFS_ENCRYPTED)
+	{
+		error("hashfs", filename, "Encrypted files are not supported!");
+		return UniquePtr<File>();
+	}
+
 	return std::make_unique<HashFsFile>(filename, this, entry);
 }
 
@@ -152,8 +158,17 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	{
 		if (line[0] == '*') // directory
 		{
-			String directorypath = removeSlashAtEnd(dirpath) + "/" + String(line.c_str() + 1);
+			String directorypath;
+			if (absolutePaths)
+			{
+				directorypath = removeSlashAtEnd(dirpath) + "/" + String(line.c_str() + 1);
+			}
+			else
+			{
+				directorypath = String(line.c_str() + 1);
+			}
 			result->push_back(Entry(directorypath, true, this));
+
 			if (recursive)
 			{
 				auto subdir = readDir(directorypath, absolutePaths, recursive);
@@ -165,7 +180,15 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 		}
 		else // file
 		{
-			String filepath = removeSlashAtEnd(dirpath) + "/" + line.c_str();
+			String filepath;
+			if (absolutePaths)
+			{
+				filepath = removeSlashAtEnd(dirpath) + "/" + line.c_str();
+			}
+			else
+			{
+				filepath = line;
+			}
 			result->push_back(Entry(filepath, false, this));
 		}
 	}
