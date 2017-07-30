@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 	Array<String> basepath;
 	String exportpath;
 	String path;
+	bool listdir_r = false;
 
 	enum {
 		DIRECTORY_LIST,
@@ -91,6 +92,7 @@ int main(int argc, char *argv[])
 		DEBUG_DDS,
 		EXTRACT_FILE,
 		EXTRACT_DIRECTORY,
+		LIST_DIR,
 	} mode = DIRECTORY_LIST;
 
 	String *parameter = nullptr;
@@ -142,6 +144,17 @@ int main(int argc, char *argv[])
 		else if (arg == "-extract_d")
 		{
 			mode = EXTRACT_DIRECTORY;
+			parameter = &path;
+		}
+		else if (arg == "-listdir")
+		{
+			mode = LIST_DIR;
+			parameter = &path;
+		}
+		else if (arg == "-listdir_r")
+		{
+			mode = LIST_DIR;
+			listdir_r = true;
 			parameter = &path;
 		}
 		else
@@ -287,6 +300,22 @@ int main(int argc, char *argv[])
 				}
 			}
 		} break;
+		case LIST_DIR:
+		{
+			if (basepath.empty())
+			{
+				printf("Not specified base path!");
+				return 1;
+			}
+
+			auto files = getUFS()->readDir(path, true, listdir_r);
+			for (const auto &f : *files)
+			{
+				printf("[%s]%s %s\n", f.IsDirectory() ? "D" : "F", f.IsEncrypted() ? " (encrypted)" : "", f.GetPath().c_str());
+			}
+
+			printf("-- done --\n");
+		} break;
 	}
 
 	long long endTime =
@@ -353,6 +382,11 @@ bool convertSingleModel(String filepath, String exportpath, Array<String> option
 bool convertWholeBase(String basepath, String exportpath)
 {
 	auto files = getSFS()->readDir(basepath, true, true);
+	if (!files)
+	{
+		printf("No files to convert!\n");
+		return false;
+	}
 
 	int size = 0;
 	for (const auto &f : *files)

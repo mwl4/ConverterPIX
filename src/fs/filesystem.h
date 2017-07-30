@@ -50,9 +50,10 @@ public:
 	{
 	}
 
-	Entry(String path, bool directory, FileSystem *filesystem)
+	Entry(String path, bool directory, bool encrypted, FileSystem *filesystem)
 		: m_path(path)
 		, m_directory(directory)
+		, m_encrypted(encrypted)
 		, m_filesystem(filesystem)
 	{
 	}
@@ -61,11 +62,13 @@ public:
 	inline void SetPath(const String path) { m_path = path; }
 
 	inline bool IsDirectory() const { return m_directory; }
+	inline bool IsEncrypted() const { return m_encrypted; }
 	inline FileSystem *GetFileSystem() const { return m_filesystem; }
 
 private:
 	String m_path;
-	bool m_directory;
+	bool m_directory = false;
+	bool m_encrypted = false;
 	FileSystem *m_filesystem = nullptr;
 };
 
