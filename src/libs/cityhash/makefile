@@ -1,9 +1,9 @@
-CXX=gcc
+CXX=g++
 CXXFLAGS=-c -g -w -static -I./
 LDFLAGS=-ldl -lpthread -static
-SOURCES=$(wildcard *.c)
-OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=../libs/libzlib.a
+SOURCES=$(wildcard *.cc)
+OBJECTS=$(SOURCES:.cc=.o)
+EXECUTABLE=../libs/libcityhash.a
 
 all: $(SOURCES) $(EXECUTABLE)
 
