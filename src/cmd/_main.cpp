@@ -244,10 +244,10 @@ int main(int argc, char *argv[])
 			{
 				exportpath = basepath[0] + "_exp";
 			}
-			auto file = getUFS()->open(path, FileSystem::read);
+			auto file = getUFS()->open(path, FileSystem::read | FileSystem::binary);
 			if (file)
 			{
-				auto output = getSFS()->open(exportpath + path, FileSystem::write);
+				auto output = getSFS()->open(exportpath + path, FileSystem::write | FileSystem::binary);
 				if (output)
 				{
 					copyFile(file.get(), output.get());
@@ -281,10 +281,10 @@ int main(int argc, char *argv[])
 					continue;
 				}
 
-				auto file = getUFS()->open(f.GetPath(), FileSystem::read);
+				auto file = getUFS()->open(f.GetPath(), FileSystem::read | FileSystem::binary);
 				if (file)
 				{
-					auto output = getSFS()->open(exportpath + f.GetPath(), FileSystem::write);
+					auto output = getSFS()->open(exportpath + f.GetPath(), FileSystem::write | FileSystem::binary);
 					if (output)
 					{
 						copyFile(file.get(), output.get());
