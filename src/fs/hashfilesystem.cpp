@@ -167,7 +167,7 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 			{
 				directorypath = String(line.c_str() + 1);
 			}
-			result->push_back(Entry(directorypath, true, this));
+			result->push_back(Entry(directorypath, true, false, this));
 
 			if (recursive)
 			{
@@ -189,7 +189,14 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 			{
 				filepath = line;
 			}
-			result->push_back(Entry(filepath, false, this));
+
+			bool encrypted = false;
+			prism::hashfs_entry_t *const entry = findEntry(removeSlashAtEnd(dirpath) + "/" + line.c_str());
+			if (entry)
+			{
+				encrypted = !!(entry->m_flags & HASHFS_ENCRYPTED);
+			}
+			result->push_back(Entry(filepath, false, encrypted, this));
 		}
 	}
 

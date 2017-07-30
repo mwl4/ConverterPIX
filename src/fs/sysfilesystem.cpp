@@ -150,7 +150,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 				}
 			}
 		}
-		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, this));
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, false, this));
 	} while (FindNextFileA(dir, &fileData));
 	FindClose(dir);
 	return result;
@@ -184,7 +184,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 				}
 			}
 		}
-		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, this));
+		result->push_back(Entry((absolutePaths ? fullFileName : fileName), isDirectory, false, this));
 	}
 	closedir(dir);
 	return result;
