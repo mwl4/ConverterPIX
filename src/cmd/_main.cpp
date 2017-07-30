@@ -51,7 +51,7 @@ void print_help()
 		   " Note that animations will not be converted when converting the whole base.\n"
 		   " This is caused by lack of information, so you have to convert each model individually to edit animations.\n"
 		   "\n"
-		   " Supported formats: pmg(0x13), pmd(0x04), pma(0x03), ppd(0x15), pmc, tobj, mat\n"
+		   " Supported formats: pmg(0x13, 0x14), pmd(0x04), pma(0x03), ppd(0x15), pmc(0x06), tobj, mat\n"
 		   "\n\n"
 		   " This is Open-Source software under the GNU LGPL License.\n\n"
 		   " Enjoy!\n"

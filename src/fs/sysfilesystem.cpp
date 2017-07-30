@@ -155,7 +155,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 	FindClose(dir);
 	return result;
 #else
-	auto result = std::make_unique<List<String>>();
+	auto result = std::make_unique<List<Entry>>();
 	DIR *dir;
 	struct dirent *ent;
 	struct stat st;
