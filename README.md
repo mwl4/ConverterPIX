@@ -12,14 +12,13 @@ Tool for conversion from game formats to middle formats (Euro Truck Simulator 2 
   -e <export_path>     - specify export path  
 
 
- Usage:
+ Usage:  
   converter_pix -b C:\\ets2_base -m /vehicle/truck/man_tgx/interior/anim s_wheel  
     ^ will export into C:\\ets2_base_exp single model with s_wheel animation.  
     ^ instead of exact animation name you can use * to convert every anim file from model directory.  
-    ^ when anim name is not started by /, then converter is looking for it in model directory.  
+    ^ when anim name is not started by /, then converter is looking for it in model directory.
 
-  converter_pix C:\\ets2_base
-
+  converter_pix C:\\ets2_base  
     ^ will convert whole base, it will export it into: <base_path>_exp (C:\\ets2_base_exp in this example).  
     ^ you can also specify export path using the -e parameter.
 
