@@ -32,13 +32,19 @@ CXXSOURCE+=$(wildcard pix/*.cpp)
 
 CXXOBJECTS=$(CXXSOURCE:.cpp=.o)
 
-EXECUTABLE=../bin/linux/converter_pix_names
-EXECUTABLE_NO_SYMBOLS=../bin/linux/converter_pix
+OS=$(shell uname)
+ifeq ($(OS),Linux)
+	EXECUTABLE=../bin/linux/converter_pix_names
+	EXECUTABLE_NO_SYMBOLS=../bin/linux/converter_pix
+else
+	EXECUTABLE=../bin/macos/converter_pix_names
+	EXECUTABLE_NO_SYMBOLS=../bin/macos/converter_pix
+endif
 
 NEWLINE="\n"
 
 all: $(EXECUTABLE)
-	strip -s $(EXECUTABLE) -o $(EXECUTABLE_NO_SYMBOLS)
+	strip $(EXECUTABLE) -o $(EXECUTABLE_NO_SYMBOLS)
 	@echo -e $(NEWLINE) "ConverterPIX has been successfully built!" $(NEWLINE)
 
 $(EXECUTABLE): $(CXXOBJECTS)
