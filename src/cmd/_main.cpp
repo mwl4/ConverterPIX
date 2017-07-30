@@ -353,8 +353,21 @@ bool convertSingleModel(String filepath, String exportpath, Array<String> option
 bool convertWholeBase(String basepath, String exportpath)
 {
 	auto files = getSFS()->readDir(basepath, true, true);
+
+	int size = 0;
+	for (const auto &f : *files)
+	{
+		if (f.IsDirectory())
+			continue;
+
+		const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
+		if (extension == ".pmg" || extension == ".tobj")
+		{
+			++size;
+		}
+	}
+
 	int i = 0;
-	int size = files->size();
 	for (const auto &f : *files)
 	{
 		if (f.IsDirectory())
@@ -375,18 +388,21 @@ bool convertWholeBase(String basepath, String exportpath)
 				printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
 				model.saveToMidFormat(exportpath, false);
 			}
+			++i;
 		}
 		else if (extension == ".tobj")
 		{
+			printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
+			printf("%s: tobj: ", filename.substr(directory(filename).length() + 1).c_str());
+
 			TextureObject tobj;
 			if (tobj.load(filename))
 			{
 				tobj.saveToMidFormats(exportpath);
-				printf("[%u/%u = %u%%]: ", i, size, (unsigned)(100.f * i / size));
-				printf("%s: tobj: yes\n", filename.substr(directory(filename).length() + 1).c_str());
+				printf("ok\n");
 			}
+			++i;
 		}
-		++i;
 	}
 	printf("\nBase converted: %s\n", exportpath.c_str());
 	return false;

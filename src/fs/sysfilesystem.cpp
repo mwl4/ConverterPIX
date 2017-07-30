@@ -115,7 +115,7 @@ bool SysFileSystem::exists(const String &filename)
 bool SysFileSystem::dirExists(const String &dirpath)
 {
 	struct stat buffer;
-	return (stat(dirpath.c_str(), &buffer) == 0 && ((buffer.st_mode & S_IFDIR) != 0));
+	return (stat((m_root + dirpath).c_str(), &buffer) == 0 && ((buffer.st_mode & S_IFDIR) != 0));
 }
 
 auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>

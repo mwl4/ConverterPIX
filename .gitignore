@@ -1,0 +1,18 @@
+###################
+## ConverterPIX
+###################
+
+*.suo
+*.sdf
+*.opensdf
+*.pdb
+*.obj
+*.log
+*.tlog
+*.idb
+*.db
+*.ipdb
+*.iobj
+
+obj/
+obj_d/

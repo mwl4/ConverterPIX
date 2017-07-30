@@ -548,7 +548,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 bool Model::loadDescriptor()
 {
 	const String pmdPath = m_filePath + ".pmd";
-	
+
 	auto file = getUFS()->open(pmdPath, FileSystem::read | FileSystem::binary);
 	if(!file)
 	{
@@ -576,7 +576,7 @@ bool Model::loadDescriptor()
 
 	m_materialCount = header->m_material_count;
 	m_looks.resize(header->m_look_count);
-	
+
 	for (uint32_t i = 0; i < m_looks.size(); ++i)
 	{
 		Look *currentLook = &m_looks[i];
@@ -625,7 +625,7 @@ bool Model::loadDescriptor()
 
 		variant->m_name = variantName.to_string();
 		variant->setPartCount(header->m_part_count);
-	
+
 		for (uint32_t j = 0; j < header->m_part_count; ++j)
 		{
 			(*variant)[j].m_part = &m_parts[j];
@@ -880,7 +880,7 @@ bool Model::saveToPim(String exportPath) const
 	//	skinStream.allocateIndexedObjects(m_skinVertCount);
 	//	for (size_t i = 0; i < m_skinVertCount; ++i)
 	//	{
-	//		skinStream[i] = 
+	//		skinStream[i] =
 	//	}
 	//}
 
@@ -893,7 +893,7 @@ bool Model::saveToPim(String exportPath) const
 		TAB "Source: \"%s\""				SEOL
 		TAB "Type: \"Model\""				SEOL
 		TAB "Name: \"%s\""					SEOL
-		"}"									SEOL, 
+		"}"									SEOL,
 			STRING_VERSION,
 			m_fileName.c_str()
 		);
@@ -908,7 +908,7 @@ bool Model::saveToPim(String exportPath) const
 		TAB "BoneCount: %i"					SEOL
 		TAB "LocatorCount: %i"				SEOL
 		TAB "Skeleton: \"%s\""				SEOL
-		"}"									SEOL, 
+		"}"									SEOL,
 			m_vertCount,
 			m_triangleCount,
 			m_materialCount,
@@ -951,7 +951,7 @@ bool Model::saveToPim(String exportPath) const
 				TAB "Stream {"				SEOL
 				TAB TAB "Format: %s"		SEOL
 				TAB TAB "Tag: \"%s\""		SEOL,
-					"FLOAT3", 
+					"FLOAT3",
 					"_POSITION"
 				);
 
@@ -994,7 +994,7 @@ bool Model::saveToPim(String exportPath) const
 					"FLOAT4",
 					"_TANGENT"
 				);
-			
+
 			for (uint32_t j = 0; j < currentPiece->m_vertices.size(); ++j)
 			{
 				*file << fmt::sprintf(
@@ -1043,8 +1043,8 @@ bool Model::saveToPim(String exportPath) const
 			*file << fmt::sprintf(
 				TAB "Stream {" SEOL
 				TAB TAB "Format: %s" SEOL
-				TAB TAB "Tag: \"%s\"" SEOL, 
-					"FLOAT4", 
+				TAB TAB "Tag: \"%s\"" SEOL,
+					"FLOAT4",
 					"_RGBA"
 				);
 
@@ -1069,8 +1069,8 @@ bool Model::saveToPim(String exportPath) const
 			{
 				*file << fmt::sprintf(
 					TAB TAB "%-5i( %-5i %-5i %-5i )" SEOL,
-						j, currentPiece->m_triangles[j].m_attach[0], 
-						   currentPiece->m_triangles[j].m_attach[1], 
+						j, currentPiece->m_triangles[j].m_attach[0],
+						   currentPiece->m_triangles[j].m_attach[1],
 						   currentPiece->m_triangles[j].m_attach[2]
 					);
 			}
@@ -1088,9 +1088,9 @@ bool Model::saveToPim(String exportPath) const
 			"Part {" SEOL
 			TAB "Name: \"%s\"" SEOL
 			TAB "PieceCount: %i" SEOL
-			TAB "LocatorCount: %i" SEOL, 
-				currentPart->m_name.c_str(), 
-				currentPart->m_pieceCount, 
+			TAB "LocatorCount: %i" SEOL,
+				currentPart->m_name.c_str(),
+				currentPart->m_pieceCount,
 				currentPart->m_locatorCount
 			);
 

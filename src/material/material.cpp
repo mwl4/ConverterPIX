@@ -125,7 +125,7 @@ bool Material::load(String filePath)
 	buffer = buffer.substr(brace_left + 1, brace_right - brace_left - 1);
 
 	std::stringstream ssbuffer(buffer);
-	
+
 	while (std::getline(ssbuffer, buffer))
 	{
 		size_t middle = buffer.find(':');
@@ -305,7 +305,7 @@ Pix::Value Material::toPixDefinition() const
 	{
 		const Attribute *const attr = &m_attributes[i];
 		Pix::Value &attribute = root["Attribute"];
-		attribute["Format"] = attr->getFormat();
+		attribute["Format"] = Pix::Value::Enumeration(attr->getFormat());
 		attribute["Tag"] = attr->m_name;
 		if (attr->m_valueType == Attribute::FLOAT)
 		{
@@ -313,7 +313,7 @@ Pix::Value Material::toPixDefinition() const
 		}
 		else
 		{
-			attribute["Value"] = attr->m_stringValue;
+			attribute["Value"] = Pix::Value::Enumeration("( \"" + attr->m_stringValue + "\" )");
 		}
 	}
 

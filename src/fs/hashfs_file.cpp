@@ -105,7 +105,7 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 
 			size_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
 			bufferOffset += wroteToBuffer;
-			assert(bufferOffset < (elementSize * elementCount));
+			assert(bufferOffset <= (elementSize * elementCount));
 			m_position += (bytes - m_stream.avail_in);
 		}
 		return bufferOffset;

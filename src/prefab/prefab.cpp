@@ -58,6 +58,22 @@ bool Prefab::load(String filePath)
 		return false;
 	}
 
+	if (header->m_node_offset > fileSize
+	 || header->m_nav_curve_offset > fileSize
+	 || header->m_sign_offset > fileSize
+	 || header->m_semaphore_offset > fileSize
+	 || header->m_spawn_point_offset > fileSize
+	 || header->m_terrain_point_pos_offset > fileSize
+	 || header->m_terrain_point_normal_offset > fileSize
+	 || header->m_terrain_point_variant_offset > fileSize
+	 || header->m_map_point_offset > fileSize
+	 || header->m_trigger_point_offset > fileSize
+	 || header->m_intersection_offset > fileSize)
+	{
+		error_f("prefab", m_filePath, "Offset inside file exceeds file size!");
+		return false;
+	}
+
 	Node node; Curve curve; Sign sign; Semaphore semaphore; SpawnPoint spawnPoint; MapPoint mapPoint;
 	TerrainPointVariant terrainPointVariant; TriggerPoint triggerPoint; Intersection intersection;
 	TerrainPoint terrainPoint;
@@ -78,7 +94,7 @@ bool Prefab::load(String filePath)
 		}
 		m_nodes.push_back(node);
 	}
-	
+
 	for (u32 i = 0; i < header->m_nav_curve_count; ++i)
 	{
 		ppd_curve_t *fcurve = (ppd_curve_t *)(buffer.get() + header->m_nav_curve_offset) + i;
@@ -291,6 +307,12 @@ bool Prefab::saveToPip(String exportPath) const
 
 			for (u32 j = 0; j < node->m_terrainPointCount; ++j)
 			{
+				if (node->m_terrainPointIdx + j >= m_terrainPoints.size())
+				{
+					error_f("prefab", m_filePath, "Terrain point index exceeds terrain points count!");
+					break;
+				}
+
 				*file << fmt::sprintf(
 					TAB TAB "%-5i( %s )" SEOL,
 						j, to_string(m_terrainPoints[node->m_terrainPointIdx + j].m_position).c_str()
@@ -309,6 +331,12 @@ bool Prefab::saveToPip(String exportPath) const
 
 			for (u32 j = 0; j < node->m_terrainPointCount; ++j)
 			{
+				if (node->m_terrainPointIdx + j >= m_terrainPoints.size())
+				{
+					// Error has been printed already (see above)
+					break;
+				}
+
 				*file << fmt::sprintf(
 					TAB TAB "%-5i( %s )" SEOL,
 						j, to_string(m_terrainPoints[node->m_terrainPointIdx + j].m_normal).c_str()
@@ -356,20 +384,21 @@ bool Prefab::saveToPip(String exportPath) const
 				curve->m_flags,
 				curve->m_leadsToNodes
 			);
+
+		if (curve->m_semaphoreId != -1)
+		{
+			*file << fmt::sprintf(
+				TAB "SemaphoreID: %i" SEOL,
+				curve->m_semaphoreId
+			);
+		}
+
 		*file << TAB "NextCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_nextLines[j]); } *file << " )" SEOL;
 		*file << TAB "PrevCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_prevLines[j]); } *file << " )" SEOL;
 		*file << fmt::sprintf(
 			TAB "Length: " FLT_FT SEOL,
 				flh(curve->m_length)
 			);
-
-		if (curve->m_semaphoreId != -1)
-		{
-			*file << fmt::sprintf(
-				TAB "SemaphoreID: %i" SEOL,
-					curve->m_semaphoreId
-				);
-		}
 
 		if (curve->m_trafficRule.length() > 0)
 		{
