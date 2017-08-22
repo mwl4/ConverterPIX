@@ -35,7 +35,8 @@ public:
 private:
 	void readZip();
 	void processEntry(const String &name, zip::CentralDirectoryFileHeader *entry);
-	void registerEntry(ZipEntry entry);
+	ZipEntry *registerEntry(ZipEntry entry);
+	void link();
 
 	ZipEntry *findEntry(const String &path);
 
