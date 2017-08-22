@@ -309,7 +309,7 @@ bool Prefab::saveToPip(String exportPath) const
 			{
 				if (node->m_terrainPointIdx + j >= m_terrainPoints.size())
 				{
-					error_f("prefab", m_filePath, "Terrain point index exceeds terrain points count!");
+					warning_f("prefab", m_filePath, "Terrain point index exceeds terrain points count!");
 					break;
 				}
 
