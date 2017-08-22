@@ -397,10 +397,6 @@ void ZipFileSystem::link()
 				newDirEntry.m_compressedSize = 0;
 				newDirEntry.m_offset = 0;
 				registerEntry(newDirEntry)->addChild(e);
-
-				printf("creating dir entry: %s\n", newDirEntry.m_path.c_str());
-
-				//error_f("zipfs", m_rootFilename, "Unable to find parent directory for: %s [%s]!", e->m_path.c_str(), directory.c_str());
 			}
 		}
 	}

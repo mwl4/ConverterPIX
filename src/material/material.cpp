@@ -67,7 +67,7 @@ bool Material::load(String filePath)
 	auto file = getUFS()->open(m_filePath, FileSystem::read | FileSystem::binary);
 	if(!file)
 	{
-		error_f("material", m_filePath, "Unable to open material!");
+		warning_f("material", m_filePath, "Unable to open material!");
 		return false;
 	}
 
@@ -84,14 +84,14 @@ bool Material::load(String filePath)
 	size_t begin_material = buffer.find(':'); // material : "effect" { }
 	if (begin_material == String::npos)
 	{
-		error("material", m_filePath, "Unable to find \':\' in material!");
+		warning("material", m_filePath, "Unable to find \':\' in material!");
 		return false;
 	}
 
 	String check_mat = removeSpaces(buffer.substr(0, begin_material));
 	if (check_mat != "material")
 	{
-		error("material", m_filePath, "Invalid material format!");
+		warning("material", m_filePath, "Invalid material format!");
 		return false;
 	}
 
@@ -100,20 +100,20 @@ bool Material::load(String filePath)
 	size_t brace_left = buffer.find('{');
 	if (brace_left == String::npos)
 	{
-		error("material", m_filePath, "Unable to find left brace!");
+		warning("material", m_filePath, "Unable to find left brace!");
 		return false;
 	}
 	size_t brace_right = buffer.rfind('}');
 	if (brace_right == String::npos)
 	{
-		error("material", m_filePath, "Unable to find right brace!");
+		warning("material", m_filePath, "Unable to find right brace!");
 		return false;
 	}
 
 	String effect = betweenQuotes(removeSpaces(buffer.substr(0, brace_left - 1)));
 	if (effect == "ERROR")
 	{
-		error("material", m_filePath, "Quotes effect error!");
+		warning("material", m_filePath, "Quotes effect error!");
 		return false;
 	}
 
@@ -145,7 +145,7 @@ bool Material::load(String filePath)
 				size_t braceRight = value.find('}');
 				if (braceRight == String::npos)
 				{
-					error("material", m_filePath, "Unable to find closing brace!");
+					warning("material", m_filePath, "Unable to find closing brace!");
 					continue;
 				}
 
@@ -201,7 +201,7 @@ bool Material::load(String filePath)
 				{
 					if (values.size() > 4)
 					{
-						error("material", m_filePath, "Too many values in the attribute!");
+						warning("material", m_filePath, "Too many values in the attribute!");
 						continue;
 					}
 					attrib.m_valueType = Attribute::FLOAT;
@@ -225,7 +225,7 @@ bool Material::load(String filePath)
 	{
 		if (!tex.load())
 		{
-			error("material", m_filePath, "Error in material!");
+			warning("material", m_filePath, "Error in material!");
 		}
 	}
 

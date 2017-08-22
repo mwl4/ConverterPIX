@@ -151,7 +151,7 @@ void Animation::saveToPia(String exportPath) const
 	{
 		if (m_bones[boneIndex] >= m_model->boneCount())
 		{
-			error_f("animation", m_filePath, "Bone index outside bones array! [%i/%i]", (int)m_bones[boneIndex], m_model->boneCount());
+			warning_f("animation", m_filePath, "Bone index outside bones array! [%i/%i]", (int)m_bones[boneIndex], m_model->boneCount());
 			return;
 		}
 

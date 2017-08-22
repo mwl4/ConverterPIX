@@ -129,7 +129,7 @@ bool Collision::load(Model *const model, String filePath)
 					locator = std::move(loc);
 				} break;
 				default: {
-					error_f("collision", m_filePath, "Not known locator type! size = %i name = %s", locatorf->m_data_size, locatorf->m_name.to_string());
+					warning_f("collision", m_filePath, "Not known locator type! size = %i name = %s", locatorf->m_data_size, locatorf->m_name.to_string());
 					return false;
 				}
 			}
@@ -195,7 +195,7 @@ void Collision::assignLocatorsToParts()
 
 		if (!loc->m_owner)
 		{
-			error_f("collision", m_filePath, "ould not find part for locator: %s(%s)", loc->m_name, loc->type());
+			warning_f("collision", m_filePath, "Could not find part for locator: %s(%s)", loc->m_name, loc->type());
 		}
 	}
 }
@@ -275,7 +275,7 @@ bool Collision::saveToPic(String exportPath) const
 			);
 		}
 		*file << TAB "}"					SEOL; // Stream {
-		
+
 		*file << TAB "Triangles {"			SEOL;
 		for (size_t j = 0; j < piece.m_triangles.size(); ++j)
 		{
@@ -331,7 +331,7 @@ bool Collision::saveToPic(String exportPath) const
 
 		*file << "}"						SEOL; // Part {
 	}
-	
+
 	for (const auto &locator : m_locators)
 	{
 		*file << locator->toDefinition() << SEOL;
@@ -363,7 +363,7 @@ String Collision::ConvexLocator::toDefinition() const
 
 String Collision::CylinderLocator::toDefinition() const
 {
-	return Locator::toDefinition() + 
+	return Locator::toDefinition() +
 		TAB + fmt::sprintf("Parameters: ( " FLT_FT "  " FLT_FT "  " FLT_FT "  " FLT_FT " )" SEOL, flh(m_radius), flh(m_depth), 0, 0) +
 	"}";
 }

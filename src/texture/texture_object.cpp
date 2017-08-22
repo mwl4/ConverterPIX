@@ -23,7 +23,7 @@ bool TextureObject::load(String filepath)
 	auto file = getUFS()->open(m_filepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		error("tobj", m_filepath, "Cannot open texture object file");
+		warning("tobj", m_filepath, "Cannot open texture object file");
 		return false;
 	}
 
@@ -31,7 +31,7 @@ bool TextureObject::load(String filepath)
 	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	if (!file->blockRead((char *)buffer.get(), 0, fileSize))
 	{
-		error("tobj", m_filepath, "Unable to read texture object file");
+		warning("tobj", m_filepath, "Unable to read texture object file");
 		return false;
 	}
 	file.reset();
@@ -87,7 +87,7 @@ bool TextureObject::loadDDS(String filepath)
 	auto file = getUFS()->open(filepath[0] == '/' ? filepath : directory(m_filepath) + "/" + filepath, FileSystem::read | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s" SEOL, filepath.c_str(), strerror(errno));
+		warning_f("tobj", m_filepath, "Unable to open file: \'%s\'", filepath);
 		return false;
 	}
 	else
@@ -100,8 +100,7 @@ bool TextureObject::loadDDS(String filepath)
 		const uint32_t magic = *(uint32_t *)(buffer.get());
 		if (magic != dds::MAGIC)
 		{
-			//error_f("tobj", m_filepath, )
-			printf("Invalid dds magic (%s): %i expected: %i\n", filepath.c_str(), magic, dds::MAGIC);
+			error_f("dds", filepath, "Invalid dds magic: %i expected: %i", magic, dds::MAGIC);
 			return false;
 		}
 		dds::header *header = (dds::header *)(buffer.get() + 4);
