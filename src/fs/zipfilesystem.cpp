@@ -274,6 +274,8 @@ void ZipFileSystem::readZip()
 			+ entry.extrafieldLength
 			+ entry.fileCommentLength;
 	}
+
+	link();
 }
 
 void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHeader *entry)
@@ -316,7 +318,7 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 
 	if (zipentry.m_directory)
 	{
-		String dirname = name.substr(0, name.length() - 1);
+		String dirname = removeSlashAtEnd(name);
 		zipentry.m_name = dirname.substr(dirname.find_last_of('/') + 1);
 		zipentry.m_path = "/" + dirname;
 	}
@@ -358,27 +360,46 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 	registerEntry(zipentry);
 }
 
-void ZipFileSystem::registerEntry(ZipEntry entry)
+ZipEntry *ZipFileSystem::registerEntry(ZipEntry entry)
 {
 	const uint64_t hash = prism::city_hash_64(entry.m_path.c_str() + 1, entry.m_path.length() - 1);
 	ZipEntry *const e = &(m_entries[hash] = entry);
+	return e;
+}
 
-	if (e->m_path != "/")
+void ZipFileSystem::link()
+{
+	for (auto &entry : m_entries)
 	{
-		String directory = e->m_path.substr(0, e->m_path.find_last_of('/'));
-		if (directory.empty())
+		ZipEntry *const e = &entry.second;
+		if (e->m_path != "/")
 		{
-			directory = "/";
-		}
+			String directory = e->m_path.substr(0, e->m_path.find_last_of('/'));
+			if (directory.empty())
+			{
+				directory = "/";
+			}
 
-		ZipEntry *dir = findEntry(directory);
-		if (dir)
-		{
-			dir->addChild(e);
-		}
-		else
-		{
-			error_f("zipfs", m_rootFilename, "Unable to find parent directory for: %s!", e->m_path.c_str());
+			ZipEntry *dir = findEntry(directory);
+			if (dir)
+			{
+				dir->addChild(e);
+			}
+			else
+			{
+				ZipEntry newDirEntry;
+				newDirEntry.m_directory = true;
+				String dirname = removeSlashAtEnd(directory);
+				newDirEntry.m_name = dirname.substr(dirname.find_last_of('/') + 1);
+				newDirEntry.m_path = "/" + dirname;
+				newDirEntry.m_compressed = false;
+				newDirEntry.m_size = 0;
+				newDirEntry.m_compressedSize = 0;
+				newDirEntry.m_offset = 0;
+				registerEntry(newDirEntry)->addChild(e);
+
+				//error_f("zipfs", m_rootFilename, "Unable to find parent directory for: %s [%s]!", e->m_path.c_str(), directory.c_str());
+			}
 		}
 	}
 }
