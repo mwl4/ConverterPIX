@@ -126,7 +126,7 @@ namespace zip
 		uint32_t offset;					// +16
 		uint16_t zipCommentLength;			// +20
 		/*
-			char zipCommendData[zipCommentLength];
+			char zipCommentData[zipCommentLength];
 		*/
 	};	static_assert(sizeof(EndOfCentralDirectory) == 22, "Unexpected structure size");
 

@@ -259,9 +259,10 @@ bool File::blockRead(void *buffer, unsigned int offset, size_t size)
 bool copyFile(File *const input, File *const output)
 {
 	input->rewind();
-	const int bufferSize = 1 * 1024 * 1024;
+	size_t toCopy = input->size();
+	const size_t bufferSize = 1 * 1024 * 1024;
 	uint8_t *buffer = new uint8_t[bufferSize];
-	for (size_t readed = 0; (readed = input->read((char *)buffer, 1, bufferSize)) != 0;)
+	for (size_t readed = 0; (readed = input->read((char *)buffer, 1, std::min(bufferSize, toCopy))) != 0; toCopy -= readed)
 	{
 		output->write(buffer, 1, readed);
 	}
