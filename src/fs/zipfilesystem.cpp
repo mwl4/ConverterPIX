@@ -267,7 +267,7 @@ void ZipFileSystem::readZip()
 			return;
 		}
 
-		processEntry(filename, &entry);
+		processEntry(trimSlashesAtEnd(trimSlashesAtBegin(filename)), &entry);
 
 		currentOffset += sizeof(zip::CentralDirectoryFileHeader)
 			+ entry.filenameLength
@@ -288,7 +288,7 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 	 || versionMadeBy == zip::VERSION_MADE_BY::DOS_OS2
 	 || versionMadeBy == zip::VERSION_MADE_BY::MVS)
 	{
-		if (entry->externalFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
+		if (entry->externalFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
 			zipentry.m_directory = true;
 		}
@@ -300,7 +300,7 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 	}
 	else if (versionMadeBy == zip::VERSION_MADE_BY::UNIX)
 	{
-		if (entry->externalFileAttributes == S_IFDIR)
+		if (entry->externalFileAttributes & S_IFDIR)
 		{
 			zipentry.m_directory = true;
 		}
@@ -318,7 +318,7 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 
 	if (zipentry.m_directory)
 	{
-		String dirname = removeSlashAtEnd(name);
+		String dirname = trimSlashesAtEnd(trimSlashesAtBegin(name));
 		zipentry.m_name = dirname.substr(dirname.find_last_of('/') + 1);
 		zipentry.m_path = "/" + dirname;
 	}
@@ -343,9 +343,9 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 			return;
 		}
 
-		zipentry.m_compressed = localEntry.compressionMethod == zip::COMPRESSION_METHOD::DEFLATED;
-		zipentry.m_size = localEntry.uncompressedSize;
-		zipentry.m_compressedSize = localEntry.compressedSize;
+		zipentry.m_compressed = entry->compressionMethod == zip::COMPRESSION_METHOD::DEFLATED;
+		zipentry.m_size = entry->uncompressedSize;
+		zipentry.m_compressedSize = entry->compressedSize;
 
 		zipentry.m_offset = zipentry.m_offset + sizeof(zip::LocalFileHeader) + localEntry.filenameLength + localEntry.extrafieldLength;
 	}
@@ -374,7 +374,7 @@ void ZipFileSystem::link()
 		ZipEntry *const e = &entry.second;
 		if (e->m_path != "/")
 		{
-			String directory = e->m_path.substr(0, e->m_path.find_last_of('/'));
+			String directory = removeSlashAtEnd(e->m_path.substr(0, e->m_path.find_last_of('/')));
 			if (directory.empty())
 			{
 				directory = "/";
@@ -389,7 +389,7 @@ void ZipFileSystem::link()
 			{
 				ZipEntry newDirEntry;
 				newDirEntry.m_directory = true;
-				String dirname = removeSlashAtEnd(directory);
+				String dirname = directory;
 				newDirEntry.m_name = dirname.substr(dirname.find_last_of('/') + 1);
 				newDirEntry.m_path = "/" + dirname;
 				newDirEntry.m_compressed = false;
@@ -397,6 +397,8 @@ void ZipFileSystem::link()
 				newDirEntry.m_compressedSize = 0;
 				newDirEntry.m_offset = 0;
 				registerEntry(newDirEntry)->addChild(e);
+
+				printf("creating dir entry: %s\n", newDirEntry.m_path.c_str());
 
 				//error_f("zipfs", m_rootFilename, "Unable to find parent directory for: %s [%s]!", e->m_path.c_str(), directory.c_str());
 			}

@@ -57,10 +57,51 @@ String removeSlashAtEnd(const String &s)
 	return s.substr(0, s.length() - ((lastch == '\\' || lastch == '/') ? 1 : 0));
 }
 
+String removeSlashAtBegin(const String &s)
+{
+	const char firstch = s[0];
+	return s.substr(firstch == '\\' || firstch == '/' ? 1 : 0);
+}
+
 String makeSlashAtEnd(const String &s)
 {
 	const bool noneedslash = (s[s.length() - 1] == '/') || (s[s.length() - 1] == '\\');
 	return noneedslash ? s : s + '/';
+}
+
+String trimSlashesAtBegin(const String &s)
+{
+	size_t count = 0;
+	for (const char ch : s)
+	{
+		if (ch == '\\' || ch == '/')
+		{
+			count++;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return s.substr(count);
+}
+
+String trimSlashesAtEnd(const String &s)
+{
+	size_t count = 0;
+	for (auto it = s.rbegin(); it != s.rend(); ++it)
+	{
+		const char ch = (*it);
+		if (ch == '\\' || ch == '/')
+		{
+			count++;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return s.substr(0, s.length() - count);
 }
 
 void backslashesToSlashes(String &str)

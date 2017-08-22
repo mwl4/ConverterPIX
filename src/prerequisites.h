@@ -168,7 +168,7 @@ class ResourceLibrary;
 
 /**
  * @brief: Converts srgb to linear color space
- * 
+ *
  * @param[in] x The srgb value
  * @return @c The linear value
 */
@@ -192,11 +192,15 @@ String betweenQuotes(String str);
 void remove(String &str, const String &substr);
 
 String removeSlashAtEnd(const String &s);
+String removeSlashAtBegin(const String &s);
 String makeSlashAtEnd(const String &s);
+
+String trimSlashesAtBegin(const String &s);
+String trimSlashesAtEnd(const String &s);
 
 /**
  * @brief: Returns directory of the file
- * 
+ *
  * @param[in] filepath The filepath to process (ex. "/vehicle/truck/mercedes.pmg")
  * @return @c The directory of the file (ex. "/vehicle/truck")
 */
