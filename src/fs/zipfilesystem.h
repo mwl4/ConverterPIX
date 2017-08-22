@@ -11,6 +11,10 @@
 
 #include "filesystem.h"
 
+#include <structs/zip.h>
+
+class ZipEntry;
+
 class ZipFileSystem : public FileSystem
 {
 public:
@@ -26,11 +30,48 @@ public:
 	virtual bool dirExists(const String &dirpath) override;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
+	bool ioRead(void *const buffer, size_t bytes, size_t offset);
+
+private:
 	void readZip();
+	void processEntry(const String &name, zip::CentralDirectoryFileHeader *entry);
+	void registerEntry(ZipEntry entry);
+
+	ZipEntry *findEntry(const String &path);
 
 private:
 	String m_rootFilename;
 	UniquePtr<File> m_root;
+
+	Map<u64, ZipEntry> m_entries;
+
+};
+
+class ZipEntry
+{
+public:
+	ZipEntry();
+	~ZipEntry();
+
+	void addChild(ZipEntry *e);
+
+private:
+	bool m_directory;
+
+	String m_path;
+	String m_name;
+
+	uint32_t m_offset = 0;
+
+	bool m_compressed = false;
+
+	size_t m_size = 0;
+	size_t m_compressedSize = 0;
+
+	Array<ZipEntry *> m_children;
+
+	friend class ZipFileSystem;
+	friend class ZipFsFile;
 };
 
 /* eof */

@@ -14,6 +14,9 @@
 #include "sysfilesystem.h"
 #include "uberfilesystem.h"
 #include "hashfilesystem.h"
+#include "zipfilesystem.h"
+
+#include "file.h"
 
 FileSystem::FileSystem()
 {
@@ -35,21 +38,26 @@ UberFileSystem *getUFS()
 	return &fs;
 }
 
-
 FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 {
-	if (root.substr(root.length() - 4) == ".zip")
+	if(getSFS()->exists(root))
 	{
-		/* TODO: Create zip file system */
-		error("system", root, "Zip filesystem is not supported yet!");
-		return nullptr;
+		auto rootfile = getSFS()->open(root, FileSystem::read | FileSystem::binary);
+		char sig[4];
+		rootfile->blockRead(&sig, 0, sizeof(sig));
+		rootfile.reset();
+		if (sig[0] == 'P' && sig[1] == 'K') // zip
+		{
+			auto fs = std::make_unique<ZipFileSystem>(root);
+			return getUFS()->mount(std::move(fs), priority);
+		}
+		else if (sig[0] == 'S' && sig[1] == 'C' && sig[2] == 'S' && sig[3] == '#') // scs#
+		{
+			auto fs = std::make_unique<HashFileSystem>(root);
+			return getUFS()->mount(std::move(fs), priority);
+		}
 	}
-	else if (root.substr(root.length() - 4) == ".scs")
-	{
-		auto fs = std::make_unique<HashFileSystem>(root);
-		return getUFS()->mount(std::move(fs), priority);
-	}
-	else
+	else if (getSFS()->dirExists(root))
 	{
 		String rootdirectory = makeSlashAtEnd(root);
 		auto fs = std::make_unique<SysFileSystem>(rootdirectory.substr(0, rootdirectory.length() - 1));

@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 		{
 			if (basepath.empty())
 			{
-				printf("Not specified base path!");
+				error("system", "", "Not specified base path!");
 				return 1;
 			}
 			if (exportpath.empty())
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 		{
 			if (optionalArgs.size() == 0)
 			{
-				printf("Invalid parameters\n");
+				error("system", "", "Invalid parameters!");
 				return 1;
 			}
 			if (basepath.empty())
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 		{
 			if (basepath.empty())
 			{
-				printf("Not specified base path!");
+				error("system", "", "Not specified base path!");
 				return 1;
 			}
 			if (exportpath.empty())
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 		{
 			if (basepath.empty())
 			{
-				printf("Not specified base path!");
+				error("system", "", "Not specified base path!");
 				return 1;
 			}
 			if (exportpath.empty())
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 		{
 			if (basepath.empty())
 			{
-				printf("Not specified base path!");
+				error("system", "", "Not specified base path!");
 				return 1;
 			}
 			if (exportpath.empty())
@@ -274,6 +274,11 @@ int main(int argc, char *argv[])
 				exportpath = basepath[0] + "_exp";
 			}
 			auto files = getUFS()->readDir(path, true, true);
+			if (!files)
+			{
+				error("system", "", "readDir returned null!");
+				return 1;
+			}
 			for (const auto &f : *files)
 			{
 				if (f.IsDirectory())
@@ -304,11 +309,16 @@ int main(int argc, char *argv[])
 		{
 			if (basepath.empty())
 			{
-				printf("Not specified base path!");
+				error("system", "", "Not specified base path!");
 				return 1;
 			}
 
 			auto files = getUFS()->readDir(path, true, listdir_r);
+			if (!files)
+			{
+				error("system", "", "readDir returned null!");
+				return 1;
+			}
 			for (const auto &f : *files)
 			{
 				printf("[%s]%s %s\n", f.IsDirectory() ? "D" : "F", f.IsEncrypted() ? " (encrypted)" : "", f.GetPath().c_str());

@@ -14,7 +14,7 @@
 class ZipFsFile : public File
 {
 public:
-	ZipFsFile();
+	ZipFsFile(const String &filepath, ZipFileSystem *filesystem, const class ZipEntry *entry);
 	ZipFsFile(const ZipFsFile &) = delete;
 	ZipFsFile(ZipFsFile &&) = delete;
 	virtual ~ZipFsFile();
@@ -29,6 +29,18 @@ public:
 	virtual void rewind() override;
 	virtual size_t tell() override;
 	virtual void flush() override;
+
+private:
+	String			m_filepath;
+	ZipFileSystem * m_filesystem;
+	z_stream		m_stream;
+	size_t			m_position;
+
+	const class ZipEntry *m_entry;
+
+private:
+	void inflateInitialize();
+	void inflateDestroy();
 
 	friend class ZipFileSystem;
 };
