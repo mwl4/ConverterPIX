@@ -35,7 +35,7 @@ public:
 private:
 	void readZip();
 	void processEntry(const String &name, zip::CentralDirectoryFileHeader *entry);
-	ZipEntry *registerEntry(ZipEntry entry);
+	ZipEntry *registerEntry(const ZipEntry &entry);
 	void link();
 
 	ZipEntry *findEntry(const String &path);
@@ -55,6 +55,7 @@ public:
 	~ZipEntry();
 
 	void addChild(ZipEntry *e);
+	const String &path() const { return m_path; }
 
 private:
 	bool m_directory;

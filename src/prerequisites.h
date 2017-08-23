@@ -88,6 +88,9 @@ using SharedPtr		= std::shared_ptr<T>;
 template < typename T >
 using UniquePtr		= std::unique_ptr<T>;
 
+template < typename FIRST, typename SECOND >
+using Pair			= std::pair<FIRST, SECOND>;
+
 #include <callbacks.h>
 
 #define TAB		"     "

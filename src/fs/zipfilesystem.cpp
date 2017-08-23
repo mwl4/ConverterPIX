@@ -263,7 +263,7 @@ void ZipFileSystem::readZip()
 
 		if (entry.compressionMethod != zip::COMPRESSION_METHOD::STORED && entry.compressionMethod != zip::COMPRESSION_METHOD::DEFLATED)
 		{
-			error_f("zipfs", m_rootFilename, "Unsupported compression method(%u/%s)!", e, filename.c_str());
+			error_f("zipfs", m_rootFilename, "Unsupported compression method(%s : %u)!", filename.c_str(), entry.compressionMethod);
 			return;
 		}
 
@@ -324,8 +324,9 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 	}
 	else
 	{
-		zipentry.m_name = name.substr(name.find_last_of('/') + 1);
-		zipentry.m_path = "/" + name;
+		String filename = trimSlashesAtEnd(trimSlashesAtBegin(name));
+		zipentry.m_name = filename.substr(filename.find_last_of('/') + 1);
+		zipentry.m_path = "/" + filename;
 	}
 
 	if (!zipentry.m_directory)
@@ -360,8 +361,12 @@ void ZipFileSystem::processEntry(const String &name, zip::CentralDirectoryFileHe
 	registerEntry(zipentry);
 }
 
-ZipEntry *ZipFileSystem::registerEntry(ZipEntry entry)
+ZipEntry *ZipFileSystem::registerEntry(const ZipEntry &entry)
 {
+	if (ZipEntry *existing = findEntry(entry.m_path))
+	{
+		return existing;
+	}
 	const uint64_t hash = prism::city_hash_64(entry.m_path.c_str() + 1, entry.m_path.length() - 1);
 	ZipEntry *const e = &(m_entries[hash] = entry);
 	return e;
@@ -369,35 +374,70 @@ ZipEntry *ZipFileSystem::registerEntry(ZipEntry entry)
 
 void ZipFileSystem::link()
 {
-	for (auto &entry : m_entries)
+	Array<ZipEntry> toRegister;
+
+	for (Pair<const u64, ZipEntry> &entry : m_entries)
 	{
 		ZipEntry *const e = &entry.second;
 		if (e->m_path != "/")
 		{
-			String directory = removeSlashAtEnd(e->m_path.substr(0, e->m_path.find_last_of('/')));
-			if (directory.empty())
+			String directory = trimSlashesAtEnd(trimSlashesAtBegin(e->m_path.substr(0, e->m_path.find_last_of('/'))));
+			ZipEntry *dir = findEntry("/" + directory);
+			if (!dir)
 			{
-				directory = "/";
+				auto dirit = std::find_if(toRegister.begin(), toRegister.end(),
+					[directory](ZipEntry &e)
+					{
+						return e.path() == ("/" + directory);
+					});
+				if (dirit == toRegister.end())
+				{
+					ZipEntry newDirEntry;
+					newDirEntry.m_directory = true;
+					newDirEntry.m_name = directory.substr(directory.find_last_of('/') + 1);
+					newDirEntry.m_path = "/" + directory;
+					newDirEntry.m_compressed = false;
+					newDirEntry.m_size = 0;
+					newDirEntry.m_compressedSize = 0;
+					newDirEntry.m_offset = 0;
+					toRegister.push_back(newDirEntry);
+				}
 			}
+		}
+	}
 
-			ZipEntry *dir = findEntry(directory);
-			if (dir)
-			{
-				dir->addChild(e);
-			}
-			else
+	for (size_t i = 0; i < toRegister.size(); ++i)
+	{
+		ZipEntry entry = toRegister[i];
+		if (entry.m_path != "/" && !entry.m_path.empty())
+		{
+			ZipEntry *const e = registerEntry(entry);
+			String directory = trimSlashesAtEnd(trimSlashesAtBegin(e->m_path.substr(0, e->m_path.find_last_of('/'))));
+			ZipEntry *dir = findEntry("/" + directory);
+			if (!dir)
 			{
 				ZipEntry newDirEntry;
 				newDirEntry.m_directory = true;
-				String dirname = directory;
-				newDirEntry.m_name = dirname.substr(dirname.find_last_of('/') + 1);
-				newDirEntry.m_path = "/" + dirname;
+				newDirEntry.m_name = directory.substr(directory.find_last_of('/') + 1);
+				newDirEntry.m_path = "/" + directory;
 				newDirEntry.m_compressed = false;
 				newDirEntry.m_size = 0;
 				newDirEntry.m_compressedSize = 0;
 				newDirEntry.m_offset = 0;
-				registerEntry(newDirEntry)->addChild(e);
+				toRegister.push_back(newDirEntry);
 			}
+		}
+	}
+
+	for (Pair<const u64, ZipEntry> &entry : m_entries)
+	{
+		ZipEntry *const e = &entry.second;
+		if (e->m_path != "/")
+		{
+			String directory = trimSlashesAtEnd(trimSlashesAtBegin(e->m_path.substr(0, e->m_path.find_last_of('/'))));
+			ZipEntry *dir = findEntry("/" + directory);
+			assert(dir);
+			dir->addChild(e);
 		}
 	}
 }
