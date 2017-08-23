@@ -25,7 +25,7 @@ auto ResourceLibrary::obtain(String tobjfile) -> Entry
 		}
 		else
 		{
-			error("tobj", tobjfile, "Unable to load!");
+			warning("tobj", tobjfile, "Unable to load!");
 			return nullptr;
 		}
 	}
