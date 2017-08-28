@@ -63,7 +63,7 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 		auto fs = std::make_unique<SysFileSystem>(rootdirectory.substr(0, rootdirectory.length() - 1));
 		return getUFS()->mount(std::move(fs), priority);
 	}
-	error("system", root, "Unknown filesystem type!");
+	warning("system", root, "Unknown filesystem type!");
 	return nullptr;
 }
 
