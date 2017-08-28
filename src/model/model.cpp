@@ -198,7 +198,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 
 		if (piece->m_bone_count > Vertex::BONE_COUNT)
 		{
-			error_f("model", m_filePath,
+			warning_f("model", m_filePath,
 					"Bone count in piece: %i exceeds maximum bone count (%i/%i)! "
 					"To fix it increase Vertex::BONE_COUNT constant, and recompile software.",
 					i, piece->m_bone_count, Vertex::BONE_COUNT);
@@ -643,7 +643,7 @@ bool Model::loadDescriptor()
 						attrib.m_intValue = attribValue->m_int_value;
 					} break;
 					// TODO: More attributes
-					default: error_f("model", m_filePath, "Invalid attribute type in descriptor (%i)!", attribDef->m_type);
+					default: warning_f("model", m_filePath, "Invalid attribute type in descriptor (%i)!", attribDef->m_type);
 				}
 				(*variant)[j].m_attributes.push_back(attrib);
 			}
