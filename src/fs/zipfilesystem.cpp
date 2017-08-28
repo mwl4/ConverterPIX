@@ -19,6 +19,10 @@
 
 #include <zlib/zlib.h>
 
+#ifndef FILE_ATTRIBUTE_DIRECTORY
+#define FILE_ATTRIBUTE_DIRECTORY 0x00000010
+#endif
+
 ZipFileSystem::ZipFileSystem(const String &root)
 {
 	m_rootFilename = root;
