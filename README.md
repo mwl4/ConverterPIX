@@ -48,6 +48,7 @@ This software is used by blender add-on [ConverterPIXWrapper](https://github.com
     # multiple base paths (you can specify more paths in the same way)
     
 Note that animations will not be converted when converting the whole base.
+
 This is caused by lack of information, so you have to convert each model individually to edit animations.
 
 
@@ -60,6 +61,7 @@ This is caused by lack of information, so you have to convert each model individ
 **This is Open-Source software under GNU LGPL License.**
 
 --- Copyright © 2017 Michał Wójtowicz a.k.a. mwl4 ---
+
 --- All rights reserved ---
 
-###Enjoy
+##Enjoy
