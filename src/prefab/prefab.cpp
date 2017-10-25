@@ -385,6 +385,14 @@ bool Prefab::saveToPip(String exportPath) const
 				curve->m_leadsToNodes
 			);
 
+		if (curve->m_trafficRule.length() > 0)
+		{
+			*file << fmt::sprintf(
+				TAB "TrafficRule: \"%s\"" SEOL,
+				curve->m_trafficRule.c_str()
+			);
+		}
+
 		if (curve->m_semaphoreId != -1)
 		{
 			*file << fmt::sprintf(
@@ -395,14 +403,6 @@ bool Prefab::saveToPip(String exportPath) const
 
 		*file << TAB "NextCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_nextLines[j]); } *file << " )" SEOL;
 		*file << TAB "PrevCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_prevLines[j]); } *file << " )" SEOL;
-
-		if (curve->m_trafficRule.length() > 0)
-		{
-			*file << fmt::sprintf(
-				TAB "TrafficRule: \"%s\"" SEOL,
-				curve->m_trafficRule.c_str()
-			);
-		}
 
 		*file << fmt::sprintf(
 			TAB "Length: " FLT_FT SEOL,
