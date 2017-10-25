@@ -40,7 +40,13 @@ UberFileSystem *getUFS()
 
 FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 {
-	if(getSFS()->exists(root))
+	if (getSFS()->dirExists(root))
+	{
+		String rootdirectory = makeSlashAtEnd(root);
+		auto fs = std::make_unique<SysFileSystem>(rootdirectory.substr(0, rootdirectory.length() - 1));
+		return getUFS()->mount(std::move(fs), priority);
+	}
+	else if(getSFS()->exists(root))
 	{
 		auto rootfile = getSFS()->open(root, FileSystem::read | FileSystem::binary);
 		char sig[4];
@@ -56,12 +62,6 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 			auto fs = std::make_unique<HashFileSystem>(root);
 			return getUFS()->mount(std::move(fs), priority);
 		}
-	}
-	else if (getSFS()->dirExists(root))
-	{
-		String rootdirectory = makeSlashAtEnd(root);
-		auto fs = std::make_unique<SysFileSystem>(rootdirectory.substr(0, rootdirectory.length() - 1));
-		return getUFS()->mount(std::move(fs), priority);
 	}
 	warning("system", root, "Unknown filesystem type!");
 	return nullptr;
