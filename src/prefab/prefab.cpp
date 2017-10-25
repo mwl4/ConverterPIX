@@ -395,18 +395,19 @@ bool Prefab::saveToPip(String exportPath) const
 
 		*file << TAB "NextCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_nextLines[j]); } *file << " )" SEOL;
 		*file << TAB "PrevCurves: ("; for (u32 j = 0; j < 4; ++j) { *file << fmt::sprintf(" %i", curve->m_prevLines[j]); } *file << " )" SEOL;
-		*file << fmt::sprintf(
-			TAB "Length: " FLT_FT SEOL,
-				flh(curve->m_length)
-			);
 
 		if (curve->m_trafficRule.length() > 0)
 		{
 			*file << fmt::sprintf(
 				TAB "TrafficRule: \"%s\"" SEOL,
-					curve->m_trafficRule.c_str()
-				);
+				curve->m_trafficRule.c_str()
+			);
 		}
+
+		*file << fmt::sprintf(
+			TAB "Length: " FLT_FT SEOL,
+				flh(curve->m_length)
+			);
 
 		*file << TAB "Bezier {" SEOL;
 		*file << fmt::sprintf(
