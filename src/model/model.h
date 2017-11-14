@@ -53,7 +53,7 @@ public:
 		String toDefinition(const String &prefix = "") const;
 
 		/**
-		 * @brief 
+		 * @brief
 		 */
 		Pix::Value toPixDefinition() const;
 
