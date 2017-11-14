@@ -23,14 +23,25 @@
 
 class TerrainPoint
 {
-	friend Prefab;
 private:
 	Float3 m_position;
 	Float3 m_normal;
+
+	friend Prefab;
 };
 
 class Prefab
 {
+public:
+	bool load(String filePath);
+	void destroy();
+
+	bool saveToPip(String exportPath) const;
+
+private:
+	bool loadVersion0x15(const uint8_t *const buffer, const size_t size);
+	bool loadVersion0x16(const uint8_t *const buffer, const size_t size);
+
 private:
 	Array<Node> m_nodes;
 	Array<Curve> m_curves;
@@ -48,11 +59,6 @@ private:
 	String m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
 	String m_fileName;		// @example anim
 	String m_directory;	// @example /vehicle/truck/man_tgx/interior
-public:
-	bool load(String filePath);
-	void destroy();
-
-	bool saveToPip(String exportPath) const;
 };
 
 /* eof */

@@ -149,9 +149,6 @@
     <ClInclude Include="structs\pmg_0x14.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
-    <ClInclude Include="structs\ppd.h">
-      <Filter>Source Files\structs</Filter>
-    </ClInclude>
     <ClInclude Include="structs\tobj.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
@@ -202,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="utils\string_tokenizer.h">
       <Filter>Source Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\ppd_0x15.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\ppd_0x16.h">
+      <Filter>Source Files\structs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
