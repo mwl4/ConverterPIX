@@ -178,7 +178,7 @@ auto ZipFileSystem::readDir(const String &path, bool absolutePaths, bool recursi
 	return result;
 }
 
-bool ZipFileSystem::ioRead(void *const buffer, size_t bytes, size_t offset)
+bool ZipFileSystem::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
 {
 	return m_root->blockRead(buffer, offset, bytes);
 }
@@ -191,15 +191,15 @@ void ZipFileSystem::readZip()
 	rootEntry.m_path = "/";
 	registerEntry(rootEntry);
 
-	const size_t size = m_root->size();
+	const uint64_t size = m_root->size();
 	if (size <= sizeof(zip::EndOfCentralDirectory))
 	{
 		error("zipfs", m_rootFilename, "Too short file!");
 		return;
 	}
 
-	size_t blockSizeToFindCentralDirEnd = ((size < 0x4000) ? size : 0x4000);
-	UniquePtr<uint8_t[]> blockToFindCentralDirEnd(new uint8_t[blockSizeToFindCentralDirEnd]);
+	uint64_t blockSizeToFindCentralDirEnd = ((size < 0x4000) ? size : 0x4000);
+	UniquePtr<uint8_t[]> blockToFindCentralDirEnd(new uint8_t[static_cast<size_t>(blockSizeToFindCentralDirEnd)]);
 	if (!m_root->blockRead(blockToFindCentralDirEnd.get(), size - blockSizeToFindCentralDirEnd, blockSizeToFindCentralDirEnd))
 	{
 		error("zipfs", m_rootFilename, "Failed to read the zip::EndOfCentralDirectory structure!");

@@ -49,7 +49,7 @@ bool Prefab::load(String filePath)
 		return false;
 	}
 
-	const size_t fileSize = file->size();
+	const size_t fileSize = static_cast<size_t>(file->size());
 	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();

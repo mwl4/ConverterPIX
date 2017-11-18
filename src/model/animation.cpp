@@ -48,7 +48,7 @@ bool Animation::load(SharedPtr<Model> model, String filePath)
 		return false;
 	}
 
-	size_t fileSize = file->size();
+	size_t fileSize = static_cast<size_t>(file->size());
 	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();

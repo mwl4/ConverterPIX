@@ -71,7 +71,7 @@ bool Material::load(String filePath)
 		return false;
 	}
 
-	size_t fileSize = file->size();
+	size_t fileSize = static_cast<size_t>(file->size());
 
 	uint8_t *buff = new uint8_t[fileSize + 1]; // +1 for null terminator
 	file->read((char *)buff, sizeof(uint8_t), fileSize);

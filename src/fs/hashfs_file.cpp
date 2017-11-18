@@ -88,10 +88,10 @@ uint64_t HashFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCo
 				return 0;
 			}
 
-			m_stream.avail_in = bytes;
+			m_stream.avail_in = static_cast<unsigned int>(bytes);
 			m_stream.next_in = inbuffer;
 
-			m_stream.avail_out = (elementSize * elementCount) - bufferOffset;
+			m_stream.avail_out = static_cast<unsigned int>((elementSize * elementCount) - bufferOffset);
 			m_stream.next_out = (uint8_t *)buffer + bufferOffset;
 
 			int ret = inflate(&m_stream, Z_NO_FLUSH);
@@ -103,7 +103,7 @@ uint64_t HashFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCo
 				return 0;
 			}
 
-			size_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
+			uint64_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
 			bufferOffset += wroteToBuffer;
 			assert(bufferOffset <= (elementSize * elementCount));
 			m_position += (bytes - m_stream.avail_in);
