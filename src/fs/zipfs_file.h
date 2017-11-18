@@ -22,19 +22,19 @@ public:
 	ZipFsFile &operator=(const ZipFsFile &) = delete;
 	ZipFsFile &operator=(ZipFsFile &&) = delete;
 
-	virtual size_t write(const void *buffer, size_t elementSize, size_t elementCount) override;
-	virtual size_t read(void *buffer, size_t elementSize, size_t elementCount) override;
-	virtual size_t size() const override;
-	virtual bool seek(uint32_t offset, Attrib attr) override;
+	virtual uint64_t write(const void *buffer, uint64_t elementSize, uint64_t elementCount) override;
+	virtual uint64_t read(void *buffer, uint64_t elementSize, uint64_t elementCount) override;
+	virtual uint64_t size() override;
+	virtual bool seek(uint64_t offset, Attrib attr) override;
 	virtual void rewind() override;
-	virtual size_t tell() override;
+	virtual uint64_t tell() const override;
 	virtual void flush() override;
 
 private:
 	String			m_filepath;
 	ZipFileSystem * m_filesystem;
 	z_stream		m_stream;
-	size_t			m_position;
+	uint64_t		m_position;
 
 	const class ZipEntry *m_entry;
 

@@ -5,7 +5,7 @@
 CXXCOMPILER=g++
 CXXSTANDARD=c++14
 
-CXXFLAGS=-c -g -w -O3 -Wall -msse -msse2 -fpermissive -std=$(CXXSTANDARD)
+CXXFLAGS=-c -g -w -O3 -Wall -msse -msse2 -fpermissive -std=$(CXXSTANDARD) -D_FILE_OFFSET_BITS=64
 
 INCLUDES=-I./
 INCLUDES+=-I./libs

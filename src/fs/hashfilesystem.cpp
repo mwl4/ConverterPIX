@@ -144,7 +144,7 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	}
 
 	HashFsFile directoryFile(path, this, entry);
-	const size_t size = directoryFile.size();
+	const size_t size = static_cast<size_t>(directoryFile.size());
 
 	UniquePtr<char[]> buffer(new char[size + 1]);
 	directoryFile.blockRead(buffer.get(), 0, size);
@@ -203,7 +203,7 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	return result;
 }
 
-bool HashFileSystem::ioRead(void *const buffer, size_t bytes, size_t offset)
+bool HashFileSystem::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
 {
 	return m_root->blockRead(buffer, offset, bytes);
 }
