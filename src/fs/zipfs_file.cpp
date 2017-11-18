@@ -82,10 +82,10 @@ uint64_t ZipFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCou
 				return 0;
 			}
 
-			m_stream.avail_in = bytes;
+			m_stream.avail_in = static_cast<unsigned int>(bytes);
 			m_stream.next_in = inbuffer;
 
-			m_stream.avail_out = (elementSize * elementCount) - bufferOffset;
+			m_stream.avail_out = static_cast<unsigned int>((elementSize * elementCount) - bufferOffset);
 			m_stream.next_out = (uint8_t *)buffer + bufferOffset;
 
 			int ret = inflate(&m_stream, Z_NO_FLUSH);
