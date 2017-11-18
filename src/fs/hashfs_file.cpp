@@ -37,12 +37,12 @@ HashFsFile::~HashFsFile()
 	}
 }
 
-size_t HashFsFile::write(const void *buffer, size_t elementSize, size_t elementCount)
+uint64_t HashFsFile::write(const void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
 	return 0;
 }
 
-size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
+uint64_t HashFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
 	using namespace prism;
 
@@ -53,9 +53,9 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 			return 0;
 		}
 
-		if (m_filesystem->ioRead(buffer, elementSize * elementCount, (size_t)(m_header->m_offset + m_position)))
+		if (m_filesystem->ioRead(buffer, elementSize * elementCount, m_header->m_offset + m_position))
 		{
-			size_t result = std::min(elementSize * elementCount, m_header->m_size - m_position);
+			uint64_t result = std::min(elementSize * elementCount, m_header->m_size - m_position);
 			m_position += elementSize * elementCount;
 			if (m_position > m_header->m_size)
 			{
@@ -70,14 +70,14 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	}
 	else
 	{
-		const size_t chunk = 1024 * 4;
+		const uint64_t chunk = 1024 * 4;
 		uint8_t inbuffer[chunk];
-		size_t bufferOffset = 0;
+		uint64_t bufferOffset = 0;
 
 		while (m_position < m_header->m_compressed_size && bufferOffset < (elementSize * elementCount))
 		{
-			size_t left = m_header->m_compressed_size - m_position;
-			size_t bytes = std::min(chunk, left);
+			uint64_t left = m_header->m_compressed_size - m_position;
+			uint64_t bytes = std::min(chunk, left);
 			if (bytes == 0) {
 				break;
 			}
@@ -112,12 +112,12 @@ size_t HashFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	}
 }
 
-size_t HashFsFile::size() const
+uint64_t HashFsFile::size()
 {
 	return m_header->m_size;
 }
 
-bool HashFsFile::seek(uint32_t offset, Attrib attr)
+bool HashFsFile::seek(uint64_t offset, Attrib attr)
 {
 	if (m_header->m_flags & prism::HASHFS_COMPRESSED)
 	{
@@ -155,9 +155,9 @@ void HashFsFile::rewind()
 	seek(0, SeekSet);
 }
 
-size_t HashFsFile::tell()
+uint64_t HashFsFile::tell() const
 {
-	return 0;
+	return m_position;
 }
 
 void HashFsFile::flush()

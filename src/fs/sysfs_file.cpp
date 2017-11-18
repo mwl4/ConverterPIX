@@ -23,28 +23,32 @@ SysFsFile::~SysFsFile()
 	}
 }
 
-size_t SysFsFile::write(const void *buffer, size_t elementSize, size_t elementCount)
+uint64_t SysFsFile::write(const void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
-	return ::fwrite(buffer, elementSize, elementCount, m_fp);
+	return ::fwrite(buffer, static_cast<size_t>(elementSize), static_cast<size_t>(elementCount), m_fp);
 }
 
-size_t SysFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
+uint64_t SysFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
-	return ::fread(buffer, elementSize, elementCount, m_fp);
+	return ::fread(buffer, static_cast<size_t>(elementSize), static_cast<size_t>(elementCount), m_fp);
 }
 
-size_t SysFsFile::size() const
+uint64_t SysFsFile::size()
 {
-	long current = ::ftell(m_fp);
-	::fseek(m_fp, 0, SEEK_END);
-	size_t result = (size_t)::ftell(m_fp);
-	::fseek(m_fp, current, SEEK_SET);
+	uint64_t current = tell();
+	seek(0, SeekEnd);
+	uint64_t result = tell();
+	seek(current, SeekSet);
 	return result;
 }
 
-bool SysFsFile::seek(uint32_t offset, Attrib attr)
+bool SysFsFile::seek(uint64_t offset, Attrib attr)
 {
-	return ::fseek(m_fp, offset, attr) == 0;
+#ifdef _WIN32
+	return ::_fseeki64(m_fp, static_cast<long long>(offset), static_cast<int>(attr)) == 0;
+#else
+	return ::fseeko(m_fp, static_cast<off_t>(offset), static_cast<int>(attr)) == 0;
+#endif
 }
 
 void SysFsFile::rewind()
@@ -52,9 +56,13 @@ void SysFsFile::rewind()
 	::rewind(m_fp);
 }
 
-size_t SysFsFile::tell()
+uint64_t SysFsFile::tell() const
 {
-	return (size_t)::ftell(m_fp);
+#ifdef _WIN32
+	return static_cast<uint64_t>(::_ftelli64(m_fp));
+#else
+	return static_cast<uint64_t>(::ftello(m_fp));
+#endif
 }
 
 void SysFsFile::flush()

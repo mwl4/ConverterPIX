@@ -33,12 +33,12 @@ ZipFsFile::~ZipFsFile()
 	}
 }
 
-size_t ZipFsFile::write(const void *buffer, size_t elementSize, size_t elementCount)
+uint64_t ZipFsFile::write(const void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
 	return 0;
 }
 
-size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
+uint64_t ZipFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCount)
 {
 	if (!m_entry->m_compressed)
 	{
@@ -47,9 +47,9 @@ size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 			return 0;
 		}
 
-		if (m_filesystem->ioRead(buffer, elementSize * elementCount, (size_t)(m_entry->m_offset + m_position)))
+		if (m_filesystem->ioRead(buffer, elementSize * elementCount, m_entry->m_offset + m_position))
 		{
-			size_t result = std::min(elementSize * elementCount, m_entry->m_size - m_position);
+			uint64_t result = std::min(elementSize * elementCount, m_entry->m_size - m_position);
 			m_position += elementSize * elementCount;
 			if (m_position > m_entry->m_size)
 			{
@@ -64,19 +64,19 @@ size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	}
 	else
 	{
-		const size_t chunk = 1024 * 4;
+		const uint64_t chunk = 1024 * 4;
 		uint8_t inbuffer[chunk];
-		size_t bufferOffset = 0;
+		uint64_t bufferOffset = 0;
 
 		while (m_position < m_entry->m_compressedSize && bufferOffset < (elementSize * elementCount))
 		{
-			size_t left = m_entry->m_compressedSize - m_position;
-			size_t bytes = std::min(chunk, left);
+			uint64_t left = m_entry->m_compressedSize - m_position;
+			uint64_t bytes = std::min(chunk, left);
 			if (bytes == 0) {
 				break;
 			}
 
-			if (!m_filesystem->ioRead(inbuffer, bytes, (size_t)(m_entry->m_offset + m_position)))
+			if (!m_filesystem->ioRead(inbuffer, bytes, m_entry->m_offset + m_position))
 			{
 				error("zipfs", m_filepath, "Unable to read from filesystem file");
 				return 0;
@@ -97,7 +97,7 @@ size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 				return 0;
 			}
 
-			size_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
+			uint64_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
 			bufferOffset += wroteToBuffer;
 			assert(bufferOffset <= (elementSize * elementCount));
 			m_position += (bytes - m_stream.avail_in);
@@ -106,12 +106,12 @@ size_t ZipFsFile::read(void *buffer, size_t elementSize, size_t elementCount)
 	}
 }
 
-size_t ZipFsFile::size() const
+uint64_t ZipFsFile::size()
 {
 	return m_entry->m_size;
 }
 
-bool ZipFsFile::seek(uint32_t offset, Attrib attr)
+bool ZipFsFile::seek(uint64_t offset, Attrib attr)
 {
 	if (m_entry->m_compressed)
 	{
@@ -149,9 +149,9 @@ void ZipFsFile::rewind()
 	seek(0, SeekSet);
 }
 
-size_t ZipFsFile::tell()
+uint64_t ZipFsFile::tell() const
 {
-	return 0;
+	return m_position;
 }
 
 void ZipFsFile::flush()

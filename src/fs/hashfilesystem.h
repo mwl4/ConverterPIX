@@ -33,8 +33,8 @@ public:
 	virtual bool dirExists(const String &dirpath) override;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
 
-	bool ioRead(void *const buffer, size_t bytes, size_t offset);
-
+	bool ioRead(void *const buffer, uint64_t bytes, uint64_t offset);
+	 
 private:
 	String m_rootFilename;
 	UniquePtr<File> m_root;
