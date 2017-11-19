@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : token.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/utils/token.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 #pragma pack(push, 1)
@@ -61,61 +74,75 @@ namespace prism
 	{
 	public:
 		c_token_t m_value;
+
 	public:
 		token_t()
 		{
 			set(0ull);
 		}
+
 		token_t(c_token_t value)
 		{
 			set(value);
 		}
+
 		token_t(int value)
 		{
 			set(value);
 		}
+
 		token_t(const String &s)
 		{
 			from_string(s);
 		}
+
 		token_t(const token_t &rhs)
 		{
 			set(rhs);
 		}
+
 		inline void set(const token_t &rhs)
 		{
 			m_value = rhs.m_value;
 		}
+
 		inline void set(c_token_t value)
 		{
 			m_value = value;
 		}
+
 		inline c_token_t get() const
 		{
 			return m_value;
 		}
+
 		inline void from_string(const String &s)
 		{
 			set(string_to_token(s));
 		}
+
 		inline String to_string() const
 		{
 			return token_to_string(*this);
 		}
+
 		inline operator String() const
 		{
 			return to_string();
 		}
+
 		inline token_t &operator=(const token_t& rhs)
 		{
 			set(rhs.m_value);
 			return (*this);
 		}
+
 		inline token_t &operator=(const String &s)
 		{
 			set(s);
 			return (*this);
 		}
+
 		inline token_t &operator=(u64 rhs)
 		{
 			set(rhs);

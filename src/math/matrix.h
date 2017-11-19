@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : matrix.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/math/matrix.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 #pragma pack(push, 1)
@@ -17,11 +30,13 @@ namespace prism
 	{
 	public:
 		T m[N][N];
+
 	public:
 		mat_sq_t()
 		{
 			loadIdentity();
 		}
+
 		mat_sq_t(const glm::mat4 &rhs)
 		{
 			for (size_t i = 0; i < N; ++i)
@@ -32,6 +47,7 @@ namespace prism
 				}
 			}
 		}
+
 		void loadIdentity()
 		{
 			m[0][0] = 1.f; m[1][0] = 0.f; m[2][0] = 0.f; m[3][0] = 0.f;
@@ -39,14 +55,17 @@ namespace prism
 			m[0][2] = 0.f; m[1][2] = 0.f; m[2][2] = 1.f; m[3][2] = 0.f;
 			m[0][3] = 0.f; m[1][3] = 0.f; m[2][3] = 0.f; m[3][3] = 1.f;
 		}
+
 		T *operator[](size_t idx)
 		{
 			return m[idx];
 		}
+
 		const T *operator[](size_t idx) const
 		{
 			return m[idx];
 		}
+
 		String toString() const
 		{
 			String result = " ";

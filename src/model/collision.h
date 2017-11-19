@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : collision.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/model/collision.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 
@@ -14,66 +27,22 @@
 class Collision
 {
 public:
-	class Piece
-	{
-	public:
-		Array<prism::float3> m_verts;
-		Array<prism::pmc_triangle_t> m_triangles;
-	};
-	class Locator
-	{
-	public:
-		int m_type = 0; // 1 - box, 2 - ..., 4 - ..., 8 - convex
-		String m_name;
-		size_t m_index;
-		Float3 m_position;
-		Quaternion m_rotation;
-		float m_weight;
-		const Part *m_owner = nullptr;
-	public:
-		virtual String type() const = 0;
-		virtual String toDefinition() const;
-	};
-	class ConvexLocator : public Locator
-	{
-	public:
-		unsigned int m_convexPiece = 0;
-	public:
-		virtual String type() const override { return "Convex"; }
-		virtual String toDefinition() const override;
-	};
-	class CylinderLocator : public Locator
-	{
-	public:
-		float m_radius;
-		float m_depth;
-	public:
-		virtual String type() const override { return "Cylinder"; }
-		virtual String toDefinition() const override;
-	};
-	class BoxLocator : public Locator
-	{
-	public:
-		Float3 m_scale;
-	public:
-		virtual String type() const override { return "Box"; }
-		virtual String toDefinition() const override;
-	};
-	class SphereLocator : public Locator
-	{
-	public:
-		float m_radius;
-	public:
-		virtual String type() const override { return "Sphere"; }
-		virtual String toDefinition() const override;
-	};
-	class Variant
-	{
-	public:
-		String m_name;
-		Array<SharedPtr<Locator>> m_locators;
-		const ::Variant *m_modelVariant = nullptr;
-	};
+	class Piece;
+	class Locator;
+	class ConvexLocator;
+	class CylinderLocator;
+	class BoxLocator;
+	class SphereLocator;
+	class Variant;
+
+public:
+	bool load(Model *const model, String filePath);
+	void destroy();
+
+	bool saveToPic(String exportPath) const;
+
+	void assignLocatorsToParts();
+
 private:
 	Model *m_model = nullptr;
 	String m_filePath;		// @example /vehicle/truck/man_tgx/truck
@@ -83,13 +52,78 @@ private:
 
 	unsigned int m_vertCount = 0;
 	unsigned int m_triangleCount = 0;
+};
+
+class Collision::Piece
+{
 public:
-	bool load(Model *const model, String filePath);
-	void destroy();
+	Array<prism::float3> m_verts;
+	Array<prism::pmc_triangle_t> m_triangles;
+};
 
-	bool saveToPic(String exportPath) const;
+class Collision::Locator
+{
+public:
+	virtual String type() const = 0;
+	virtual String toDefinition() const;
 
-	void assignLocatorsToParts();
+public:
+	int m_type = 0; // 1 - box, 2 - ..., 4 - ..., 8 - convex
+	String m_name;
+	size_t m_index;
+	Float3 m_position;
+	Quaternion m_rotation;
+	float m_weight;
+	const Part *m_owner = nullptr;
+};
+
+class Collision::ConvexLocator : public Locator
+{
+public:
+	virtual String type() const override { return "Convex"; }
+	virtual String toDefinition() const override;
+
+public:
+	unsigned int m_convexPiece = 0;
+};
+
+class Collision::CylinderLocator : public Locator
+{
+public:
+	virtual String type() const override { return "Cylinder"; }
+	virtual String toDefinition() const override;
+
+public:
+	float m_radius;
+	float m_depth;
+};
+
+class Collision::BoxLocator : public Locator
+{
+public:
+	virtual String type() const override { return "Box"; }
+	virtual String toDefinition() const override;
+
+public:
+	Float3 m_scale;
+};
+
+class Collision::SphereLocator : public Locator
+{
+public:
+	virtual String type() const override { return "Sphere"; }
+	virtual String toDefinition() const override;
+
+public:
+	float m_radius;
+};
+
+class Collision::Variant
+{
+public:
+	String m_name;
+	Array<SharedPtr<Locator>> m_locators;
+	const ::Variant *m_modelVariant = nullptr;
 };
 
 /* eof */

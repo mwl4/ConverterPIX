@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : model.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/model/model.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 
@@ -16,84 +29,9 @@
 
 #include <material/material.h>
 
-class Look
-{
-private:
-	String m_name;
-	Array<Material> m_materials;
-
-	friend Model;
-};
-
-class Variant
-{
-public:
-	class Attribute
-	{
-		friend Variant;
-		friend Model;
-
-		String m_name;
-		enum { INT = 0 } m_type;
-		union
-		{
-			int m_intValue;
-			float m_floatValue;
-		};
-
-	public:
-		Attribute(String name) : m_name(name) {}
-
-		/**
-		* @brief Creates PIT definition
-		*
-		* @param[in] prefix The prefix for each line of generated definition
-		* @return @c The definition of the attribute
-		*/
-		String toDefinition(const String &prefix = "") const;
-
-		/**
-		 * @brief
-		 */
-		Pix::Value toPixDefinition() const;
-
-		String getName() const { return m_name; }
-		int getInt() const { return m_intValue; }
-		float getFloat() const { return m_floatValue; }
-	};
-
-	class Part
-	{
-		friend Variant;
-		friend Model;
-
-		const ::Part *m_part = nullptr;
-		Array<Attribute> m_attributes;
-
-	public:
-		const Attribute &operator[](String attribute) const;
-		const Attribute &operator[](size_t attribute) const;
-		Attribute &operator[](String attribute);
-		Attribute &operator[](size_t attribute);
-
-		const ::Part *part() const { return m_part; }
-	};
-
-private:
-	String m_name;
-	Array<Part> m_parts;
-
-public:
-	void setPartCount(size_t parts);
-	const Part &operator[](size_t id) const;
-	Part &operator[](size_t id);
-
-	const Array<Part> &getParts() const { return m_parts; }
-
-	String getName() const { return m_name; }
-
-	friend Model;
-};
+/* forward declarations */
+class Look;
+class Variant;
 
 class Model
 {
@@ -151,6 +89,90 @@ public:
 private:
 	bool loadModel0x13(const uint8_t *const buffer, const size_t size);
 	bool loadModel0x14(const uint8_t *const buffer, const size_t size);
+};
+
+class Look
+{
+private:
+	String m_name;
+	Array<Material> m_materials;
+
+	friend Model;
+};
+
+class Variant
+{
+public:
+	class Attribute;
+	class Part;
+
+public:
+	void setPartCount(size_t parts);
+	const Part &operator[](size_t id) const;
+	Part &operator[](size_t id);
+
+	const Array<Part> &getParts() const { return m_parts; }
+
+	String getName() const { return m_name; }
+
+private:
+	String m_name;
+	Array<Part> m_parts;
+
+	friend Model;
+};
+
+class Variant::Attribute
+{
+public:
+	Attribute(String name) : m_name(name) {}
+
+	/**
+	* @brief Creates PIT definition
+	*
+	* @param[in] prefix The prefix for each line of generated definition
+	* @return @c The definition of the attribute
+	*/
+	String toDefinition(const String &prefix = "") const;
+
+	/**
+	* @brief
+	*/
+	Pix::Value toPixDefinition() const;
+
+	String getName() const { return m_name; }
+	int getInt() const { return m_intValue; }
+	float getFloat() const { return m_floatValue; }
+
+private:
+	String m_name;
+	enum { INT = 0 } m_type;
+	union
+	{
+		int m_intValue;
+		float m_floatValue;
+	};
+
+	friend Variant;
+	friend Model;
+};
+
+class Variant::Part
+{
+public:
+	const Attribute &operator[](String attribute) const;
+	const Attribute &operator[](size_t attribute) const;
+	Attribute &operator[](String attribute);
+	Attribute &operator[](size_t attribute);
+
+	const ::Part *part() const { return m_part; }
+
+private:
+	const ::Part *m_part = nullptr;
+	Array<Attribute> m_attributes;
+
+	friend Variant;
+	friend Model;
 };
 
 /* eof */

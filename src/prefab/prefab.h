@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : prefab.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/prefab/prefab.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 
@@ -21,14 +34,8 @@
 
 #include <math/vector.h>
 
-class TerrainPoint
-{
-private:
-	Float3 m_position;
-	Float3 m_normal;
-
-	friend Prefab;
-};
+/* forward declarations */
+class TerrainPoint;
 
 class Prefab
 {
@@ -59,6 +66,15 @@ private:
 	String m_filePath;		// @example /vehicle/truck/man_tgx/interior/anim
 	String m_fileName;		// @example anim
 	String m_directory;	// @example /vehicle/truck/man_tgx/interior
+};
+
+class TerrainPoint
+{
+private:
+	Float3 m_position;
+	Float3 m_normal;
+
+	friend Prefab;
 };
 
 /* eof */
