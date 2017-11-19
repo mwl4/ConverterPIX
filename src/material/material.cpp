@@ -129,95 +129,97 @@ bool Material::load(String filePath)
 	while (std::getline(ssbuffer, buffer))
 	{
 		size_t middle = buffer.find(':');
-		if (middle != String::npos)
+		if (middle == String::npos)
 		{
-			String name = removeSpaces(buffer.substr(0, middle));
-			String nameWithoutIndex = removeSpaces(name.substr(0, name.find('[')));
-			String value = removeSpaces(buffer.substr(middle + 1));
+			continue;
+		}
 
-			Array<String> values;
+		const String name = removeSpaces(buffer.substr(0, middle));
+		const String nameWithoutIndex = removeSpaces(name.substr(0, name.find('[')));
+		String value = removeSpaces(buffer.substr(middle + 1));
 
-			size_t braceLeft = value.find('{');
-			size_t quoteLeft = value.find('\"');
+		Array<String> values;
 
-			if (braceLeft != String::npos)
+		size_t braceLeft = value.find('{');
+		size_t quoteLeft = value.find('\"');
+
+		if (braceLeft != String::npos)
+		{
+			size_t braceRight = value.find('}');
+			if (braceRight == String::npos)
 			{
-				size_t braceRight = value.find('}');
-				if (braceRight == String::npos)
+				warning("material", m_filePath, "Unable to find closing brace!");
+				continue;
+			}
+
+			String valuesArray = value.substr(braceLeft + 1, braceRight - braceLeft - 1);
+			std::replace_if(valuesArray.begin(), valuesArray.end(), [](char ch)->bool { return ch == ','; }, ' ');
+
+			char valuesArray2[128] = { 0 }, tempValue[128] = { 0 };
+			strcpy(valuesArray2, valuesArray.c_str());
+			const char *valuesArrayptr = valuesArray2;
+			while (sscanf(valuesArrayptr, "%s", tempValue) != EOF)
+			{
+				values.push_back(tempValue);
+				valuesArrayptr += strlen(tempValue) + 1;
+			}
+		}
+		else if (quoteLeft != String::npos)
+		{
+			value = betweenQuotes(value);
+		}
+		else
+		{
+			values.push_back(value);
+		}
+
+		auto textureProperty = [&]()->int {
+			int indexTexture = 0;
+			size_t indexBraceLeft = name.find('[');
+			size_t indexBraceRight = name.find(']');
+			if (indexBraceLeft != String::npos && indexBraceRight != String::npos)
+			{
+				indexTexture = atoi(name.substr(indexBraceLeft + 1, indexBraceRight - 1).c_str());
+			}
+			if (indexTexture >= (int)m_textures.size())
+			{
+				m_textures.resize(indexTexture + 1);
+			}
+			return indexTexture;
+		};
+
+		if (nameWithoutIndex == "texture_name")
+		{
+			m_textures[textureProperty()].m_textureName = value.c_str();
+		}
+		else if (nameWithoutIndex == "texture")
+		{
+			m_textures[textureProperty()].m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
+		}
+		else if (name != "queue_bias")
+		{
+			Attribute attrib;
+			attrib.m_name = name;
+			if (values.size() > 0)
+			{
+				if (values.size() > 4)
 				{
-					warning("material", m_filePath, "Unable to find closing brace!");
+					warning("material", m_filePath, "Too many values in the attribute!");
 					continue;
 				}
-
-				String valuesArray = value.substr(braceLeft + 1, braceRight - braceLeft - 1);
-				std::replace_if(valuesArray.begin(), valuesArray.end(), [](char ch)->bool { return ch == ','; }, ' ');
-
-				char valuesArray2[128] = { 0 }, tempValue[128] = { 0 };
-				strcpy(valuesArray2, valuesArray.c_str());
-				const char *valuesArrayptr = valuesArray2;
-				while(sscanf(valuesArrayptr, "%s", tempValue) != EOF)
+				attrib.m_valueType = Attribute::FLOAT;
+				attrib.m_valueCount = values.size();
+				for (uint32_t i = 0; i < attrib.m_valueCount; ++i)
 				{
-					values.push_back(tempValue);
-					valuesArrayptr += strlen(tempValue) + 1;
+					attrib.m_value[i] = convertAtribIfNeeded(effect, name, atof(values[i].c_str()));
 				}
-			}
-			else if (quoteLeft != String::npos)
-			{
-				value = betweenQuotes(value);
 			}
 			else
 			{
-				values.push_back(value);
+				attrib.m_valueType = Attribute::STRING;
+				attrib.m_stringValue = value.c_str();
 			}
-
-			auto textureProperty = [&]()->int {
-				int indexTexture = 0;
-				size_t indexBraceLeft = name.find('[');
-				size_t indexBraceRight = name.find(']');
-				if (indexBraceLeft != String::npos && indexBraceRight != String::npos)
-				{
-					indexTexture = atoi(name.substr(indexBraceLeft + 1, indexBraceRight - 1).c_str());
-				}
-				if (indexTexture >= (int)m_textures.size())
-				{
-					m_textures.resize(indexTexture + 1);
-				}
-				return indexTexture;
-			};
-
-			if (nameWithoutIndex == "texture_name")
-			{
-				m_textures[textureProperty()].m_textureName = value.c_str();
-			}
-			else if (nameWithoutIndex == "texture")
-			{
-				m_textures[textureProperty()].m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
-			}
-			else if (name != "queue_bias")
-			{
-				Attribute attrib;
-				attrib.m_name = name;
-				if (values.size() > 0)
-				{
-					if (values.size() > 4)
-					{
-						warning("material", m_filePath, "Too many values in the attribute!");
-						continue;
-					}
-					attrib.m_valueType = Attribute::FLOAT;
-					attrib.m_valueCount = values.size();
-					for (uint32_t i = 0; i < attrib.m_valueCount; ++i)
-					{
-						attrib.m_value[i] = needl2srgb(nameWithoutIndex) ? lin2s((float)atof(values[i].c_str())) : (float)atof(values[i].c_str());
-					}
-				}
-				else
-				{
-					attrib.m_valueType = Attribute::STRING;
-					attrib.m_stringValue = value.c_str();
-				}
-				m_attributes.push_back(attrib);
-			}
+			m_attributes.push_back(attrib);
 		}
 	}
 
