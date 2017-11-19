@@ -20,12 +20,6 @@ class Material
 public:
 	class Attribute
 	{
-	private:
-		String m_name;
-		enum { FLOAT, STRING } m_valueType;
-		uint32_t m_valueCount;
-		Double4 m_value;
-		String m_stringValue;
 	public:
 		Attribute();
 		~Attribute();
@@ -33,14 +27,16 @@ public:
 		void clear();
 		String getFormat() const;
 
+	private:
+		String m_name;
+		enum { FLOAT, STRING } m_valueType;
+		uint32_t m_valueCount;
+		Double4 m_value;
+		String m_stringValue;
+
 		friend Material;
 	};
-private:
-	String m_effect;
-	Array<Texture> m_textures;
-	Array<Attribute> m_attributes;
-	String m_filePath;		// @example: /material/example.mat
-	String m_alias;
+
 public:
 	bool load(String filePath);
 	void destroy();
@@ -69,24 +65,41 @@ public:
 
 	bool convertTextures(String exportPath) const;
 
+private:
+	String m_effect;
+	Array<Texture> m_textures;
+	Array<Attribute> m_attributes;
+	String m_filePath;		// @example: /material/example.mat
+	String m_alias;
+
 	friend Model;
 };
 
-static bool needl2srgb(String attrib)
+static double convertAtribIfNeeded(String effect, String attrib, double value)
 {
 	/**
 	* @brief The ambient, diffuse, specular, tint, env_factor and water aux are converted from srgb to linear
 	*/
-	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor", "aux" };
+
+	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor" };
 
 	for (const auto &attribb : attributesLinear)
 	{
 		if (attrib == attribb)
 		{
-			return true;
+			return lin2s((float)value);
 		}
 	}
-	return false;
+
+	if (effect == "eut2.water")
+	{
+		if (attrib == "aux[1]" || attrib == "aux[2]")
+		{
+			return lin2s((float)value);
+		}
+	}
+
+	return value;
 }
 
 /* eof */
