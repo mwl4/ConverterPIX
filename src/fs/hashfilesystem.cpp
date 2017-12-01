@@ -263,6 +263,11 @@ prism::hashfs_entry_t *HashFileSystem::findEntry(const String &path)
 {
 	using namespace prism;
 
+	if (m_entries.empty())
+	{
+		return nullptr;
+	}
+
 	String pathToFind;
 	if (m_header.m_salt != 0)
 	{
@@ -275,25 +280,25 @@ prism::hashfs_entry_t *HashFileSystem::findEntry(const String &path)
 
 	const u64 hash = city_hash_64(pathToFind.c_str(), pathToFind.length());
 
-	size_t index, l = 0, r = m_entries.size();
-	while (l <= r) // binary search
+	for (s64 index, l = 0, r = m_entries.size() - 1; l <= r;) // binary search
 	{
-		index = (l + r) / 2;
+		index = l + (r - l) / 2;
 
-		if (m_entries[index].m_hash == hash)
+		if (m_entries[static_cast<size_t>(index)].m_hash == hash)
 		{
-			return &m_entries[index];
+			return &m_entries[static_cast<size_t>(index)];
 		}
 
-		if (m_entries[index].m_hash > hash)
-		{
-			r = index - 1;
-		}
-		else
+		if (m_entries[static_cast<size_t>(index)].m_hash < hash)
 		{
 			l = index + 1;
 		}
+		else
+		{
+			r = index - 1;
+		}
 	}
+
 	return nullptr;
 }
 

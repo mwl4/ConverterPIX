@@ -90,35 +90,33 @@ bool UberFileSystem::dirExists(const String &dirpath)
 auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
 	UniquePtr<List<Entry>> result;
+	Map<String, int> aux;
+
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
 		const auto &fs = (*it);
-		if(fs.second->dirExists(path))
+		if(!fs.second->dirExists(path))
 		{
-			auto current = fs.second->readDir(path, absolutePaths, recursive);
-			if (current)
-			{
-				if (!result)
-				{
-					result = std::make_unique<List<Entry>>();
-				}
-				for (const auto &c : (*current))
-				{
-					bool existsAlready = false;
-					for (const auto &r : (*result))
-					{
-						if (c.GetPath() == r.GetPath())
-						{
-							existsAlready = true;
-							break;
-						}
-					}
-					if (!existsAlready)
-					{
-						result->push_back(c);
-					}
-				}
-			}
+			continue;
+		}
+
+		auto current = fs.second->readDir(path, absolutePaths, recursive);
+		if (!current)
+		{
+			continue;
+		}
+
+		if (!result)
+		{
+			result = std::make_unique<List<Entry>>();
+		}
+
+		for (const FileSystem::Entry &entry : (*current))
+		{
+			int &auxValue = aux[entry.GetPath()];
+			if (auxValue == 1) { continue; }
+			auxValue = 1;
+			result->push_back(entry);
 		}
 	}
 	return result;
