@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : tobj.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/structs/tobj.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 #pragma pack(push, 1)
@@ -28,7 +41,7 @@ namespace prism
 		u8 m_min_filter;	// { nearest = 0, linear = 1, default = 3 }
 		u8 m_mip_filter;	// { trilinear = 1, nomips = 2, default = 3 }
 		u8 m_unkn6;			// always 0?
-		u8 m_addr_u;		// { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3, 
+		u8 m_addr_u;		// { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3,
 		u8 m_addr_v;		//   mirror = 4, mirror_clamp = 5, mirror_clamp_to_edge = 6
 		u8 m_addr_w;		// }
 		u8 m_nocompress;

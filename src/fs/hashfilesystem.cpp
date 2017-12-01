@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : hashfilesystem.cpp
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/fs/hashfilesystem.cpp
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #include <prerequisites.h>
 
@@ -250,6 +263,11 @@ prism::hashfs_entry_t *HashFileSystem::findEntry(const String &path)
 {
 	using namespace prism;
 
+	if (m_entries.empty())
+	{
+		return nullptr;
+	}
+
 	String pathToFind;
 	if (m_header.m_salt != 0)
 	{
@@ -262,25 +280,25 @@ prism::hashfs_entry_t *HashFileSystem::findEntry(const String &path)
 
 	const u64 hash = city_hash_64(pathToFind.c_str(), pathToFind.length());
 
-	size_t index, l = 0, r = m_entries.size();
-	while (l <= r) // binary search
+	for (s64 index, l = 0, r = m_entries.size() - 1; l <= r;) // binary search
 	{
-		index = (l + r) / 2;
+		index = l + (r - l) / 2;
 
-		if (m_entries[index].m_hash == hash)
+		if (m_entries[static_cast<size_t>(index)].m_hash == hash)
 		{
-			return &m_entries[index];
+			return &m_entries[static_cast<size_t>(index)];
 		}
 
-		if (m_entries[index].m_hash > hash)
-		{
-			r = index - 1;
-		}
-		else
+		if (m_entries[static_cast<size_t>(index)].m_hash < hash)
 		{
 			l = index + 1;
 		}
+		else
+		{
+			r = index - 1;
+		}
 	}
+
 	return nullptr;
 }
 

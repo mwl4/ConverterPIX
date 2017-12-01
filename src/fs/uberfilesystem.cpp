@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : uberfilesystem.cpp
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/fs/uberfilesystem.cpp
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #include <prerequisites.h>
 
@@ -77,35 +90,33 @@ bool UberFileSystem::dirExists(const String &dirpath)
 auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
 	UniquePtr<List<Entry>> result;
+	Map<String, int> aux;
+
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
 		const auto &fs = (*it);
-		if(fs.second->dirExists(path))
+		if(!fs.second->dirExists(path))
 		{
-			auto current = fs.second->readDir(path, absolutePaths, recursive);
-			if (current)
-			{
-				if (!result)
-				{
-					result = std::make_unique<List<Entry>>();
-				}
-				for (const auto &c : (*current))
-				{
-					bool existsAlready = false;
-					for (const auto &r : (*result))
-					{
-						if (c.GetPath() == r.GetPath())
-						{
-							existsAlready = true;
-							break;
-						}
-					}
-					if (!existsAlready)
-					{
-						result->push_back(c);
-					}
-				}
-			}
+			continue;
+		}
+
+		auto current = fs.second->readDir(path, absolutePaths, recursive);
+		if (!current)
+		{
+			continue;
+		}
+
+		if (!result)
+		{
+			result = std::make_unique<List<Entry>>();
+		}
+
+		for (const FileSystem::Entry &entry : (*current))
+		{
+			int &auxValue = aux[entry.GetPath()];
+			if (auxValue == 1) { continue; }
+			auxValue = 1;
+			result->push_back(entry);
 		}
 	}
 	return result;

@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : pix.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/pix/pix.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 
@@ -56,32 +69,6 @@ namespace Pix
 		public:
 			virtual String Get() const = 0;
 		};
-
-	private:
-		struct ValueHolder
-		{
-			size_t	m_valueCount = 0;
-			bool	m_parentheses = false;
-			union
-			{
-				LargestInt	m_int[4];
-				LargestUInt	m_uint[4];
-				double		m_double[4];
-				float		m_float[4];
-				float		m_float4x4[4][4];
-				bool		m_boolean[4];
-			};
-			String	m_string;
-		};
-		Array<ValueHolder> m_values;
-
-		struct ObjectsHolder
-		{
-			struct NamedObject;
-
-			Array<NamedObject>	m_named;
-			Array<Value>		m_indexed;
-		} m_objects;
 
 	public:
 		Value(Type type = Type::Null);
@@ -238,6 +225,32 @@ namespace Pix
 		void allocateIndexedObjects(const size_t size);
 		inline Array<Value> &getIndexedObjects() { return m_objects.m_indexed; }
 
+	private:
+		struct ValueHolder
+		{
+			size_t	m_valueCount = 0;
+			bool	m_parentheses = false;
+			union
+			{
+				LargestInt	m_int[4];
+				LargestUInt	m_uint[4];
+				double		m_double[4];
+				float		m_float[4];
+				float		m_float4x4[4][4];
+				bool		m_boolean[4];
+			};
+			String	m_string;
+		};
+		Array<ValueHolder> m_values;
+
+		struct ObjectsHolder
+		{
+			struct NamedObject;
+
+			Array<NamedObject>	m_named;
+			Array<Value>		m_indexed;
+		} m_objects;
+
 		friend class Writer;
 		friend class StyledWriter;
 		friend class FileWriter;
@@ -312,7 +325,6 @@ namespace Pix
 	private:
 		File *m_file = nullptr;
 	};
-
 } // namespace Pix
 
 /* eof */

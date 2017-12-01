@@ -1,11 +1,24 @@
-/*********************************************************************
- *           Copyright (C) 2017 mwl4 - All rights reserved           *
- *********************************************************************
- * File       : quaternion.h
- * Project    : ConverterPIX
- * Developers : Michal Wojtowicz (mwl450@gmail.com)
- 			  : Piotr Krupa (piotrkrupa06@gmail.com)
- *********************************************************************/
+/******************************************************************************
+ *
+ *  Project:	ConverterPIX @ Core
+ *  File:		/math/quaternion.h
+ *
+ *		  _____                          _            _____ _______   __
+ *		 / ____|                        | |          |  __ \_   _\ \ / /
+ *		| |     ___  _ ____   _____ _ __| |_ ___ _ __| |__) || |  \ V /
+ *		| |    / _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|  ___/ | |   > <
+ *		| |___| (_) | | | \ V /  __/ |  | ||  __/ |  | |    _| |_ / . \
+ *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
+ *
+ *
+ *  Copyright (C) 2017 Michal Wojtowicz.
+ *  All rights reserved.
+ *
+ *   This software is ditributed WITHOUT ANY WARRANTY; without even
+ *   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *   PURPOSE. See the copyright file for more information.
+ *
+ *****************************************************************************/
 
 #pragma once
 
@@ -31,13 +44,15 @@ namespace prism
 			m_w = 1.f;
 			m_x = m_y = m_z = 0.f;
 		}
+
 		quat_t(float w, float x, float y, float z)
 		{
 			m_w = w;
 			m_x = x;
 			m_y = y;
 			m_z = z;
-		}	
+		}
+
 		void set(const float3& axis, float angle)
 		{
 			const float half_angle = angle * 0.5f;
@@ -46,14 +61,17 @@ namespace prism
 			m_z = axis[2] * sinf(half_angle);
 			m_w = cosf(half_angle);
 		}
+
 		float length() const
 		{
 			return m_x * m_x + m_y * m_y + m_z * m_z;
 		}
+
 		float sq_length() const
 		{
 			return sqrtf(length());
 		}
+
 		void normalize()
 		{
 			const float len = sq_length();
@@ -61,6 +79,7 @@ namespace prism
 			m_y /= len;
 			m_z /= len;
 		}
+
 		quat_t normalized() const
 		{
 			quat_t result(*this);
