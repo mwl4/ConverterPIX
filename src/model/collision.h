@@ -41,7 +41,8 @@ public:
 
 	bool saveToPic(String exportPath) const;
 
-	void assignLocatorsToParts();
+	void assignPartsToLocators();
+	void assignPartToLocator(const SharedPtr<Locator> &loc, const size_t locatorId);
 
 private:
 	Model *m_model = nullptr;
