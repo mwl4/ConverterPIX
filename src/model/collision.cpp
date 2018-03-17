@@ -160,7 +160,7 @@ bool Collision::load(Model *const model, String filePath)
 		}
 		m_variants.push_back(variant);
 	}
-	assignLocatorsToParts();
+	assignPartsToLocators();
 	return true;
 }
 
@@ -175,41 +175,54 @@ void Collision::destroy()
 	m_triangleCount = 0;
 }
 
-void Collision::assignLocatorsToParts()
+void Collision::assignPartsToLocators()
 {
-	for (auto &loc : m_locators)
+	for (size_t locatorid = 0; locatorid < m_locators.size(); ++locatorid)
 	{
-		Array<const Variant *> belongsToVariants;
-		std::for_each(m_variants.begin(), m_variants.end(),
-			[&belongsToVariants, &loc](const Variant &v) {
+		assignPartToLocator(m_locators[locatorid], locatorid);
+	}
+}
+
+void Collision::assignPartToLocator(const SharedPtr<Locator> &loc, const size_t locatorId)
+{
+	Array<const Variant *> belongsToVariants;
+	std::for_each
+	(
+		m_variants.begin(), m_variants.end(),
+		[&belongsToVariants, &loc](const Variant &v)
+		{
 			if (std::find(v.m_locators.begin(), v.m_locators.end(), loc) != v.m_locators.end())
 			{
 				belongsToVariants.push_back(&v);
 			}
-		});
+		}
+	);
 
-		for (size_t i = 0; i < m_model->getParts().size(); ++i)
-		{
-			const auto &part = m_model->getParts()[i];
-			Array<const Variant *> partBelongsToVariants;
-			std::for_each(m_variants.begin(), m_variants.end(),
-				[&partBelongsToVariants, &part, i](const Variant &v) {
+	for (size_t i = 0; i < m_model->getParts().size(); ++i)
+	{
+		const auto &part = m_model->getParts()[i];
+		Array<const Variant *> partBelongsToVariants;
+		std::for_each
+		(
+			m_variants.begin(), m_variants.end(),
+			[&partBelongsToVariants, &part, i](const Variant &v)
+			{
 				if ((*v.m_modelVariant)[i]["visible"].getInt() == 1)
 				{
 					partBelongsToVariants.push_back(&v);
 				}
-			});
-
-			if (belongsToVariants == partBelongsToVariants)
-			{
-				loc->m_owner = &part;
 			}
-		}
+		);
 
-		if (!loc->m_owner)
+		if (belongsToVariants == partBelongsToVariants)
 		{
-			warning_f("collision", m_filePath, "Could not find part for locator: %s(%s)", loc->m_name, loc->type());
+			loc->m_owner = &part;
 		}
+	}
+
+	if (!loc->m_owner)
+	{
+		warning_f("collision", m_filePath, "Could not find part for locator: %s(%s)", loc->m_name, loc->type());
 	}
 }
 

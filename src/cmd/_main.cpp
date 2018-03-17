@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  *  Project:	ConverterPIX @ CMD Application
- *  File:		/resource_lib.h
+ *  File:		/cmd/_main.cpp
  *
  *		  _____                          _            _____ _______   __
  *		 / ____|                        | |          |  __ \_   _\ \ / /
@@ -103,9 +103,10 @@ int main(int argc, char *argv[])
 		SINGLE_MODEL,
 		SINGLE_TOBJ,
 		DEBUG_DDS,
+		SHOW_FILE,
 		EXTRACT_FILE,
 		EXTRACT_DIRECTORY,
-		LIST_DIR,
+		LIST_DIR
 	} mode = DIRECTORY_LIST;
 
 	String *parameter = nullptr;
@@ -168,6 +169,11 @@ int main(int argc, char *argv[])
 		{
 			mode = LIST_DIR;
 			listdir_r = true;
+			parameter = &path;
+		}
+		else if (arg == "-show_f")
+		{
+			mode = SHOW_FILE;
 			parameter = &path;
 		}
 		else
@@ -269,6 +275,27 @@ int main(int argc, char *argv[])
 				{
 					printf("Unable to open file to write: %s\n", (exportpath + path).c_str());
 				}
+			}
+			else
+			{
+				printf("Unable to open file to read: %s\n", path.c_str());
+			}
+		} break;
+		case SHOW_FILE:
+		{
+			if (basepath.empty())
+			{
+				error("system", "", "Not specified base path!");
+				return 1;
+			}
+			auto file = getUFS()->open(path, FileSystem::read | FileSystem::binary);
+			if (file)
+			{
+				String data(static_cast<size_t>(file->size()), '\0');
+				file->blockRead(&data[0], 0, file->size());
+				printf("-----------------------\n");
+				printf("%s\n", data.c_str());
+				printf("-----------------------\n");
 			}
 			else
 			{

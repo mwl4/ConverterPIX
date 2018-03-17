@@ -304,7 +304,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 				vert->m_color[0] = 2.f * vertRgba->m_r / 255.f;
 				vert->m_color[1] = 2.f * vertRgba->m_g / 255.f;
 				vert->m_color[2] = 2.f * vertRgba->m_b / 255.f;
-				vert->m_color[3] = 2.f * vertRgba->m_a / 255.f;
+				vert->m_color[3] = vertRgba->m_a / 255.f;
 			}
 			if (currentPiece->m_color2)
 			{
@@ -312,7 +312,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 				vert->m_color2[0] = 2.f * vertRgba->m_r / 255.f;
 				vert->m_color2[1] = 2.f * vertRgba->m_g / 255.f;
 				vert->m_color2[2] = 2.f * vertRgba->m_b / 255.f;
-				vert->m_color2[3] = 2.f * vertRgba->m_a / 255.f;
+				vert->m_color2[3] = vertRgba->m_a / 255.f;
 			}
 			if (piece->m_anim_bind_offset != -1)
 			{
@@ -519,7 +519,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 				vert->m_color[0] = 2.f * vertRgba->r / 255.f;
 				vert->m_color[1] = 2.f * vertRgba->g / 255.f;
 				vert->m_color[2] = 2.f * vertRgba->b / 255.f;
-				vert->m_color[3] = 2.f * vertRgba->a / 255.f;
+				vert->m_color[3] = vertRgba->a / 255.f;
 			}
 			if (currentPiece->m_color2)
 			{
@@ -527,7 +527,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 				vert->m_color2[0] = 2.f * vertRgba->r / 255.f;
 				vert->m_color2[1] = 2.f * vertRgba->g / 255.f;
 				vert->m_color2[2] = 2.f * vertRgba->b / 255.f;
-				vert->m_color2[3] = 2.f * vertRgba->a / 255.f;
+				vert->m_color2[3] = vertRgba->a / 255.f;
 			}
 			if (piece->m_vert_bone_index_offset != -1 && piece->m_vert_bone_weight_offset != -1)
 			{
