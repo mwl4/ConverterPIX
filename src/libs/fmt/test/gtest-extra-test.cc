@@ -1,29 +1,9 @@
-/*
- Tests of custom Google Test assertions.
-
- Copyright (c) 2012-2014, Victor Zverovich
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- 1. Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Formatting library for C++ - tests of custom Google Test assertions
+//
+// Copyright (c) 2012 - present, Victor Zverovich
+// All rights reserved.
+//
+// For the license information refer to format.h.
 
 #include "gtest-extra.h"
 
@@ -78,7 +58,7 @@ void throw_exception() {
 }
 
 void throw_system_error() {
-  throw fmt::SystemError(EDOM, "test");
+  throw fmt::system_error(EDOM, "test");
 }
 
 // Tests that when EXPECT_THROW_MSG fails, it evaluates its message argument
@@ -207,11 +187,11 @@ TEST(ExpectThrowTest, DoesNotGenerateUnreachableCodeWarning) {
 // EXPECT_SYSTEM_ERROR macro.
 TEST(ExpectSystemErrorTest, DoesNotGenerateUnreachableCodeWarning) {
   int n = 0;
-  EXPECT_SYSTEM_ERROR(throw fmt::SystemError(EDOM, "test"), EDOM, "test");
+  EXPECT_SYSTEM_ERROR(throw fmt::system_error(EDOM, "test"), EDOM, "test");
   EXPECT_NONFATAL_FAILURE(EXPECT_SYSTEM_ERROR(n++, EDOM, ""), "");
   EXPECT_NONFATAL_FAILURE(EXPECT_SYSTEM_ERROR(throw 1, EDOM, ""), "");
   EXPECT_NONFATAL_FAILURE(EXPECT_SYSTEM_ERROR(
-      throw fmt::SystemError(EDOM, "aaa"), EDOM, "bbb"), "");
+      throw fmt::system_error(EDOM, "aaa"), EDOM, "bbb"), "");
 }
 
 TEST(AssertionSyntaxTest, ExceptionAssertionBehavesLikeSingleStatement) {
@@ -268,10 +248,10 @@ TEST(ExpectTest, EXPECT_SYSTEM_ERROR) {
   EXPECT_NONFATAL_FAILURE(
       EXPECT_SYSTEM_ERROR(throw_exception(), EDOM, "test"),
       "Expected: throw_exception() throws an exception of "
-      "type fmt::SystemError.\n  Actual: it throws a different type.");
+      "type fmt::system_error.\n  Actual: it throws a different type.");
   EXPECT_NONFATAL_FAILURE(
       EXPECT_SYSTEM_ERROR(do_nothing(), EDOM, "test"),
-      "Expected: do_nothing() throws an exception of type fmt::SystemError.\n"
+      "Expected: do_nothing() throws an exception of type fmt::system_error.\n"
       "  Actual: it throws nothing.");
   EXPECT_NONFATAL_FAILURE(
       EXPECT_SYSTEM_ERROR(throw_system_error(), EDOM, "other"),
@@ -319,27 +299,27 @@ TEST(StreamingAssertionsTest, EXPECT_WRITE) {
 }
 
 TEST(UtilTest, FormatSystemError) {
-  fmt::MemoryWriter out;
+  fmt::memory_buffer out;
   fmt::format_system_error(out, EDOM, "test message");
-  EXPECT_EQ(out.str(), format_system_error(EDOM, "test message"));
+  EXPECT_EQ(to_string(out), format_system_error(EDOM, "test message"));
 }
 
 #if FMT_USE_FILE_DESCRIPTORS
 
-using fmt::BufferedFile;
-using fmt::ErrorCode;
-using fmt::File;
+using fmt::buffered_file;
+using fmt::error_code;
+using fmt::file;
 
 TEST(ErrorCodeTest, Ctor) {
-  EXPECT_EQ(0, ErrorCode().get());
-  EXPECT_EQ(42, ErrorCode(42).get());
+  EXPECT_EQ(0, error_code().get());
+  EXPECT_EQ(42, error_code(42).get());
 }
 
 TEST(OutputRedirectTest, ScopedRedirect) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   {
-    BufferedFile file(write_end.fdopen("w"));
+    buffered_file file(write_end.fdopen("w"));
     std::fprintf(file.get(), "[[[");
     {
       OutputRedirect redir(file.get());
@@ -352,53 +332,53 @@ TEST(OutputRedirectTest, ScopedRedirect) {
 
 // Test that OutputRedirect handles errors in flush correctly.
 TEST(OutputRedirectTest, FlushErrorInCtor) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   int write_fd = write_end.descriptor();
-  File write_copy = write_end.dup(write_fd);
-  BufferedFile f = write_end.fdopen("w");
+  file write_copy = write_end.dup(write_fd);
+  buffered_file f = write_end.fdopen("w");
   // Put a character in a file buffer.
   EXPECT_EQ('x', fputc('x', f.get()));
   FMT_POSIX(close(write_fd));
-  scoped_ptr<OutputRedirect> redir;
+  scoped_ptr<OutputRedirect> redir{nullptr};
   EXPECT_SYSTEM_ERROR_NOASSERT(redir.reset(new OutputRedirect(f.get())),
       EBADF, "cannot flush stream");
-  redir.reset();
+  redir.reset(nullptr);
   write_copy.dup2(write_fd);  // "undo" close or dtor will fail
 }
 
 TEST(OutputRedirectTest, DupErrorInCtor) {
-  BufferedFile f = open_buffered_file();
+  buffered_file f = open_buffered_file();
   int fd = (f.fileno)();
-  File copy = File::dup(fd);
+  file copy = file::dup(fd);
   FMT_POSIX(close(fd));
-  scoped_ptr<OutputRedirect> redir;
+  scoped_ptr<OutputRedirect> redir{nullptr};
   EXPECT_SYSTEM_ERROR_NOASSERT(redir.reset(new OutputRedirect(f.get())),
       EBADF, fmt::format("cannot duplicate file descriptor {}", fd));
   copy.dup2(fd);  // "undo" close or dtor will fail
 }
 
 TEST(OutputRedirectTest, RestoreAndRead) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
-  BufferedFile file(write_end.fdopen("w"));
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
+  buffered_file file(write_end.fdopen("w"));
   std::fprintf(file.get(), "[[[");
   OutputRedirect redir(file.get());
   std::fprintf(file.get(), "censored");
   EXPECT_EQ("censored", sanitize(redir.restore_and_read()));
   EXPECT_EQ("", sanitize(redir.restore_and_read()));
   std::fprintf(file.get(), "]]]");
-  file = BufferedFile();
+  file = buffered_file();
   EXPECT_READ(read_end, "[[[]]]");
 }
 
 // Test that OutputRedirect handles errors in flush correctly.
 TEST(OutputRedirectTest, FlushErrorInRestoreAndRead) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   int write_fd = write_end.descriptor();
-  File write_copy = write_end.dup(write_fd);
-  BufferedFile f = write_end.fdopen("w");
+  file write_copy = write_end.dup(write_fd);
+  buffered_file f = write_end.fdopen("w");
   OutputRedirect redir(f.get());
   // Put a character in a file buffer.
   EXPECT_EQ('x', fputc('x', f.get()));
@@ -409,11 +389,11 @@ TEST(OutputRedirectTest, FlushErrorInRestoreAndRead) {
 }
 
 TEST(OutputRedirectTest, ErrorInDtor) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   int write_fd = write_end.descriptor();
-  File write_copy = write_end.dup(write_fd);
-  BufferedFile f = write_end.fdopen("w");
+  file write_copy = write_end.dup(write_fd);
+  buffered_file f = write_end.fdopen("w");
   scoped_ptr<OutputRedirect> redir(new OutputRedirect(f.get()));
   // Put a character in a file buffer.
   EXPECT_EQ('x', fputc('x', f.get()));
@@ -423,9 +403,9 @@ TEST(OutputRedirectTest, ErrorInDtor) {
       // output in EXPECT_STDERR and the second close will break output
       // redirection.
       FMT_POSIX(close(write_fd));
-      SUPPRESS_ASSERT(redir.reset());
+      SUPPRESS_ASSERT(redir.reset(nullptr));
   }, format_system_error(EBADF, "cannot flush stream"));
-  write_copy.dup2(write_fd); // "undo" close or dtor of BufferedFile will fail
+  write_copy.dup2(write_fd); // "undo" close or dtor of buffered_file will fail
 }
 
 #endif  // FMT_USE_FILE_DESCRIPTORS

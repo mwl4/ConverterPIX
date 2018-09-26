@@ -10,7 +10,7 @@ CXXFLAGS=-c -g -w -O3 -Wall -msse -msse2 -fpermissive -std=$(CXXSTANDARD) -D_FIL
 INCLUDES=-I./
 INCLUDES+=-I./libs
 INCLUDES+=-I./libs/glm
-INCLUDES+=-I./libs/fmt
+INCLUDES+=-I./libs/fmt/include
 
 LDFLAGS=-g
 

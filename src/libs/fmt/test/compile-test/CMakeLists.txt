@@ -1,15 +1,17 @@
 # Test if compile errors are produced where necessary.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1.0)
 
 include(CheckCXXSourceCompiles)
-set(CMAKE_REQUIRED_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/../..)
-set(CMAKE_REQUIRED_FLAGS ${CPP11_FLAG})
+include(CheckCXXCompilerFlag)
+
+set(CMAKE_REQUIRED_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
+set(CMAKE_REQUIRED_FLAGS ${CXX_STANDARD_FLAG} ${PEDANTIC_COMPILE_FLAGS})
 
 function (generate_source result fragment)
   set(${result} "
   #define FMT_HEADER_ONLY 1
-  #include \"fmt/posix.h\"
+  #include \"fmt/format.h\"
   int main() {
     ${fragment}
   }
@@ -47,24 +49,23 @@ endfunction ()
 # check if the source file skeleton compiles
 expect_compile("")
 
-# MakeArg doesn't accept [const] volatile char *.
-expect_compile_error("volatile char s[] = \"test\"; (fmt::internal::MakeArg<char>)(s);")
-expect_compile_error("const volatile char s[] = \"test\"; (fmt::internal::MakeArg<char>)(s);")
-
-# MakeArg<char> doesn't accept wchar_t.
-expect_compile_error("fmt::internal::MakeValue<char>(L'a');")
-expect_compile_error("fmt::internal::MakeValue<char>(L\"test\");")
-
-# Writing a wide character to a character stream Writer is forbidden.
-expect_compile_error("fmt::MemoryWriter() << L'a';")
-expect_compile_error("fmt::MemoryWriter() << fmt::pad(\"abc\", 5, L' ');")
-expect_compile_error("fmt::MemoryWriter() << fmt::pad(42, 5, L' ');")
-
 # Formatting a wide character with a narrow format string is forbidden.
-expect_compile_error("fmt::format(\"{}\", L'a';")
+expect_compile_error("fmt::format(\"{}\", L'a');")
 
-expect_compile("FMT_STATIC_ASSERT(true, \"this should never happen\");")
-expect_compile_error("FMT_STATIC_ASSERT(0 > 1, \"oops\");")
+# Formatting a wide string with a narrow format string is forbidden.
+expect_compile_error("fmt::format(\"{}\", L\"foo\");")
+
+# Formatting a narrow string with a wide format string is forbidden because
+# mixing UTF-8 with UTF-16/32 can result in an invalid output.
+expect_compile_error("fmt::format(L\"{}\", \"foo\");")
+
+# Formatting a wide string with a narrow format string is forbidden.
+expect_compile_error("
+  struct S {
+    operator std::string() const { return std::string(); }
+  };
+  fmt::format(\"{}\", S());
+")
 
 # Make sure that compiler features detected in the header
 # match the features detected in CMake.
