@@ -145,7 +145,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = bone->m_parent;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : 0xff;
 
 		if (currentBone->m_name.empty())
 		{
@@ -371,7 +371,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = bone->m_parent;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : 0xff;
 
 		if (currentBone->m_name.empty())
 		{
