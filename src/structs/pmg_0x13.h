@@ -73,7 +73,7 @@ namespace prism
 			float3 m_translation;						// +168
 			float3 m_scale;								// +180
 			float m_sign_of_determinant_of_matrix;		// +192
-			i8 m_parent;								// +196
+			u8 m_parent;								// +196
 			u8 m_pad[3];								// +197
 		};	ENSURE_SIZE(pmg_bone_t, 200);
 

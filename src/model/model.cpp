@@ -145,7 +145,7 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : -1;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : 0xff;
 
 		if (currentBone->m_name.empty())
 		{
@@ -319,12 +319,12 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 				const auto animBind = *(const uint16_t *)(buffer + piece->m_anim_bind_offset + j * sizeof(uint16_t));
 				for (int k = 0; k < std::min(piece->m_bone_count, (i32)Vertex::BONE_COUNT); ++k)
 				{
-					vert->m_boneIndex[k] = *(const int8_t *)(buffer + piece->m_anim_bind_bones_offset + (animBind * piece->m_bone_count) + k);
+					vert->m_boneIndex[k] = *(const uint8_t *)(buffer + piece->m_anim_bind_bones_offset + (animBind * piece->m_bone_count) + k);
 					vert->m_boneWeight[k] = *(const uint8_t *)(buffer + piece->m_anim_bind_bones_weight_offset + (animBind * piece->m_bone_count) + k);
 				}
 				for (int k = std::min(piece->m_bone_count, (i32)Vertex::BONE_COUNT); k < Vertex::BONE_COUNT; ++k)
 				{
-					vert->m_boneIndex[k] = -1;
+					vert->m_boneIndex[k] = 0xff;
 					vert->m_boneWeight[k] = 0;
 				}
 			}
@@ -371,7 +371,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 		currentBone->m_translation = bone->m_translation;
 		currentBone->m_scale = bone->m_scale;
 		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
-		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : -1;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : 0xff;
 
 		if (currentBone->m_name.empty())
 		{
@@ -541,7 +541,7 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 				}
 				for (int bone = 4; bone < Vertex::BONE_COUNT; ++bone)
 				{
-					vert->m_boneIndex[bone] = -1;
+					vert->m_boneIndex[bone] = 0xff;
 					vert->m_boneWeight[bone] = 0;
 				}
 			}
@@ -1355,7 +1355,7 @@ bool Model::saveToPis(String exportPath) const
 				TAB TAB "             " FLT_FT "  " FLT_FT "  " FLT_FT "  " FLT_FT " )"		SEOL
 				TAB "  )" SEOL,
 					(int)i, m_bones[i].m_name.c_str(),
-					(m_bones[i].m_parent != -1 ? m_bones[m_bones[i].m_parent].m_name.c_str() : ""),
+					(m_bones[i].m_parent != 0xff ? m_bones[m_bones[i].m_parent].m_name.c_str() : ""),
 					flh(mat[0][0]), flh(mat[1][0]), flh(mat[2][0]), flh(mat[3][0]),
 					flh(mat[0][1]), flh(mat[1][1]), flh(mat[2][1]), flh(mat[3][1]),
 					flh(mat[0][2]), flh(mat[1][2]), flh(mat[2][2]), flh(mat[3][2]),

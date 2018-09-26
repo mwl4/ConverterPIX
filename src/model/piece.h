@@ -35,7 +35,7 @@ struct Vertex
 	Float2 m_texcoords[TEXCOORD_COUNT];
 	Float4 m_color;
 	Float4 m_color2;
-	int8_t m_boneIndex[BONE_COUNT];
+	uint8_t m_boneIndex[BONE_COUNT];
 	uint8_t m_boneWeight[BONE_COUNT];
 };
 
