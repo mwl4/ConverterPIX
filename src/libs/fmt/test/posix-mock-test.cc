@@ -1,35 +1,17 @@
-/*
- Tests of the C++ interface to POSIX functions that require mocks
-
- Copyright (c) 2012-2015, Victor Zverovich
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- 1. Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Tests of the C++ interface to POSIX functions that require mocks
+//
+// Copyright (c) 2012 - present, Victor Zverovich
+// All rights reserved.
+//
+// For the license information refer to format.h.
 
 // Disable bogus MSVC warnings.
-#define _CRT_SECURE_NO_WARNINGS
+#ifdef _MSC_VER
+# define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "posix-mock.h"
-#include "fmt/posix.cc"
+#include "../src/posix.cc"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,13 +23,13 @@
 # undef ERROR
 #endif
 
-#include "gmock/gmock.h"
+#include "gmock.h"
 #include "gtest-extra.h"
 #include "util.h"
 
-using fmt::BufferedFile;
-using fmt::ErrorCode;
-using fmt::File;
+using fmt::buffered_file;
+using fmt::error_code;
+using fmt::file;
 
 using testing::internal::scoped_ptr;
 using testing::_;
@@ -151,7 +133,7 @@ int test::dup2(int fildes, int fildes2) {
 }
 
 FILE *test::fdopen(int fildes, const char *mode) {
-  EMULATE_EINTR(fdopen, 0);
+  EMULATE_EINTR(fdopen, nullptr);
   return ::FMT_POSIX(fdopen(fildes, mode));
 }
 
@@ -180,7 +162,7 @@ int test::pipe(int *pfds, unsigned psize, int textmode) {
 #endif
 
 FILE *test::fopen(const char *filename, const char *mode) {
-  EMULATE_EINTR(fopen, 0);
+  EMULATE_EINTR(fopen, nullptr);
   return ::fopen(filename, mode);
 }
 
@@ -213,15 +195,9 @@ int (test::fileno)(FILE *stream) {
 # define EXPECT_EQ_POSIX(expected, actual)
 #endif
 
-void write_file(fmt::CStringRef filename, fmt::StringRef content) {
-  fmt::BufferedFile f(filename, "w");
+static void write_file(fmt::cstring_view filename, fmt::string_view content) {
+  fmt::buffered_file f(filename, "w");
   f.print("{}", content);
-}
-
-TEST(UtilTest, StaticAssert) {
-  FMT_STATIC_ASSERT(true, "success");
-  // Static assertion failure is tested in compile-test because it causes
-  // a compile-time error.
 }
 
 TEST(UtilTest, GetPageSize) {
@@ -240,8 +216,8 @@ TEST(UtilTest, GetPageSize) {
 
 TEST(FileTest, OpenRetry) {
   write_file("test", "there must be something here");
-  scoped_ptr<File> f;
-  EXPECT_RETRY(f.reset(new File("test", File::RDONLY)),
+  scoped_ptr<file> f{nullptr};
+  EXPECT_RETRY(f.reset(new file("test", file::RDONLY)),
                open, "cannot open file test");
 #ifndef _WIN32
   char c = 0;
@@ -250,13 +226,13 @@ TEST(FileTest, OpenRetry) {
 }
 
 TEST(FileTest, CloseNoRetryInDtor) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
-  scoped_ptr<File> f(new File(std::move(read_end)));
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
+  scoped_ptr<file> f(new file(std::move(read_end)));
   int saved_close_count = 0;
   EXPECT_WRITE(stderr, {
     close_count = 1;
-    f.reset();
+    f.reset(nullptr);
     saved_close_count = close_count;
     close_count = 0;
   }, format_system_error(EINTR, "cannot close file") + "\n");
@@ -264,8 +240,8 @@ TEST(FileTest, CloseNoRetryInDtor) {
 }
 
 TEST(FileTest, CloseNoRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   close_count = 1;
   EXPECT_SYSTEM_ERROR(read_end.close(), EINTR, "cannot close file");
   EXPECT_EQ(2, close_count);
@@ -275,15 +251,15 @@ TEST(FileTest, CloseNoRetry) {
 TEST(FileTest, Size) {
   std::string content = "top secret, destroy before reading";
   write_file("test", content);
-  File f("test", File::RDONLY);
+  file f("test", file::RDONLY);
   EXPECT_GE(f.size(), 0);
-  EXPECT_EQ(content.size(), static_cast<fmt::ULongLong>(f.size()));
+  EXPECT_EQ(content.size(), static_cast<unsigned long long>(f.size()));
 #ifdef _WIN32
-  fmt::MemoryWriter message;
+  fmt::memory_buffer message;
   fmt::internal::format_windows_error(
       message, ERROR_ACCESS_DENIED, "cannot get file size");
   fstat_sim = ERROR;
-  EXPECT_THROW_MSG(f.size(), fmt::WindowsError, message.str());
+  EXPECT_THROW_MSG(f.size(), fmt::windows_error, fmt::to_string(message));
   fstat_sim = NONE;
 #else
   f.close();
@@ -293,7 +269,7 @@ TEST(FileTest, Size) {
 
 TEST(FileTest, MaxSize) {
   write_file("test", "");
-  File f("test", File::RDONLY);
+  file f("test", file::RDONLY);
   fstat_sim = MAX_SIZE;
   EXPECT_GE(f.size(), 0);
   EXPECT_EQ(max_file_size(), f.size());
@@ -301,8 +277,8 @@ TEST(FileTest, MaxSize) {
 }
 
 TEST(FileTest, ReadRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   enum { SIZE = 4 };
   write_end.write("test", SIZE);
   write_end.close();
@@ -314,8 +290,8 @@ TEST(FileTest, ReadRetry) {
 }
 
 TEST(FileTest, WriteRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   enum { SIZE = 4 };
   std::size_t count = 0;
   EXPECT_RETRY(count = write_end.write("test", SIZE),
@@ -332,29 +308,29 @@ TEST(FileTest, WriteRetry) {
 
 #ifdef _WIN32
 TEST(FileTest, ConvertReadCount) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   char c;
   std::size_t size = UINT_MAX;
   if (sizeof(unsigned) != sizeof(std::size_t))
     ++size;
   read_count = 1;
   read_nbyte = 0;
-  EXPECT_THROW(read_end.read(&c, size), fmt::SystemError);
+  EXPECT_THROW(read_end.read(&c, size), fmt::system_error);
   read_count = 0;
   EXPECT_EQ(UINT_MAX, read_nbyte);
 }
 
 TEST(FileTest, ConvertWriteCount) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   char c;
   std::size_t size = UINT_MAX;
   if (sizeof(unsigned) != sizeof(std::size_t))
     ++size;
   write_count = 1;
   write_nbyte = 0;
-  EXPECT_THROW(write_end.write(&c, size), fmt::SystemError);
+  EXPECT_THROW(write_end.write(&c, size), fmt::system_error);
   write_count = 0;
   EXPECT_EQ(UINT_MAX, write_nbyte);
 }
@@ -363,14 +339,14 @@ TEST(FileTest, ConvertWriteCount) {
 TEST(FileTest, DupNoRetry) {
   int stdout_fd = FMT_POSIX(fileno(stdout));
   dup_count = 1;
-  EXPECT_SYSTEM_ERROR(File::dup(stdout_fd), EINTR,
+  EXPECT_SYSTEM_ERROR(file::dup(stdout_fd), EINTR,
       fmt::format("cannot duplicate file descriptor {}", stdout_fd));
   dup_count = 0;
 }
 
 TEST(FileTest, Dup2Retry) {
   int stdout_fd = FMT_POSIX(fileno(stdout));
-  File f1 = File::dup(stdout_fd), f2 = File::dup(stdout_fd);
+  file f1 = file::dup(stdout_fd), f2 = file::dup(stdout_fd);
   EXPECT_RETRY(f1.dup2(f2.descriptor()), dup2,
       fmt::format("cannot duplicate file descriptor {} to {}",
       f1.descriptor(), f2.descriptor()));
@@ -378,8 +354,8 @@ TEST(FileTest, Dup2Retry) {
 
 TEST(FileTest, Dup2NoExceptRetry) {
   int stdout_fd = FMT_POSIX(fileno(stdout));
-  File f1 = File::dup(stdout_fd), f2 = File::dup(stdout_fd);
-  ErrorCode ec;
+  file f1 = file::dup(stdout_fd), f2 = file::dup(stdout_fd);
+  error_code ec;
   dup2_count = 1;
   f1.dup2(f2.descriptor(), ec);
 #ifndef _WIN32
@@ -391,16 +367,16 @@ TEST(FileTest, Dup2NoExceptRetry) {
 }
 
 TEST(FileTest, PipeNoRetry) {
-  File read_end, write_end;
+  file read_end, write_end;
   pipe_count = 1;
   EXPECT_SYSTEM_ERROR(
-      File::pipe(read_end, write_end), EINTR, "cannot create pipe");
+      file::pipe(read_end, write_end), EINTR, "cannot create pipe");
   pipe_count = 0;
 }
 
 TEST(FileTest, FdopenNoRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
   fdopen_count = 1;
   EXPECT_SYSTEM_ERROR(read_end.fdopen("r"),
       EINTR, "cannot associate stream with file descriptor");
@@ -409,24 +385,24 @@ TEST(FileTest, FdopenNoRetry) {
 
 TEST(BufferedFileTest, OpenRetry) {
   write_file("test", "there must be something here");
-  scoped_ptr<BufferedFile> f;
-  EXPECT_RETRY(f.reset(new BufferedFile("test", "r")),
+  scoped_ptr<buffered_file> f{nullptr};
+  EXPECT_RETRY(f.reset(new buffered_file("test", "r")),
                fopen, "cannot open file test");
 #ifndef _WIN32
   char c = 0;
   if (fread(&c, 1, 1, f->get()) < 1)
-    throw fmt::SystemError(errno, "fread failed");
+    throw fmt::system_error(errno, "fread failed");
 #endif
 }
 
 TEST(BufferedFileTest, CloseNoRetryInDtor) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
-  scoped_ptr<BufferedFile> f(new BufferedFile(read_end.fdopen("r")));
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
+  scoped_ptr<buffered_file> f(new buffered_file(read_end.fdopen("r")));
   int saved_fclose_count = 0;
   EXPECT_WRITE(stderr, {
     fclose_count = 1;
-    f.reset();
+    f.reset(nullptr);
     saved_fclose_count = fclose_count;
     fclose_count = 0;
   }, format_system_error(EINTR, "cannot close file") + "\n");
@@ -434,9 +410,9 @@ TEST(BufferedFileTest, CloseNoRetryInDtor) {
 }
 
 TEST(BufferedFileTest, CloseNoRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
-  BufferedFile f = read_end.fdopen("r");
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
+  buffered_file f = read_end.fdopen("r");
   fclose_count = 1;
   EXPECT_SYSTEM_ERROR(f.close(), EINTR, "cannot close file");
   EXPECT_EQ(2, fclose_count);
@@ -444,9 +420,9 @@ TEST(BufferedFileTest, CloseNoRetry) {
 }
 
 TEST(BufferedFileTest, FilenoNoRetry) {
-  File read_end, write_end;
-  File::pipe(read_end, write_end);
-  BufferedFile f = read_end.fdopen("r");
+  file read_end, write_end;
+  file::pipe(read_end, write_end);
+  buffered_file f = read_end.fdopen("r");
   fileno_count = 1;
   EXPECT_SYSTEM_ERROR((f.fileno)(), EINTR, "cannot get file descriptor");
   EXPECT_EQ(2, fileno_count);
@@ -462,8 +438,9 @@ TEST(ScopedMock, Scope) {
     ScopedMock<TestMock> mock;
     EXPECT_EQ(&mock, TestMock::instance);
     TestMock &copy = mock;
+    static_cast<void>(copy);
   }
-  EXPECT_EQ(0, TestMock::instance);
+  EXPECT_EQ(nullptr, TestMock::instance);
 }
 
 #ifdef FMT_LOCALE
@@ -498,24 +475,32 @@ double _strtod_l(const char *nptr, char **endptr, _locale_t locale) {
 # pragma warning(pop)
 #endif
 
-LocaleType newlocale(int category_mask, const char *locale, LocaleType base) {
+#if defined(__THROW) && FMT_GCC_VERSION > 0 && FMT_GCC_VERSION <= 408
+#define FMT_LOCALE_THROW __THROW
+#else
+#define FMT_LOCALE_THROW
+#endif
+
+LocaleType newlocale(int category_mask, const char *locale, LocaleType base) FMT_LOCALE_THROW {
   return LocaleMock::instance->newlocale(category_mask, locale, base);
 }
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || (defined(__FreeBSD__) && __FreeBSD_version < 1200002)
 typedef int FreeLocaleResult;
 #else
 typedef void FreeLocaleResult;
 #endif
 
-FreeLocaleResult freelocale(LocaleType locale) {
+FreeLocaleResult freelocale(LocaleType locale) FMT_LOCALE_THROW {
   LocaleMock::instance->freelocale(locale);
   return FreeLocaleResult();
 }
 
-double strtod_l(const char *nptr, char **endptr, LocaleType locale) {
+double strtod_l(const char *nptr, char **endptr, LocaleType locale) FMT_LOCALE_THROW {
   return LocaleMock::instance->strtod_l(nptr, endptr, locale);
 }
+
+#undef FMT_LOCALE_THROW
 
 TEST(LocaleTest, LocaleMock) {
   ScopedMock<LocaleMock> mock;
@@ -530,7 +515,7 @@ TEST(LocaleTest, Locale) {
 #endif
   ScopedMock<LocaleMock> mock;
   LocaleType impl = reinterpret_cast<LocaleType>(42);
-  EXPECT_CALL(mock, newlocale(LC_NUMERIC_MASK, StrEq("C"), 0))
+  EXPECT_CALL(mock, newlocale(LC_NUMERIC_MASK, StrEq("C"), nullptr))
       .WillOnce(Return(impl));
   EXPECT_CALL(mock, freelocale(impl));
   fmt::Locale locale;
