@@ -69,7 +69,6 @@
 #include <glm/glm.hpp>
 
 #include <fmt/format.h>
-#include <fmt/string.h>
 #include <fmt/printf.h>
 #include <fmt/posix.h>
 

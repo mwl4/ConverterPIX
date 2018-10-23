@@ -1,7 +1,7 @@
 CXX=g++
-CXXFLAGS=-c -g -w -static -I./
+CXXFLAGS=-c -g -w -static -I./include
 LDFLAGS=-ldl -lpthread -static
-SOURCES=$(wildcard fmt/*.cc)
+SOURCES=$(wildcard src/*.cc)
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=../libs/libfmt.a
 
