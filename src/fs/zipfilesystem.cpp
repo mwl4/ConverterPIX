@@ -221,7 +221,7 @@ void ZipFileSystem::readZip()
 
 	zip::EndOfCentralDirectory *centralDirEnd = nullptr;
 
-	for(uint8_t *currentOffset = blockToFindCentralDirEnd.get() + blockSizeToFindCentralDirEnd;;)
+	for(uint8_t *currentOffset = blockToFindCentralDirEnd.get() + blockSizeToFindCentralDirEnd - sizeof(zip::EndOfCentralDirectory);;)
 	{
 		centralDirEnd = reinterpret_cast<zip::EndOfCentralDirectory *>(currentOffset);
 		if (centralDirEnd->signature == zip::EndOfCentralDirectory::SIGNATURE)
