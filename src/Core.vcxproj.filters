@@ -208,15 +208,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="libs\fmt\fmt\format.cc">
-      <Filter>Source Files\fmt</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\fmt\fmt\ostream.cc">
-      <Filter>Source Files\fmt</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\fmt\fmt\posix.cc">
-      <Filter>Source Files\fmt</Filter>
-    </ClCompile>
     <ClCompile Include="fs\file.cpp">
       <Filter>Source Files\fs</Filter>
     </ClCompile>
@@ -291,6 +282,12 @@
     </ClCompile>
     <ClCompile Include="utils\string_tokenizer.cpp">
       <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\fmt\src\format.cc">
+      <Filter>Source Files\fmt</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\fmt\src\posix.cc">
+      <Filter>Source Files\fmt</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
