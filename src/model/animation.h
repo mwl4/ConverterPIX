@@ -46,7 +46,6 @@ public:
 	void saveToPia(String exportPath) const;
 
 private:
-	String m_name;
 	float m_totalLength = 0.f;
 	Array<uint8_t> m_bones;
 	Array<Array<Frame>> m_frames; // @[bone][frame]

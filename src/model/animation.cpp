@@ -42,7 +42,6 @@ bool Animation::loadAnim0x03(const uint8_t *const buffer, const size_t size)
 
 	pma_header_t *header = (pma_header_t *)(buffer);
 
-	m_name = token_to_string(header->m_name);
 	m_totalLength = header->m_anim_length;
 
 	m_bones.resize(header->m_bones);
@@ -82,7 +81,6 @@ bool Animation::loadAnim0x04(const uint8_t *const buffer, const size_t size)
 
 	pma_header_t *header = (pma_header_t *)(buffer);
 
-	m_name = token_to_string(header->m_skeleton_hash);
 	m_totalLength = header->m_anim_length;
 
 	m_bones.resize(header->m_bones);

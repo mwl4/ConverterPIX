@@ -39,7 +39,7 @@ namespace prism
 			u16 m_frames;				// +4
 			u16 m_flags;				// +6
 			u32 m_bones;				// +8
-			token_t m_skeleton_hash;	// +12
+			u64 m_skeleton_hash;		// +12 cityhash64 of skeleton file name without path
 			float m_anim_length;		// +20
 			i32 m_lengths_offset;		// +24
 			i32 m_bones_offset;			// +28
