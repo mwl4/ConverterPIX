@@ -49,11 +49,13 @@
     <ClInclude Include="resource_lib.h" />
     <ClInclude Include="structs\dds.h" />
     <ClInclude Include="structs\hashfs.h" />
-    <ClInclude Include="structs\pma.h" />
+    <ClInclude Include="structs\pma_0x03.h" />
+    <ClInclude Include="structs\pma_0x04.h" />
     <ClInclude Include="structs\pmc.h" />
     <ClInclude Include="structs\pmd.h" />
     <ClInclude Include="structs\pmg_0x13.h" />
     <ClInclude Include="structs\pmg_0x14.h" />
+    <ClInclude Include="structs\pmg_0x15.h" />
     <ClInclude Include="structs\ppd_0x15.h" />
     <ClInclude Include="structs\ppd_0x16.h" />
     <ClInclude Include="structs\tobj.h" />

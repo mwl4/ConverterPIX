@@ -27,13 +27,94 @@
 #include <fs/file.h>
 #include <fs/sysfilesystem.h>
 #include <fs/uberfilesystem.h>
-#include <structs/pma.h>
+#include <structs/pma_0x03.h>
+#include <structs/pma_0x04.h>
 #include <model/model.h>
 #include <pix/pix.h>
 
 #include <glm/gtx/transform.hpp>
 
 using namespace prism;
+
+bool Animation::loadAnim0x03(const uint8_t *const buffer, const size_t size)
+{
+	using namespace prism::pma_0x03;
+
+	pma_header_t *header = (pma_header_t *)(buffer);
+
+	m_name = token_to_string(header->m_name);
+	m_totalLength = header->m_anim_length;
+
+	m_bones.resize(header->m_bones);
+	m_frames.resize(header->m_bones);
+	m_timeframes.resize(header->m_frames);
+
+	for (uint32_t i = 0; i < m_bones.size(); ++i)
+	{
+		m_bones[i] = *(uint8_t *)(buffer + header->m_bones_offset + i*sizeof(uint8_t));
+		m_frames[i].resize(header->m_frames);
+		for (uint32_t j = 0; j < header->m_frames; ++j)
+		{
+			pma_frame_t *frame = (pma_frame_t *)(buffer + header->m_frames_offset + i*sizeof(pma_frame_t) + j*m_bones.size()*sizeof(pma_frame_t));
+			if(i == 0) m_timeframes[j] = *(float *)(buffer + header->m_lengths_offset + j * sizeof(float));
+			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
+			m_frames[i][j].m_rotation = frame->m_rot;
+			m_frames[i][j].m_translation = frame->m_trans;
+			m_frames[i][j].m_scale = frame->m_scale;
+		}
+	}
+
+	if (header->m_flags == 2)
+	{
+		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
+		for (u32 i = 0; i < header->m_frames; ++i)
+		{
+			(*m_movement)[i] = *((float3 *)(buffer + header->m_delta_trans_offset) + i);
+		}
+	}
+
+	return true;
+}
+
+bool Animation::loadAnim0x04(const uint8_t *const buffer, const size_t size)
+{
+	using namespace prism::pma_0x04;
+
+	pma_header_t *header = (pma_header_t *)(buffer);
+
+	m_name = token_to_string(header->m_skeleton_hash);
+	m_totalLength = header->m_anim_length;
+
+	m_bones.resize(header->m_bones);
+	m_frames.resize(header->m_bones);
+	m_timeframes.resize(header->m_frames);
+
+	for (uint32_t i = 0; i < m_bones.size(); ++i)
+	{
+		m_bones[i] = *(uint8_t *)(buffer + header->m_bones_offset + i*sizeof(uint8_t));
+		m_frames[i].resize(header->m_frames);
+		for (uint32_t j = 0; j < header->m_frames; ++j)
+		{
+			pma_frame_t *frame = (pma_frame_t *)(buffer + header->m_frames_offset + i*sizeof(pma_frame_t) + j*m_bones.size()*sizeof(pma_frame_t));
+			if(i == 0) m_timeframes[j] = *(float *)(buffer + header->m_lengths_offset + j * sizeof(float));
+			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
+			m_frames[i][j].m_rotation = frame->m_rot;
+			m_frames[i][j].m_translation = frame->m_trans;
+			m_frames[i][j].m_scale = frame->m_scale;
+		}
+	}
+
+	if (header->m_flags == 2)
+	{
+		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
+		for (u32 i = 0; i < header->m_frames; ++i)
+		{
+			(*m_movement)[i] = *((float3 *)(buffer + header->m_delta_trans_offset) + i);
+		}
+	}
+
+	return true;
+}
 
 bool Animation::load(SharedPtr<Model> model, String filePath)
 {
@@ -66,45 +147,16 @@ bool Animation::load(SharedPtr<Model> model, String filePath)
 	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
 	file.reset();
 
-	pma_header_t *header = (pma_header_t *)(buffer.get());
-	if (header->m_version != pma_header_t::SUPPORTED_VERSION)
+	switch ((u8)buffer.get()[0])
 	{
-		error_f("animation", m_filePath, "Invalid version of the file! (have: %i, expected: %i)", header->m_version, pma_header_t::SUPPORTED_VERSION);
-		return false;
+		case 0x03: return loadAnim0x03(buffer.get(), fileSize);
+		case 0x04: return loadAnim0x04(buffer.get(), fileSize);
 	}
 
-	m_name = token_to_string(header->m_name);
-	m_totalLength = header->m_anim_length;
+	error_f("animation", m_filePath, "Invalid version of the file (have: %i, expected: %i, or %i)",
+		buffer.get()[0], pma_0x03::pma_header_t::SUPPORTED_VERSION, pma_0x04::pma_header_t::SUPPORTED_VERSION);
 
-	m_bones.resize(header->m_bones);
-	m_frames.resize(header->m_bones);
-	m_timeframes.resize(header->m_frames);
-
-	for (uint32_t i = 0; i < m_bones.size(); ++i)
-	{
-		m_bones[i] = *(uint8_t *)(buffer.get() + header->m_bones_offset + i*sizeof(uint8_t));
-		m_frames[i].resize(header->m_frames);
-		for (uint32_t j = 0; j < header->m_frames; ++j)
-		{
-			pma_frame_t *frame = (pma_frame_t *)(buffer.get() + header->m_frames_offset + i*sizeof(pma_frame_t) + j*m_bones.size()*sizeof(pma_frame_t));
-			if(i == 0) m_timeframes[j] = *(float *)(buffer.get() + header->m_lengths_offset + j * sizeof(float));
-			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
-			m_frames[i][j].m_rotation = frame->m_rot;
-			m_frames[i][j].m_translation = frame->m_trans;
-			m_frames[i][j].m_scale = frame->m_scale;
-		}
-	}
-
-	if (header->m_flags == 2)
-	{
-		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
-		for (u32 i = 0; i < header->m_frames; ++i)
-		{
-			(*m_movement)[i] = *((float3 *)(buffer.get() + header->m_delta_trans_offset) + i);
-		}
-	}
-
-	return true;
+	return false;
 }
 
 void Animation::saveToPia(String exportPath) const
