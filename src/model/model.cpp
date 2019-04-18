@@ -36,6 +36,7 @@
 
 #include <structs/pmg_0x13.h>
 #include <structs/pmg_0x14.h>
+#include <structs/pmg_0x15.h>
 
 #include <glm/gtx/transform.hpp>
 
@@ -107,11 +108,12 @@ bool Model::loadModel()
 	{
 		case MAKEFOURCC(0x13, 'g', 'm', 'P'): return loadModel0x13(buffer.get(), fileSize);
 		case MAKEFOURCC(0x14, 'g', 'm', 'P'): return loadModel0x14(buffer.get(), fileSize);
+		case MAKEFOURCC(0x15, 'g', 'm', 'P'): return loadModel0x15(buffer.get(), fileSize);
 	}
 
-	error_f("model", m_filePath, "Invalid version of geometry file (have: %i signature: %c%c%c, expected: %i or %i)",
+	error_f("model", m_filePath, "Invalid version of geometry file (have: %i signature: %c%c%c, expected: %i, %i or %i)",
 			buffer.get()[0], buffer.get()[3], buffer.get()[2], buffer.get()[1],
-			pmg_0x13::pmg_header_t::SUPPORTED_VERSION, pmg_0x14::pmg_header_t::SUPPORTED_VERSION);
+			pmg_0x13::pmg_header_t::SUPPORTED_VERSION, pmg_0x14::pmg_header_t::SUPPORTED_VERSION, pmg_0x15::pmg_header_t::SUPPORTED_VERSION);
 
 	return false;
 }
@@ -557,6 +559,224 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 	}
 	return true;
 }
+
+bool Model::loadModel0x15(const uint8_t *const buffer, const size_t size)
+{
+	using namespace prism::pmg_0x15;
+
+	if (size < sizeof(pmg_header_t))
+	{
+		error("model", m_filePath, "Geometry file is malformed!");
+		return false;
+	}
+
+	const auto header = (const pmg_header_t *)(buffer);
+
+	m_pieces.resize(header->m_piece_count);
+	m_bones.resize(header->m_bone_count);
+	m_locators.resize(header->m_locator_count);
+	m_parts.resize(header->m_part_count);
+
+	auto bone = (const pmg_bone_data_t *)(buffer + header->m_skeleton_offset);
+	for (int32_t i = 0; i < header->m_bone_count; ++i, ++bone)
+	{
+		Bone *const currentBone = &m_bones[i];
+		currentBone->m_index = i;
+		currentBone->m_name = token_to_string(bone->m_name);
+		currentBone->m_transReversed = bone->m_transformation_reversed;
+		currentBone->m_transformation = bone->m_transformation;
+		currentBone->m_stretch = bone->m_stretch;
+		currentBone->m_rotation = bone->m_rotation;
+		currentBone->m_translation = bone->m_translation;
+		currentBone->m_scale = bone->m_scale;
+		currentBone->m_signOfDeterminantOfMatrix = bone->m_sign_of_determinant_of_matrix;
+		currentBone->m_parent = (bone->m_parent != i) ? bone->m_parent : 0xff;
+
+		if (currentBone->m_name.empty())
+		{
+			currentBone->m_name = "noname";
+		}
+
+		String name = currentBone->m_name;
+		for (int j = 0;
+			 std::find_if(
+				m_bones.begin(),
+				m_bones.begin() + i,
+				[&](const Bone &bone) -> bool
+				{
+					return bone.m_name == currentBone->m_name;
+				}) != (m_bones.begin() + i);
+			 ++j)
+		{
+			const auto id = std::to_string(j);
+			currentBone->m_name = name.substr(0, 12 - id.length()) + id;
+		}
+	}
+
+	auto part = (const pmg_part_t *)(buffer + header->m_parts_offset);
+	for (int32_t i = 0; i < header->m_part_count; ++i, ++part)
+	{
+		Part *const currentPart = &m_parts[i];
+		currentPart->m_name = token_to_string(part->m_name);
+		currentPart->m_locatorCount = part->m_locator_count;
+		currentPart->m_locatorId = part->m_locators_idx;
+		currentPart->m_pieceCount = part->m_piece_count;
+		currentPart->m_pieceId = part->m_pieces_idx;
+	}
+
+	auto locator = (const pmg_locator_t *)(buffer + header->m_locators_offset);
+	for (int32_t i = 0; i < header->m_locator_count; ++i, ++locator)
+	{
+		Locator *const currentLocator = &m_locators[i];
+		currentLocator->m_index = i;
+		currentLocator->m_position = locator->m_position;
+		currentLocator->m_rotation = locator->m_rotation;
+		currentLocator->m_scale = locator->m_scale;
+		currentLocator->m_name = token_to_string(locator->m_name);
+
+		if (locator->m_hookup_offset != -1) {
+			currentLocator->m_hookup = String(
+				(const char *)(buffer + header->m_string_pool_offset + locator->m_hookup_offset)
+			).substr(0, header->m_string_pool_size - locator->m_hookup_offset);
+		}
+		else {
+			currentLocator->m_hookup = "";
+		}
+	}
+
+	auto piece = (const pmg_piece_t *)(buffer + header->m_pieces_offset);
+	for (int32_t i = 0; i < header->m_piece_count; ++i, ++piece)
+	{
+		Piece *const currentPiece = &m_pieces[i];
+		currentPiece->m_index = i;
+		currentPiece->m_texcoordMask = piece->m_texcoord_mask;
+		currentPiece->m_texcoordCount = piece->m_texcoord_width;
+		currentPiece->m_bones = header->m_weight_width;
+		currentPiece->m_material = piece->m_material;
+
+		currentPiece->m_vertices.resize(piece->m_verts);
+		m_vertCount += piece->m_verts;
+
+		currentPiece->m_triangles.resize(piece->m_edges / 3);
+		m_triangleCount += (piece->m_edges / 3);
+
+		m_skinVertCount += currentPiece->m_bones > 0 ? currentPiece->m_vertices.size() : 0;
+
+		uint32_t poolSize = 0;
+
+		if (piece->m_vert_position_offset != -1)
+		{
+			currentPiece->m_position = true;
+			++currentPiece->m_streamCount;
+			poolSize += sizeof(float3);
+		}
+		if (piece->m_vert_normal_offset != -1)
+		{
+			currentPiece->m_normal = true;
+			++currentPiece->m_streamCount;
+			poolSize += sizeof(float3);
+		}
+		if (piece->m_vert_tangent_offset != -1)
+		{
+			currentPiece->m_tangent = true;
+			++currentPiece->m_streamCount;
+			poolSize += sizeof(pmg_vert_tangent_t);
+		}
+		if (piece->m_vert_texcoord_offset != -1)
+		{
+			currentPiece->m_texcoord = true;
+			currentPiece->m_streamCount += piece->m_texcoord_width;
+			poolSize += sizeof(float2) * piece->m_texcoord_width;
+		}
+		if (piece->m_vert_color_offset != -1)
+		{
+			currentPiece->m_color = true;
+			++currentPiece->m_streamCount;
+			poolSize += sizeof(uint32_t);
+		}
+		if (piece->m_vert_color2_offset != -1)
+		{
+			currentPiece->m_color2 = true;
+			++currentPiece->m_streamCount;
+			poolSize += sizeof(uint32_t);
+		}
+		if (piece->m_vert_bone_index_offset != -1)
+		{
+			poolSize += 2 * sizeof(uint32_t);
+		}
+
+		for (int32_t j = 0; j < piece->m_verts; ++j)
+		{
+			Vertex *vert = &currentPiece->m_vertices[j];
+
+			if (currentPiece->m_position)
+			{
+				vert->m_position = *(const float3 *)(buffer + piece->m_vert_position_offset + poolSize*j);
+			}
+			if (currentPiece->m_normal)
+			{
+				vert->m_normal = *(const float3 *)(buffer + piece->m_vert_normal_offset + poolSize*j);
+			}
+			if (currentPiece->m_tangent)
+			{
+				const auto vertTangent = (const pmg_vert_tangent_t *)(buffer + piece->m_vert_tangent_offset + poolSize*j);
+				vert->m_tangent[0] = vertTangent->w;
+				vert->m_tangent[1] = vertTangent->x;
+				vert->m_tangent[2] = vertTangent->y;
+				vert->m_tangent[3] = vertTangent->z;
+			}
+			if (currentPiece->m_texcoord)
+			{
+				for (int32_t k = 0; k < piece->m_texcoord_width; ++k)
+				{
+					vert->m_texcoords[k] = *(float2 *)(buffer + piece->m_vert_texcoord_offset + poolSize*j + sizeof(float2)*k);
+				}
+			}
+			if (currentPiece->m_color)
+			{
+				const auto vertRgba = (const pmg_vert_color_t *)(buffer + piece->m_vert_color_offset + poolSize*j);
+				vert->m_color[0] = 2.f * vertRgba->r / 255.f;
+				vert->m_color[1] = 2.f * vertRgba->g / 255.f;
+				vert->m_color[2] = 2.f * vertRgba->b / 255.f;
+				vert->m_color[3] = vertRgba->a / 255.f;
+			}
+			if (currentPiece->m_color2)
+			{
+				const auto vertRgba = (const pmg_vert_color_t *)(buffer + piece->m_vert_color_offset + poolSize*j);
+				vert->m_color2[0] = 2.f * vertRgba->r / 255.f;
+				vert->m_color2[1] = 2.f * vertRgba->g / 255.f;
+				vert->m_color2[2] = 2.f * vertRgba->b / 255.f;
+				vert->m_color2[3] = vertRgba->a / 255.f;
+			}
+			if (piece->m_vert_bone_index_offset != -1 && piece->m_vert_bone_weight_offset != -1)
+			{
+				for (int bone = 0; bone < 4; ++bone)
+				{
+					const uint32_t indexes = *(const uint32_t *)(buffer + piece->m_vert_bone_index_offset + poolSize*j);
+					vert->m_boneIndex[bone] = (indexes >> (8 * bone)) & 0xff;
+
+					const uint32_t weights = *(const uint32_t *)(buffer + piece->m_vert_bone_weight_offset + poolSize*j);
+					vert->m_boneWeight[bone] = (weights >> (8 * bone)) & 0xff;
+				}
+				for (int bone = 4; bone < Vertex::BONE_COUNT; ++bone)
+				{
+					vert->m_boneIndex[bone] = 0xff;
+					vert->m_boneWeight[bone] = 0;
+				}
+			}
+		}
+
+		auto triangle = (const pmg_index_t *)(buffer + piece->m_index_offset);
+		for (int32_t j = 0; j < (piece->m_edges / 3); ++j, ++triangle)
+		{
+			currentPiece->m_triangles[j].m_attach[0] = triangle->a[0];
+			currentPiece->m_triangles[j].m_attach[1] = triangle->a[1];
+			currentPiece->m_triangles[j].m_attach[2] = triangle->a[2];
+		}
+	}
+	return true;
+}
+
 
 bool Model::loadDescriptor()
 {

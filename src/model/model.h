@@ -89,6 +89,7 @@ public:
 private:
 	bool loadModel0x13(const uint8_t *const buffer, const size_t size);
 	bool loadModel0x14(const uint8_t *const buffer, const size_t size);
+	bool loadModel0x15(const uint8_t *const buffer, const size_t size);
 };
 
 class Look

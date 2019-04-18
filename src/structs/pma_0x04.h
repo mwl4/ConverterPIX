@@ -31,30 +31,33 @@
 
 namespace prism
 {
-	struct pma_header_t
+	namespace pma_0x04
 	{
-		u32 m_version;				// +0
-		token_t m_name;				// +4
-		u16 m_frames;				// +12
-		u16 m_flags;				// +14
-		u32 m_bones;				// +16
-		float m_anim_length;		// +20
-		i32 m_lengths_offset;		// +24
-		i32 m_bones_offset;			// +28
-		i32 m_frames_offset;		// +32
-		i32 m_delta_trans_offset;	// +36
-		i32 m_delta_rot_offset;		// +40
+		struct pma_header_t
+		{
+			u32 m_version;				// +0
+			u16 m_frames;				// +4
+			u16 m_flags;				// +6
+			u32 m_bones;				// +8
+			u64 m_skeleton_hash;		// +12 cityhash64 of skeleton file name without path
+			float m_anim_length;		// +20
+			i32 m_lengths_offset;		// +24
+			i32 m_bones_offset;			// +28
+			i32 m_frames_offset;		// +32
+			i32 m_delta_trans_offset;	// +36
+			i32 m_delta_rot_offset;		// +40
 
-		static const u32 SUPPORTED_VERSION = 0x03;
-	};	ENSURE_SIZE(pma_header_t, 44);
+			static const u32 SUPPORTED_VERSION = 0x04;
+		};	ENSURE_SIZE(pma_header_t, 44);
 
-	struct pma_frame_t
-	{
-		quat_t m_scale_orient;		// +0
-		quat_t m_rot;				// +16
-		float3 m_trans;				// +32
-		float3 m_scale;				// +44
-	};	ENSURE_SIZE(pma_frame_t, 56);
+		struct pma_frame_t
+		{
+			quat_t m_scale_orient;		// +0
+			quat_t m_rot;				// +16
+			float3 m_trans;				// +32
+			float3 m_scale;				// +44
+		};	ENSURE_SIZE(pma_frame_t, 56);
+	}; // namespace pma_0x04
 } // namespace prism
 
 #pragma pack(pop)

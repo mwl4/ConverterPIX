@@ -134,9 +134,6 @@
     <ClInclude Include="structs\dds.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
-    <ClInclude Include="structs\pma.h">
-      <Filter>Source Files\structs</Filter>
-    </ClInclude>
     <ClInclude Include="structs\pmc.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
@@ -204,6 +201,15 @@
       <Filter>Source Files\structs</Filter>
     </ClInclude>
     <ClInclude Include="structs\ppd_0x16.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\pma_0x03.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\pmg_0x15.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\pma_0x04.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
   </ItemGroup>
