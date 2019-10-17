@@ -127,7 +127,7 @@ namespace prism
 			u32 m_flags;
 		};	ENSURE_SIZE(ppd_intersection_t, 16);
 
-		struct ppd_newdata1_t // sizeof(96)
+		struct ppd_newdata1_t // sizeof(188)
 		{
 			u32 m_data[47];
 		};	ENSURE_SIZE(ppd_newdata1_t, 188);
