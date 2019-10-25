@@ -54,7 +54,7 @@ This is caused by lack of information, so you have to convert each model individ
 
 ----------
 
-**Supported formats: pmg(0x13, 0x14), pmd(0x04), pma(0x03), ppd(0x15, 0x16, 0x17), pmc, tobj, mat, scs(SCS#, CITYHASH), zip(uncompressed & compressed)**
+**Supported formats: pmg(0x13, 0x14, 0x15), pmd(0x04), pma(0x03, 0x04), ppd(0x15, 0x16, 0x17), pmc, tobj, mat, scs(SCS#, CITYHASH), zip(uncompressed & compressed)**
 
 ----------
 
