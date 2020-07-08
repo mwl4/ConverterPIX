@@ -95,7 +95,7 @@ uint64_t HashFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCo
 				break;
 			}
 
-			if (!m_filesystem->ioRead(inbuffer, bytes, (size_t)(m_header->m_offset + m_position)))
+			if (!m_filesystem->ioRead(inbuffer, bytes, m_header->m_offset + m_position))
 			{
 				error("hashfs", m_filepath, "Unable to read from filesystem file");
 				return 0;
