@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-c -g -w -static -I./include
+CXXFLAGS=-std=c++11 -c -g -w -static -I./include
 LDFLAGS=-ldl -lpthread -static
 SOURCES=$(wildcard src/*.cc)
 OBJECTS=$(SOURCES:.cc=.o)
