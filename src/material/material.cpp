@@ -400,11 +400,16 @@ void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &
 			maxVal = std::fmax(attrib.m_value[i], maxVal);
 	}
 
-	if (maxVal <= 1.0 || !convert)
+	if (!convert)
 		return;
 
 	for (size_t i = 0; i < values.size(); i++)
-		attrib.m_value[i] = lin2s(attrib.m_value[i] / maxVal) * maxVal;
+	{
+		if (maxVal <= 1.0)
+			attrib.m_value[i] = lin2s(attrib.m_value[i]);
+		else
+			attrib.m_value[i] = lin2s(attrib.m_value[i] / maxVal) * maxVal;
+	}
 }
 
 /* eof */
