@@ -222,10 +222,8 @@ bool Material::load(String filePath)
 				}
 				attrib.m_valueType = Attribute::FLOAT;
 				attrib.m_valueCount = values.size();
-				for (uint32_t i = 0; i < attrib.m_valueCount; ++i)
-				{
-					attrib.m_value[i] = convertAtribIfNeeded(effect, name, atof(values[i].c_str()));
-				}
+
+				convertAttribIfNeeded(attrib, effect, name, values);
 			}
 			else
 			{
@@ -370,6 +368,43 @@ bool Material::convertTextures(String exportPath) const
 		}
 	}
 	return true;
+}
+
+void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values)
+{
+	/**
+	* @brief The ambient, diffuse, specular, tint, env_factor and water aux are converted from srgb to linear
+	*/
+
+	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor" };
+
+	double maxVal = 0;
+	bool convert = false;
+
+	for (const auto &attribb : attributesLinear)
+	{
+		if (attribName == attribb)
+		{
+			convert = true;
+			break;
+		}
+	}
+
+	if (effect == "eut2.water" && (attribName == "aux[1]" || attribName == "aux[2]"))
+		convert = true;
+
+	for (size_t i = 0; i < values.size(); i++)
+	{
+		attrib.m_value[i] = atof(values[i].c_str());
+		if (convert)
+			maxVal = std::fmax(attrib.m_value[i], maxVal);
+	}
+
+	if (maxVal <= 1.0 || !convert)
+		return;
+
+	for (size_t i = 0; i < values.size(); i++)
+		attrib.m_value[i] = lin2s(attrib.m_value[i] / maxVal) * maxVal;
 }
 
 /* eof */

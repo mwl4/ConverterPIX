@@ -187,7 +187,7 @@ class ResourceLibrary;
  * @param[in] x The srgb value
  * @return @c The linear value
 */
-float s2lin(float x);
+double s2lin(double x);
 
 /**
  * @brief: Converts linear to srgb color space
@@ -195,7 +195,7 @@ float s2lin(float x);
  * @param[in] x The linear value
  * @return @c The srgb value
 */
-float lin2s(float x);
+double lin2s(double x);
 
 inline uint32_t flh(float x)
 {
