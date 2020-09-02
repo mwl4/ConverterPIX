@@ -631,13 +631,21 @@ bool Prefab::saveToPip(String exportPath) const
 		*file << TAB "OutputLanes: ("; for (u32 j = 0; j < 8; ++j) { *file << fmt::sprintf(" %i", node->m_outputLines[j]); } *file << " )" SEOL;
 		*file << SEOL;
 
+		u32 variantCount = node->m_variantCount;
+
+		if (node->m_variantIdx + node->m_variantCount > m_terrainPointVariants.size())
+		{
+			warning_f("prefab", m_filePath, "Incorrect terrain point variants count for node %zu!", i);
+			variantCount = 0;
+		}
+
 		*file << fmt::sprintf(
 			TAB "TerrainPointCount: %i" SEOL
 			TAB "TerrainPointVariantCount : %i" SEOL
 			TAB "StreamCount : %i" SEOL,
 				node->m_terrainPointCount,
-				node->m_variantCount,
-				(node->m_variantCount > 0 ? 1 : 0) + (node->m_terrainPointCount > 0 ? 2 : 0)
+				variantCount,
+				(variantCount > 0 ? 1 : 0) + (node->m_terrainPointCount > 0 ? 2 : 0)
 			);
 
 		if (node->m_terrainPointCount > 0)
@@ -691,7 +699,7 @@ bool Prefab::saveToPip(String exportPath) const
 			*file << TAB "}" SEOL;
 		}
 
-		if (node->m_variantCount > 0)
+		if (variantCount > 0)
 		{
 			*file << fmt::sprintf(
 				TAB "Stream {" SEOL
@@ -701,7 +709,7 @@ bool Prefab::saveToPip(String exportPath) const
 					"_VARIANT_BLOCK"
 				);
 
-			for (u32 j = 0; j < node->m_variantCount; ++j)
+			for (u32 j = 0; j < variantCount; ++j)
 			{
 				TerrainPointVariant data = m_terrainPointVariants[node->m_variantIdx + j];
 				*file << fmt::sprintf(
