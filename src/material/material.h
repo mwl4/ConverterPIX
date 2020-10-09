@@ -78,6 +78,8 @@ public:
 
 	bool convertTextures(String exportPath) const;
 
+	static void convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values);
+
 private:
 	String m_effect;
 	Array<Texture> m_textures;
@@ -87,32 +89,5 @@ private:
 
 	friend Model;
 };
-
-static double convertAtribIfNeeded(String effect, String attrib, double value)
-{
-	/**
-	* @brief The ambient, diffuse, specular, tint, env_factor and water aux are converted from srgb to linear
-	*/
-
-	static const char *const attributesLinear[] = { "ambient", "diffuse", "specular", "tint", "env_factor" };
-
-	for (const auto &attribb : attributesLinear)
-	{
-		if (attrib == attribb)
-		{
-			return lin2s((float)value);
-		}
-	}
-
-	if (effect == "eut2.water")
-	{
-		if (attrib == "aux[1]" || attrib == "aux[2]")
-		{
-			return lin2s((float)value);
-		}
-	}
-
-	return value;
-}
 
 /* eof */

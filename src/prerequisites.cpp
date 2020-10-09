@@ -24,15 +24,15 @@
 
 #include <cityhash/city.h>
 
-float s2lin(float x)
+double s2lin(double x)
 {
-	const float a = 0.055f;
+	const double a = 0.055f;
 	return ((x <= 0.04045f) ? (x * (1.f / 12.92f)) : (pow((x + a) * (1.f / (1.f + a)), 2.4f)));
 }
 
-float lin2s(float x)
+double lin2s(double x)
 {
-	const float a = 0.055f;
+	const double a = 0.055f;
 	return ((x <= 0.0031308f) ? (x * 12.92f) : ((1.f + a) * pow(x, 1.f / 2.4f) - a));
 }
 
