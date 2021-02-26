@@ -23,6 +23,20 @@ This software is used by blender add-on [ConverterPIXWrapper](https://github.com
 
     -b <base_path> - specify base path
 
+    -e <export_path> - specify export path
+
+    -extract_f <file_name> - extract file (relative to base)
+
+    -extract_d <dir_name> - extract directory (relative to base)
+
+    -listdir <dir_name> - list of directories (relative to base)
+
+    -listdir_r <dir_name> - recursive list of directories (relative to base)
+
+    -show_f <file_name> - show file content (relative to base)
+
+    -c - show clean result of "listdir", "listdir_r" and "show_f" without any comments
+
 
 ----------
 ***Usage:***
@@ -51,16 +65,41 @@ Note that animations will not be converted when converting the whole base.
 
 This is caused by lack of information, so you have to convert each model individually to edit animations.
 
-
 ----------
 
 **Supported formats: pmg(0x13, 0x14, 0x15), pmd(0x04), pma(0x03, 0x04), ppd(0x15, 0x16, 0x17), pmc, tobj, mat, scs(SCS#, CITYHASH), zip(uncompressed & compressed)**
 
 ----------
 
+***Usage of extracting, list of directories and show file content:***
+
+    converter_pix -b C:\ets2_base\def.scs -extract_f /def/city/berlin.sui
+
+    # will extract file /def/city/berlin.sui into C:\ets2_base_exp.
+    # you can also specify export path using the -e parameter.
+
+    converter_pix -b C:\ets2_base\def.scs -extract_d /def/city
+
+    # will extract directory /def/city recursive with all files into C:\ets2_base_exp.
+    # you can also specify export path using the -e parameter.
+
+    converter_pix -b C:\ets2_base\def.scs -listdir /def/vehicle
+    # will show listing of all files and subdirectories of /def/vehicle.\n"
+
+    converter_pix -b C:\ets2_base\def.scs -listdir_r /def/vehicle\n"
+    # will show recursive listing of all files and subdirectories of /def/vehicle.\n"
+
+    converter_pix -b C:\ets2_base\def.scs -show_f /def/city/berlin.sui\n"
+    # will show content of /def/city/berlin.sui file.\n"
+
+    converter_pix -c -b C:\ets2_base\def.scs -show_f /def/city/berlin.sui\n"
+    # will show clean content of /def/city/berlin.sui file.\n"
+
+----------
+
 **This is Open-Source software under GNU LGPL License.**
 
---- Copyright © 2017 Michał Wójtowicz a.k.a. mwl4 ---
+--- Copyright © 2021 Michał Wójtowicz a.k.a. mwl4 ---
 
 --- All rights reserved ---
 
