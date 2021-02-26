@@ -35,17 +35,34 @@
 
 #include <chrono>
 
+void print_copyright()
+{
+	printf("\n"
+		" ******************************************\n"
+		" **        Converter PMX to PIX          **\n"
+		" **       Copyright (C) 2021 mwl4        **\n"
+		" ******************************************\n"
+		"\n"
+	);
+}
+
 void print_help()
 {
 	printf(" Parameters:\n"
-		   "  -h                   - prints help text\n"
-		   "  -m <model_path>      - turns into single model mode and specifies model path (relative to base)\n"
-		   "  -t <tobj_path>       - turns into single tobj mode and specifies tobj path (relative to base)\n"
-		   "  -d <dds_path>        - turns into single dds mode and prints debug info (absolute path)\n"
-		   "  -b <base_path>       - specify base path\n"
-		   "  -e <export_path>     - specify export path\n"
+		   "  -h                     - prints help text\n"
+		   "  -m <model_path>        - turns into single model mode and specifies model path (relative to base)\n"
+		   "  -t <tobj_path>         - turns into single tobj mode and specifies tobj path (relative to base)\n"
+		   "  -d <dds_path>          - turns into single dds mode and prints debug info (absolute path)\n"
+		   "  -b <base_path>         - specify base path\n"
+		   "  -e <export_path>       - specify export path\n"
+		   "  -extract_f <file_name> - extract file (relative to base)\n"
+		   "  -extract_d <dir_name>  - extract directory (relative to base)\n"
+		   "  -listdir <dir_name>    - list of directories (relative to base)\n"
+		   "  -listdir_r <dir_name>  - recursive list of directories (relative to base)\n"
+		   "  -show_f <file_name>    - show file content (relative to base)\n"
+		   "  -c                     - show clean result of \"listdir\", \"listdir_r\" and \"show_f\" without any comments\n"
 		   "\n"
-		   " Usage:\n"
+		   " Usage:\n\n"
 		   "  converter_pix -b C:\\ets2_base -m /vehicle/truck/man_tgx/interior/anim s_wheel\n"
 		   "    ^ will export into C:\\ets2_base_exp single model with s_wheel animation.\n"
 		   "    ^ instead of exact animation name you can use * to convert every anim file from model directory.\n"
@@ -65,6 +82,27 @@ void print_help()
 		   " This is caused by lack of information, so you have to convert each model individually to edit animations.\n"
 		   "\n"
 		   " Supported formats: pmg(0x13, 0x14), pmd(0x04), pma(0x03), ppd(0x15), pmc(0x06), tobj, mat\n"
+		   "\n"
+		   " Usage of extracting, list of directories and show file content:\n\n"
+		   "  converter_pix -b C:\\ets2_base\\def.scs -extract_f /def/city/berlin.sui\n"
+		   "    ^ will extract file /def/city/berlin.sui into C:\\ets2_base_exp.\n"
+		   "    ^ you can also specify export path using the -e parameter.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base\\def.scs -extract_d /def/city\n"
+		   "    ^ will extract directory /def/city recursive with all files into C:\\ets2_base_exp.\n"
+		   "    ^ you can also specify export path using the -e parameter.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base\\def.scs -listdir /def/vehicle\n"
+		   "    ^ will show listing of all files and subdirectories of /def/vehicle.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base\\def.scs -listdir_r /def/vehicle\n"
+		   "    ^ will show recursive listing of all files and subdirectories of /def/vehicle.\n"
+		   "\n"
+		   "  converter_pix -b C:\\ets2_base\\def.scs -show_f /def/city/berlin.sui\n"
+		   "    ^ will show content of /def/city/berlin.sui file.\n"
+		   "\n"
+		   "  converter_pix -c -b C:\\ets2_base\\def.scs -show_f /def/city/berlin.sui\n"
+		   "    ^ will show clean content of /def/city/berlin.sui file.\n"
 		   "\n\n"
 		   " This is Open-Source software under the GNU LGPL License.\n\n"
 		   " Enjoy!\n"
@@ -76,16 +114,9 @@ bool convertWholeBase(String basepath, String exportpath);
 
 int main(int argc, char *argv[])
 {
-	printf("\n"
-		   " ******************************************\n"
-		   " **        Converter PMX to PIX          **\n"
-		   " **       Copyright (C) 2017 mwl4        **\n"
-		   " ******************************************\n"
-		   "\n"
-	);
-
 	if (argc < 2)
 	{
+		print_copyright();
 		printf("Not enough parameters.\n");
 		print_help();
 		return 1;
@@ -97,6 +128,7 @@ int main(int argc, char *argv[])
 	String exportpath;
 	String path;
 	bool listdir_r = false;
+	bool clean_result = false;
 
 	enum {
 		DIRECTORY_LIST,
@@ -123,8 +155,11 @@ int main(int argc, char *argv[])
 		}
 		if (arg == "-h")
 		{
+			print_copyright();
 			print_help();
 			return 0;
+		} else if (arg == "-c") {
+			clean_result = true;
 		}
 		else if (arg == "-m")
 		{
@@ -181,6 +216,10 @@ int main(int argc, char *argv[])
 			optionalArgs.push_back(arg);
 		}
 	}
+
+	if (clean_result && mode != LIST_DIR && mode != SHOW_FILE) clean_result = false;
+
+	if (!clean_result) print_copyright();
 
 	for (const auto &base : basepath)
 	{
@@ -293,9 +332,9 @@ int main(int argc, char *argv[])
 			{
 				String data(static_cast<size_t>(file->size()), '\0');
 				file->blockRead(&data[0], 0, file->size());
-				printf("-----------------------\n");
+				if(!clean_result) printf("-----------------------\n");
 				printf("%s\n", data.c_str());
-				printf("-----------------------\n");
+				if (!clean_result) printf("-----------------------\n");
 			}
 			else
 			{
@@ -361,10 +400,15 @@ int main(int argc, char *argv[])
 			}
 			for (const auto &f : *files)
 			{
-				printf("[%s]%s %s\n", f.IsDirectory() ? "D" : "F", f.IsEncrypted() ? " (encrypted)" : "", f.GetPath().c_str());
+				if (!clean_result) {
+					printf("[%s]%s %s\n", f.IsDirectory() ? "D" : "F", f.IsEncrypted() ? " (encrypted)" : "", f.GetPath().c_str());
+				}
+				else {
+					printf("%s\n", f.GetPath().c_str());
+				}
 			}
 
-			printf("-- done --\n");
+			if (!clean_result) printf("-- done --\n");
 		} break;
 	}
 
