@@ -47,7 +47,11 @@ namespace prism
 			i32 m_delta_trans_offset;	// +36
 			i32 m_delta_rot_offset;		// +40
 
-			static const u32 SUPPORTED_VERSION = 0x04;
+			static const u32 SUPPORTED_VERSION	= 0x04;
+
+			static const u32 FLAG_HAS_MOVEMENT	= (1 << 1);
+			static const u32 FLAG_HAS_ROTATION	= (1 << 2);
+
 		};	ENSURE_SIZE(pma_header_t, 44);
 
 		struct pma_frame_t

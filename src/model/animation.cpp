@@ -63,12 +63,21 @@ bool Animation::loadAnim0x03(const uint8_t *const buffer, const size_t size)
 		}
 	}
 
-	if (header->m_flags == 2)
+	if (header->m_flags & pma_header_t::FLAG_HAS_MOVEMENT)
 	{
 		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
 		for (u32 i = 0; i < header->m_frames; ++i)
 		{
 			(*m_movement)[i] = *((float3 *)(buffer + header->m_delta_trans_offset) + i);
+		}
+	}
+
+	if (header->m_flags & pma_header_t::FLAG_HAS_ROTATION)
+	{
+		m_rotation = std::make_unique<Array<Quaternion>>(header->m_frames);
+		for (u32 i = 0; i < header->m_frames; ++i)
+		{
+			(*m_rotation)[i] = *((quat_t *)(buffer + header->m_delta_rot_offset) + i);
 		}
 	}
 
@@ -102,12 +111,21 @@ bool Animation::loadAnim0x04(const uint8_t *const buffer, const size_t size)
 		}
 	}
 
-	if (header->m_flags == 2)
+	if (header->m_flags & pma_header_t::FLAG_HAS_MOVEMENT)
 	{
 		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
 		for (u32 i = 0; i < header->m_frames; ++i)
 		{
 			(*m_movement)[i] = *((float3 *)(buffer + header->m_delta_trans_offset) + i);
+		}
+	}
+
+	if (header->m_flags & pma_header_t::FLAG_HAS_ROTATION)
+	{
+		m_rotation = std::make_unique<Array<Quaternion>>(header->m_frames);
+		for (u32 i = 0; i < header->m_frames; ++i)
+		{
+			(*m_rotation)[i] = *((quat_t *)(buffer + header->m_delta_rot_offset) + i);
 		}
 	}
 
@@ -179,7 +197,7 @@ void Animation::saveToPia(String exportPath) const
 	global["Skeleton"] = relativePath((m_model->filePath() + ".pis"), directory(m_filePath));
 	global["TotalTime"] = double{ m_totalLength };
 	global["BoneChannelCount"] = (int)m_bones.size();
-	global["CustomChannelCount"] = m_movement ? 1 : 0;
+	global["CustomChannelCount"] = (m_movement ? 1 : 0) + (m_rotation ? 1 : 0);
 
 	if (m_movement)
 	{
@@ -206,6 +224,35 @@ void Animation::saveToPia(String exportPath) const
 			for (size_t keyframe = 0; keyframe < m_timeframes.size(); ++keyframe)
 			{
 				stream[keyframe] = (*m_movement)[keyframe];
+			}
+		}
+	}
+
+	if (m_rotation)
+	{
+		Pix::Value &channel = root["CustomChannel"];
+		channel["Name"] = "Prism Rotation";
+		channel["StreamCount"] = 2;
+		channel["KeyframeCount"] = m_timeframes.size();
+
+		{
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT");
+			stream["Tag"] = "_TIME";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t timeframe = 0; timeframe < m_timeframes.size(); ++timeframe)
+			{
+				stream[timeframe] = Float1(m_timeframes[timeframe]);
+			}
+		}
+		{
+			Pix::Value &stream = channel["Stream"];
+			stream["Format"] = Pix::Value::Enumeration("FLOAT4");
+			stream["Tag"] = "_ROTATION";
+			stream.allocateIndexedObjects(m_timeframes.size());
+			for (size_t keyframe = 0; keyframe < m_timeframes.size(); ++keyframe)
+			{
+				stream[keyframe] = (*m_rotation)[keyframe];
 			}
 		}
 	}

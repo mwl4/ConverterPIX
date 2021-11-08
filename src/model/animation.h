@@ -51,6 +51,7 @@ private:
 	Array<Array<Frame>> m_frames; // @[bone][frame]
 	Array<float> m_timeframes;
 	UniquePtr<Array<Float3>> m_movement;
+	UniquePtr<Array<Quaternion>> m_rotation;
 
 	String m_filePath;
 	bool m_loaded = false;
