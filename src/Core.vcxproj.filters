@@ -215,6 +215,9 @@
     <ClInclude Include="structs\ppd_0x17.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
+    <ClInclude Include="structs\pma_0x05.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fs\file.cpp">

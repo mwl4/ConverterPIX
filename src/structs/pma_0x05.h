@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  *  Project:	ConverterPIX @ Core
- *  File:		/structs/pma.h
+ *  File:		/structs/pma_0x05.h
  *
  *		  _____                          _            _____ _______   __
  *		 / ____|                        | |          |  __ \_   _\ \ / /
@@ -11,7 +11,7 @@
  *		 \_____\___/|_| |_|\_/ \___|_|   \__\___|_|  |_|   |_____/_/ \_\
  *
  *
- *  Copyright (C) 2017 Michal Wojtowicz.
+ *  Copyright (C) 2022 Michal Wojtowicz.
  *  All rights reserved.
  *
  *   This software is ditributed WITHOUT ANY WARRANTY; without even
@@ -61,7 +61,7 @@ namespace prism
 			float3 m_trans;				// +32
 			float3 m_scale;				// +44
 		};	ENSURE_SIZE(pma_frame_t, 56);
-	}; // namespace pma_0x04
+	}; // namespace pma_0x05
 } // namespace prism
 
 #pragma pack(pop)
