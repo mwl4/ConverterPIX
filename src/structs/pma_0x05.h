@@ -40,10 +40,10 @@ namespace prism
 			u16 m_flags;				// +6
 			u32 m_bones;				// +8
 			u64 m_skeleton_hash;		// +12 cityhash64 of skeleton file name without path
-      float3 m_bsphere_org; //+20
-      float m_bsphere_rad;  //+32
-      float3 m_bbox_min;    //+36
-      float3 m_bbox_max;    //+48
+			float3 m_bsphere_org;		//+20
+			float m_bsphere_rad;		//+32
+			float3 m_bbox_min;			//+36
+			float3 m_bbox_max;			//+48
 			float m_anim_length;		// +60
 			i32 m_lengths_offset;		// +64
 			i32 m_bones_offset;			// +68
