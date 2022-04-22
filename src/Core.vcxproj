@@ -51,6 +51,7 @@
     <ClInclude Include="structs\hashfs.h" />
     <ClInclude Include="structs\pma_0x03.h" />
     <ClInclude Include="structs\pma_0x04.h" />
+    <ClInclude Include="structs\pma_0x05.h" />
     <ClInclude Include="structs\pmc.h" />
     <ClInclude Include="structs\pmd.h" />
     <ClInclude Include="structs\pmg_0x13.h" />

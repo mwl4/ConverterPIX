@@ -41,9 +41,10 @@ public:
 
 public:
 	bool load(SharedPtr<Model> model, String filePath);
-	bool loadAnim0x03(const uint8_t *const buffer, const size_t size);
-	bool loadAnim0x04(const uint8_t *const buffer, const size_t size);
-	void saveToPia(String exportPath) const;
+  
+  template<typename pma_header_t, typename pma_frame_t>
+  bool loadAnim(const uint8_t *const buffer, const size_t size);
+  void saveToPia(String exportPath) const;
 
 private:
 	float m_totalLength = 0.f;
