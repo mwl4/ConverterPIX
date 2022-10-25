@@ -260,9 +260,9 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 			++currentPiece->m_streamCount;
 			poolSizeDynamic += sizeof(uint32_t);
 		}
-		if (piece->m_vert_rgba2_offset != -1)
+		if (piece->m_vert_factor_offset != -1)
 		{
-			currentPiece->m_color2 = true;
+			currentPiece->m_factor = true;
 			++currentPiece->m_streamCount;
 			poolSizeDynamic += sizeof(uint32_t);
 		}
@@ -308,13 +308,13 @@ bool Model::loadModel0x13(const uint8_t *const buffer, const size_t size)
 				vert->m_color[2] = 2.f * vertRgba->m_b / 255.f;
 				vert->m_color[3] = vertRgba->m_a / 255.f;
 			}
-			if (currentPiece->m_color2)
+			if (currentPiece->m_factor)
 			{
-				const auto vertRgba = (const pmg_vert_color_t *)(buffer + piece->m_vert_rgba2_offset + poolSizeDynamic*j);
-				vert->m_color2[0] = 2.f * vertRgba->m_r / 255.f;
-				vert->m_color2[1] = 2.f * vertRgba->m_g / 255.f;
-				vert->m_color2[2] = 2.f * vertRgba->m_b / 255.f;
-				vert->m_color2[3] = vertRgba->m_a / 255.f;
+				const auto vertFactor = (const pmg_vert_factor_t *)(buffer + piece->m_vert_factor_offset + poolSizeDynamic*j);
+				vert->m_factor[0] = vertFactor->a[0];
+				vert->m_factor[1] = vertFactor->a[1];
+				vert->m_factor[2] = vertFactor->a[2];
+				vert->m_factor[3] = vertFactor->a[3];
 			}
 			if (piece->m_anim_bind_offset != -1)
 			{
@@ -477,9 +477,9 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 			++currentPiece->m_streamCount;
 			poolSize += sizeof(uint32_t);
 		}
-		if (piece->m_vert_color2_offset != -1)
+		if (piece->m_vert_factor_offset != -1)
 		{
-			currentPiece->m_color2 = true;
+			currentPiece->m_factor = true;
 			++currentPiece->m_streamCount;
 			poolSize += sizeof(uint32_t);
 		}
@@ -523,13 +523,13 @@ bool Model::loadModel0x14(const uint8_t *const buffer, const size_t size)
 				vert->m_color[2] = 2.f * vertRgba->b / 255.f;
 				vert->m_color[3] = vertRgba->a / 255.f;
 			}
-			if (currentPiece->m_color2)
+			if (currentPiece->m_factor)
 			{
-				const auto vertRgba = (const pmg_vert_color_t *)(buffer + piece->m_vert_color_offset + poolSize*j);
-				vert->m_color2[0] = 2.f * vertRgba->r / 255.f;
-				vert->m_color2[1] = 2.f * vertRgba->g / 255.f;
-				vert->m_color2[2] = 2.f * vertRgba->b / 255.f;
-				vert->m_color2[3] = vertRgba->a / 255.f;
+				const auto vertFactor = (const pmg_vert_factor_t *)(buffer + piece->m_vert_factor_offset + poolSize*j);
+				vert->m_factor[0] = vertFactor->a[0];
+				vert->m_factor[1] = vertFactor->a[1];
+				vert->m_factor[2] = vertFactor->a[2];
+				vert->m_factor[3] = vertFactor->a[3];
 			}
 			if (piece->m_vert_bone_index_offset != -1 && piece->m_vert_bone_weight_offset != -1)
 			{
@@ -694,9 +694,9 @@ bool Model::loadModel0x15(const uint8_t *const buffer, const size_t size)
 			++currentPiece->m_streamCount;
 			poolSize += sizeof(uint32_t);
 		}
-		if (piece->m_vert_color2_offset != -1)
+		if (piece->m_vert_factor_offset != -1)
 		{
-			currentPiece->m_color2 = true;
+			currentPiece->m_factor = true;
 			++currentPiece->m_streamCount;
 			poolSize += sizeof(uint32_t);
 		}
@@ -740,13 +740,13 @@ bool Model::loadModel0x15(const uint8_t *const buffer, const size_t size)
 				vert->m_color[2] = 2.f * vertRgba->b / 255.f;
 				vert->m_color[3] = vertRgba->a / 255.f;
 			}
-			if (currentPiece->m_color2)
+			if (currentPiece->m_factor)
 			{
-				const auto vertRgba = (const pmg_vert_color_t *)(buffer + piece->m_vert_color_offset + poolSize*j);
-				vert->m_color2[0] = 2.f * vertRgba->r / 255.f;
-				vert->m_color2[1] = 2.f * vertRgba->g / 255.f;
-				vert->m_color2[2] = 2.f * vertRgba->b / 255.f;
-				vert->m_color2[3] = vertRgba->a / 255.f;
+				const auto vertFactor = (const pmg_vert_factor_t *)(buffer + piece->m_vert_factor_offset + poolSize*j);
+				vert->m_factor[0] = vertFactor->a[0];
+				vert->m_factor[1] = vertFactor->a[1];
+				vert->m_factor[2] = vertFactor->a[2];
+				vert->m_factor[3] = vertFactor->a[3];
 			}
 			if (piece->m_vert_bone_index_offset != -1 && piece->m_vert_bone_weight_offset != -1)
 			{
@@ -1291,6 +1291,27 @@ bool Model::saveToPim(String exportPath) const
 
 			*file << TAB "}" SEOL;
 		}
+		if (currentPiece->m_factor)
+		{
+			*file << fmt::sprintf(
+				TAB "Stream {" SEOL
+				TAB TAB "Format: %s" SEOL
+				TAB TAB "Tag: \"%s\"" SEOL,
+					"FLOAT4",
+					"_FACTOR"
+				);
+
+			for (uint32_t j = 0; j < currentPiece->m_vertices.size(); ++j)
+			{
+				*file << fmt::sprintf(
+					TAB TAB "%-5i( %s )" SEOL,
+						j, to_string(currentPiece->m_vertices[j].m_factor).c_str()
+					);
+			}
+
+			*file << TAB "}" SEOL;
+		}
+
 
 		{ // triangles
 			*file << fmt::sprintf(

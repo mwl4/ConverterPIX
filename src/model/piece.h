@@ -34,7 +34,7 @@ struct Vertex
 	Float4 m_tangent;
 	Float2 m_texcoords[TEXCOORD_COUNT];
 	Float4 m_color;
-	Float4 m_color2;
+	Float4 m_factor;
 	uint8_t m_boneIndex[BONE_COUNT];
 	uint8_t m_boneWeight[BONE_COUNT];
 };
@@ -63,7 +63,7 @@ private:
 	bool m_tangent = false;
 	bool m_texcoord = false;
 	bool m_color = false;
-	bool m_color2 = false;
+	bool m_factor = false;
 
 	Array<Vertex> m_vertices;
 	Array<Triangle> m_triangles;

@@ -89,7 +89,7 @@ namespace prism
 			i32 m_vert_normal_offset;					// +68
 			i32 m_vert_texcoord_offset;					// +72
 			i32 m_vert_color_offset;					// +76
-			i32 m_vert_color2_offset;					// +80
+			i32 m_vert_factor_offset;					// +80
 			i32 m_vert_tangent_offset;					// +84
 			i32 m_vert_bone_index_offset;				// +92
 			i32 m_vert_bone_weight_offset;				// +96
@@ -121,6 +121,11 @@ namespace prism
 			u8 b;										// +2
 			u8 a;										// +3
 		};	ENSURE_SIZE(pmg_vert_color_t, 4);
+
+		struct pmg_vert_factor_t
+		{
+			u8 a[ 4 ];									// +0
+		};	ENSURE_SIZE( pmg_vert_factor_t, 4 );
 
 		struct pmg_vert_tangent_t // sizeof(16)
 		{
