@@ -50,6 +50,26 @@ public:
 		friend Material;
 	};
 
+	class AttributeConvert
+	{
+	public:
+		AttributeConvert(String oldName, int valueCount, int startIndex);
+	private:
+		String m_oldName;
+		uint32_t m_valueCount;
+		/* some new attributes map to a single old attribute
+		* example:
+		* detail_fadeout_from -> aux[5][0]
+		* detail_fadeout_range -> aux[5][1]
+		* detail_blend_bias -> aux[5][2]
+		* detail_uv_scale -> aux[5][3]
+		* that's why we need the startIndex to insert the value at specified offset
+		*/
+		uint32_t m_startIndex;
+
+		friend Material;
+	};
+
 public:
 	bool load(String filePath);
 	void destroy();
@@ -78,14 +98,19 @@ public:
 
 	bool convertTextures(String exportPath) const;
 
-	static void convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values);
+	static void convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values, const int startIndex = 0);
+
+	typedef Map<String, Attribute> AttributesMap; //changed to map since 1.47 to easily insert values to a single old attribute from multiple new attributes
+	typedef Map<String, AttributeConvert> AttributeConvertMap; //since 1.47 - map of new attribute names to old attribute names
 
 private:
 	String m_effect;
 	Array<Texture> m_textures;
-	Array<Attribute> m_attributes;
+	AttributesMap m_attributes;
 	String m_filePath;		// @example: /material/example.mat
 	String m_alias;
+
+	static AttributeConvertMap m_convertMap;
 
 	friend Model;
 };

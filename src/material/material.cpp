@@ -66,6 +66,74 @@ String Material::Attribute::getFormat() const
 	return "UNKNOWN";
 }
 
+Material::AttributeConvert::AttributeConvert(String oldName, int valueCount, int startIndex)
+	: m_oldName(oldName)
+	, m_valueCount(valueCount)
+	, m_startIndex(startIndex)
+{
+}
+
+Material::AttributeConvertMap Material::m_convertMap = {
+	{ "additional_ambient", Material::AttributeConvert("add_ambient", 1, 0) },
+	{ "glass_tint_color", Material::AttributeConvert("tint", 3, 0) },
+	{ "glass_tint_opacity", Material::AttributeConvert("tint_opacity", 1, 0) },
+	{ "shadowmap_bias", Material::AttributeConvert("shadow_bias", 1, 0) },
+	{ "paintjob_base_color", Material::AttributeConvert("aux[8]", 3, 0) },
+	{ "specular_secondary", Material::AttributeConvert("aux[3]", 4, 0) },
+	{ "shininess_secondary", Material::AttributeConvert("aux[3]", 4, 3) },
+	{ "reflection_secondary", Material::AttributeConvert("reflection2", 1, 0) },
+	{ "lod_selector", Material::AttributeConvert("aux[1]", 1, 0) },
+	{ "shadow_offset", Material::AttributeConvert("aux[0]", 1, 0) },
+	{ "amod_decal_blending_factors", Material::AttributeConvert("amod_decal_blending_factors", 2, 0) }, //not present in materials until 1.47
+	{ "texgen_0_gen", Material::AttributeConvert("aux[0]", 2, 0) },
+	{ "texgen_0_rot", Material::AttributeConvert("texgen_0_rot", 1, 0) }, //not present in materials until 1.47
+	{ "texgen_1_gen", Material::AttributeConvert("aux[1]", 2, 0) },
+	{ "texgen_1_rot", Material::AttributeConvert("texgen_1_rot", 1, 0) }, //not present in materials until 1.47
+	{ "depth_bias", Material::AttributeConvert("aux[0]", 1, 0) },
+	{ "luminance_output", Material::AttributeConvert("aux[5]", 2, 0) },
+	{ "luminance_night", Material::AttributeConvert("aux[5]", 2, 1) },
+	{ "water_distances", Material::AttributeConvert("aux[0]", 3, 0) },
+	{ "water_near_color", Material::AttributeConvert("aux[1]", 3, 0) },
+	{ "water_horizon_color", Material::AttributeConvert("aux[2]", 3, 0) },
+	{ "water_layer_0_yaw", Material::AttributeConvert("aux[3]", 4, 0) },
+	{ "water_layer_0_speed", Material::AttributeConvert("aux[3]", 4, 1) },
+	{ "water_layer_0_scale", Material::AttributeConvert("aux[3]", 4, 2) },
+	{ "water_layer_1_yaw", Material::AttributeConvert("aux[4]", 4, 0) },
+	{ "water_layer_1_speed", Material::AttributeConvert("aux[4]", 4, 1) },
+	{ "water_layer_1_scale", Material::AttributeConvert("aux[4]", 4, 2) },
+	{ "water_mirror", Material::AttributeConvert("aux[5]", 1, 0) },
+	{ "animsheet_cfg_fps", Material::AttributeConvert("aux[0]", 3, 0) },
+	{ "animsheet_cfg_frames_row", Material::AttributeConvert("aux[0]", 3, 1) },
+	{ "animsheet_cfg_frames_total", Material::AttributeConvert("aux[0]", 3, 2) },
+	{ "animsheet_frame_width", Material::AttributeConvert("aux[1]", 2, 0) },
+	{ "animsheet_frame_height", Material::AttributeConvert("aux[1]", 2, 1) },
+	{ "detail_fadeout_from", Material::AttributeConvert("aux[5]", 4, 0) },
+	{ "detail_fadeout_range", Material::AttributeConvert("aux[5]", 4, 1) },
+	{ "detail_blend_bias", Material::AttributeConvert("aux[5]", 4, 2) },
+	{ "detail_uv_scale", Material::AttributeConvert("aux[5]", 4, 3) },
+	{ "animation_speed", Material::AttributeConvert("aux[0]", 1, 0) },
+	{ "showroom_r_color", Material::AttributeConvert("aux[0]", 1, 0) }, //was single float, since 1.47 is 3d vector
+	{ "showroom_speed", Material::AttributeConvert("aux[4]", 3, 0) },
+	{ "flake_uvscale", Material::AttributeConvert("aux[5]", 4, 0) },
+	{ "flake_shininess", Material::AttributeConvert("aux[5]", 4, 1) },
+	{ "flake_clearcoat_rolloff", Material::AttributeConvert("aux[5]", 4, 2) },
+	{ "flake_vratio", Material::AttributeConvert("aux[5]", 4, 3) },
+	{ "flake_color", Material::AttributeConvert("aux[6]", 4, 0) },
+	{ "flake_density", Material::AttributeConvert("aux[6]", 4, 3) },
+	{ "flip_color", Material::AttributeConvert("aux[7]", 4, 0) },
+	{ "flip_strength", Material::AttributeConvert("aux[7]", 4, 3) },
+	{ "mix00_diffuse_secondary", Material::AttributeConvert("mix00_diffuse_secondary", 3, 0) }, //not present in materials until 1.47
+	{ "mult_uvscale", Material::AttributeConvert("aux[5]", 4, 0) },
+	{ "mult_uvscale_secondary", Material::AttributeConvert("aux[5]", 4, 2) },
+	{ "sheet_frame_size_r", Material::AttributeConvert("aux[0]", 4, 0) },
+	{ "sheet_frame_size_g", Material::AttributeConvert("aux[0]", 4, 2) },
+	{ "sheet_frame_size_b", Material::AttributeConvert("aux[1]", 4, 0) },
+	{ "sheet_frame_size_a", Material::AttributeConvert("aux[1]", 4, 2) },
+	{ "paintjob_r_color", Material::AttributeConvert("aux[5]", 3, 0) },
+	{ "paintjob_g_color", Material::AttributeConvert("aux[6]", 3, 0) },
+	{ "paintjob_b_color", Material::AttributeConvert("aux[7]", 3, 0) }
+};
+
 void Material::destroy()
 {
 	m_filePath = "";
@@ -102,7 +170,7 @@ bool Material::load(String filePath)
 	}
 
 	String check_mat = removeSpaces(buffer.substr(0, begin_material));
-	if (check_mat != "material")
+	if (check_mat != "material" && check_mat != "effect") //changed to "effect" since 1.47
 	{
 		warning("material", m_filePath, "Invalid material format!");
 		return false;
@@ -156,7 +224,7 @@ bool Material::load(String filePath)
 		size_t braceLeft = value.find('{');
 		size_t quoteLeft = value.find('\"');
 
-		if (braceLeft != String::npos)
+		if (braceLeft != String::npos && name != "texture")
 		{
 			size_t braceRight = value.find('}');
 			if (braceRight == String::npos)
@@ -164,7 +232,6 @@ bool Material::load(String filePath)
 				warning("material", m_filePath, "Unable to find closing brace!");
 				continue;
 			}
-
 			String valuesArray = value.substr(braceLeft + 1, braceRight - braceLeft - 1);
 			std::replace_if(valuesArray.begin(), valuesArray.end(), [](char ch)->bool { return ch == ','; }, ' ');
 
@@ -177,6 +244,42 @@ bool Material::load(String filePath)
 				valuesArrayptr += strlen(tempValue) + 1;
 			}
 		}
+		else if (braceLeft != String::npos && name == "texture")
+		{
+			/* handles the new format of texture attribute since 1.47
+			* texture : "texture_name" {
+			*	source : "texture_path"
+			* }
+			*/
+
+			String textureType = betweenQuotes(value);
+			if (textureType == "ERROR")
+			{
+				warning("material", m_filePath, "Unable to parse texture type!");
+				continue;
+			}
+			std::getline(ssbuffer, buffer); //assuming the "source" attribute is in the next line
+			middle = buffer.find(':');
+			if (removeSpaces(buffer.substr(0, middle)) != "source")
+			{
+				warning("material", m_filePath, "Unexpected texture attribute: " + removeSpaces(buffer.substr(0, middle)));
+				continue;
+			}
+			value = removeSpaces(buffer.substr(middle + 1));
+			quoteLeft = value.find('\"');
+			if (quoteLeft != String::npos)
+			{
+				value = betweenQuotes(value);
+			}
+
+			Texture newTexture;
+			newTexture.m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
+			newTexture.m_textureName = textureType;
+			m_textures.push_back(newTexture);
+
+			std::getline(ssbuffer, buffer); //read the closing brace
+			continue;
+		}
 		else if (quoteLeft != String::npos)
 		{
 			value = betweenQuotes(value);
@@ -186,33 +289,47 @@ bool Material::load(String filePath)
 			values.push_back(value);
 		}
 
-		auto textureProperty = [&]()->int {
-			int indexTexture = 0;
-			size_t indexBraceLeft = name.find('[');
-			size_t indexBraceRight = name.find(']');
-			if (indexBraceLeft != String::npos && indexBraceRight != String::npos)
-			{
-				indexTexture = atoi(name.substr(indexBraceLeft + 1, indexBraceRight - 1).c_str());
-			}
-			if (indexTexture >= (int)m_textures.size())
-			{
-				m_textures.resize(indexTexture + 1);
-			}
-			return indexTexture;
-		};
+		if ((nameWithoutIndex == "texture" || nameWithoutIndex == "texture_name") && name != nameWithoutIndex)
+		{
+			//handles the old format of texture attribute
+			auto textureProperty = [&]()->int {
+				int indexTexture = 0;
+				size_t indexBraceLeft = name.find('[');
+				size_t indexBraceRight = name.find(']');
+				if (indexBraceLeft != String::npos && indexBraceRight != String::npos)
+				{
+					indexTexture = atoi(name.substr(indexBraceLeft + 1, indexBraceRight - 1).c_str());
+				}
+				if (indexTexture >= (int)m_textures.size())
+				{
+					m_textures.resize(indexTexture + 1);
+				}
+				return indexTexture;
+			};
 
-		if (nameWithoutIndex == "texture_name")
-		{
-			m_textures[textureProperty()].m_textureName = value.c_str();
+			if (nameWithoutIndex == "texture_name")
+			{
+				m_textures[textureProperty()].m_textureName = value.c_str();
+			}
+			else if (nameWithoutIndex == "texture")
+			{
+				m_textures[textureProperty()].m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
+			}
 		}
-		else if (nameWithoutIndex == "texture")
+		else if (name != "queue_bias" && name != "texture")
 		{
-			m_textures[textureProperty()].m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
-		}
-		else if (name != "queue_bias")
-		{
-			Attribute attrib;
-			attrib.m_name = name;
+			AttributeConvertMap::iterator convertRule = m_convertMap.find(name);
+			bool needConversion = (convertRule != m_convertMap.end());
+			String nameAfterConversion;
+
+			if (needConversion)
+				nameAfterConversion = convertRule->second.m_oldName;
+			else
+				nameAfterConversion = name;
+
+			Attribute& attrib = m_attributes[nameAfterConversion];
+			attrib.m_name = nameAfterConversion;
+
 			if (values.size() > 0)
 			{
 				if (values.size() > 4)
@@ -221,16 +338,18 @@ bool Material::load(String filePath)
 					continue;
 				}
 				attrib.m_valueType = Attribute::FLOAT;
-				attrib.m_valueCount = values.size();
+				if (needConversion)
+					attrib.m_valueCount = convertRule->second.m_valueCount;
+				else
+					attrib.m_valueCount = values.size();
 
-				convertAttribIfNeeded(attrib, effect, name, values);
+				convertAttribIfNeeded(attrib, effect, name, values, needConversion ? convertRule->second.m_startIndex : 0);
 			}
 			else
 			{
 				attrib.m_valueType = Attribute::STRING;
 				attrib.m_stringValue = value.c_str();
 			}
-			m_attributes.push_back(attrib);
 		}
 	}
 
@@ -255,24 +374,23 @@ String Material::toDefinition(const String &prefix) const
 		result += prefix + fmt::sprintf(TAB "Flags: %i\n", 0);
 		result += prefix + fmt::sprintf(TAB "AttributeCount: %i\n", (int32_t)m_attributes.size());
 		result += prefix + fmt::sprintf(TAB "TextureCount: %i\n", (int32_t)m_textures.size());
-		for (size_t i = 0; i < m_attributes.size(); ++i)
+		for (AttributesMap::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it)
 		{
-			const Attribute *const attr = &m_attributes[i];
 			result += prefix + TAB + "Attribute {\n";
 			{
-				result += prefix + fmt::sprintf(TAB TAB "Format: %s" SEOL, attr->getFormat());
-				result += prefix + fmt::sprintf(TAB TAB "Tag: \"%s\"" SEOL, attr->m_name.c_str());
+				result += prefix + fmt::sprintf(TAB TAB "Format: %s" SEOL, it->second.getFormat());
+				result += prefix + fmt::sprintf(TAB TAB "Tag: \"%s\"" SEOL, it->second.m_name.c_str());
 				result += prefix + fmt::sprintf(TAB TAB "Value: ( ");
-				if (attr->m_valueType == Attribute::FLOAT)
+				if (it->second.m_valueType == Attribute::FLOAT)
 				{
-					for (uint32_t j = 0; j < attr->m_valueCount; ++j)
+					for (uint32_t j = 0; j < it->second.m_valueCount; ++j)
 					{
-						result += fmt::sprintf("%f ", attr->m_value[j]);
+						result += fmt::sprintf("%f ", it->second.m_value[j]);
 					}
 				}
 				else
 				{
-					result += "\"" + attr->m_stringValue + "\" ";
+					result += "\"" + it->second.m_stringValue + "\" ";
 				}
 				result += ")" SEOL;
 			}
@@ -314,19 +432,18 @@ Pix::Value Material::toPixDefinition() const
 	root["AttributeCount"] = m_attributes.size();
 	root["TextureCount"] = m_textures.size();
 
-	for (size_t i = 0; i < m_attributes.size(); ++i)
+	for (AttributesMap::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it)
 	{
-		const Attribute *const attr = &m_attributes[i];
 		Pix::Value &attribute = root["Attribute"];
-		attribute["Format"] = Pix::Value::Enumeration(attr->getFormat());
-		attribute["Tag"] = attr->m_name;
-		if (attr->m_valueType == Attribute::FLOAT)
+		attribute["Format"] = Pix::Value::Enumeration(it->second.getFormat());
+		attribute["Tag"] = it->second.m_name;
+		if (it->second.m_valueType == Attribute::FLOAT)
 		{
-			attribute["Value"] = Pix::Value(attr->m_value, attr->m_valueCount);
+			attribute["Value"] = Pix::Value(it->second.m_value, it->second.m_valueCount);
 		}
 		else
 		{
-			attribute["Value"] = Pix::Value::Enumeration("( \"" + attr->m_stringValue + "\" )");
+			attribute["Value"] = Pix::Value::Enumeration("( \"" + it->second.m_stringValue + "\" )");
 		}
 	}
 
@@ -370,7 +487,7 @@ bool Material::convertTextures(String exportPath) const
 	return true;
 }
 
-void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values)
+void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values, const int startIndex)
 {
 	/**
 	* @brief The ambient, diffuse, specular, tint, env_factor and water aux are converted from srgb to linear
@@ -395,9 +512,9 @@ void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &
 
 	for (size_t i = 0; i < values.size(); i++)
 	{
-		attrib.m_value[i] = atof(values[i].c_str());
+		attrib.m_value[startIndex+i] = atof(values[i].c_str());
 		if (convert)
-			maxVal = std::fmax(attrib.m_value[i], maxVal);
+			maxVal = std::fmax(attrib.m_value[startIndex+i], maxVal);
 	}
 
 	if (!convert)
@@ -406,9 +523,9 @@ void Material::convertAttribIfNeeded(Material::Attribute &attrib, const String &
 	for (size_t i = 0; i < values.size(); i++)
 	{
 		if (maxVal <= 1.0)
-			attrib.m_value[i] = lin2s(attrib.m_value[i]);
+			attrib.m_value[startIndex+i] = lin2s(attrib.m_value[startIndex+i]);
 		else
-			attrib.m_value[i] = lin2s(attrib.m_value[i] / maxVal) * maxVal;
+			attrib.m_value[startIndex+i] = lin2s(attrib.m_value[startIndex+i] / maxVal) * maxVal;
 	}
 }
 
