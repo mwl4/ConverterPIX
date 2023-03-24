@@ -218,6 +218,9 @@
     <ClInclude Include="structs\pma_0x05.h">
       <Filter>Source Files\structs</Filter>
     </ClInclude>
+    <ClInclude Include="material\material_converter_147.h">
+      <Filter>Source Files\material</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fs\file.cpp">
@@ -300,6 +303,15 @@
     </ClCompile>
     <ClCompile Include="libs\fmt\src\posix.cc">
       <Filter>Source Files\fmt</Filter>
+    </ClCompile>
+    <ClCompile Include="material\material_pre_147.cpp">
+      <Filter>Source Files\material</Filter>
+    </ClCompile>
+    <ClCompile Include="material\material_post_147.cpp">
+      <Filter>Source Files\material</Filter>
+    </ClCompile>
+    <ClCompile Include="material\material_converter_147.cpp">
+      <Filter>Source Files\material</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
