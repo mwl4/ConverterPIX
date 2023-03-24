@@ -23,6 +23,7 @@
     <ClInclude Include="fs\zipfilesystem.h" />
     <ClInclude Include="fs\zipfs_file.h" />
     <ClInclude Include="material\material.h" />
+    <ClInclude Include="material\material_converter_147.h" />
     <ClInclude Include="math\aabox.h" />
     <ClInclude Include="math\matrix.h" />
     <ClInclude Include="math\quaternion.h" />
@@ -92,6 +93,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="material\material.cpp" />
+    <ClCompile Include="material\material_converter_147.cpp" />
+    <ClCompile Include="material\material_post_147.cpp" />
+    <ClCompile Include="material\material_pre_147.cpp" />
     <ClCompile Include="model\animation.cpp" />
     <ClCompile Include="model\collision.cpp" />
     <ClCompile Include="model\model.cpp" />
@@ -113,7 +117,7 @@
     <ProjectGuid>{7AF227E8-E1B1-4364-A66F-3752D1B23713}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Core</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -126,7 +130,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>

@@ -40,14 +40,11 @@ public:
 		void clear();
 		String getFormat() const;
 
-	private:
 		String m_name;
 		enum { FLOAT, STRING } m_valueType;
 		uint32_t m_valueCount;
 		Double4 m_value;
 		String m_stringValue;
-
-		friend Material;
 	};
 
 	class AttributeConvert
@@ -72,6 +69,8 @@ public:
 
 public:
 	bool load(String filePath);
+	void loadPre147Format(String &content);
+	void loadPost147Format(String &content);
 	void destroy();
 
 	/**
@@ -80,11 +79,12 @@ public:
 	 * @param[in] prefix The prefix for each line of generated definition
 	 * @return @c The definition of material
 	 */
-	String toDefinition(const String &prefix = "") const;
+	//String toDefinition(const String &prefix = "") const;
 
 	String toDeclaration(const String &prefix = "") const;
 
-	Pix::Value toPixDefinition() const;
+	Pix::Value toPixDefinitionPre147() const;
+	Pix::Value toPixDefinitionPost147() const;
 	Pix::Value toPixDeclaration() const;
 
 	/**
@@ -98,10 +98,9 @@ public:
 
 	bool convertTextures(String exportPath) const;
 
-	static void convertAttribIfNeeded(Material::Attribute &attrib, const String &effect, const String &attribName, const Array<String> &values, const int startIndex = 0);
+	static void setValues(Material::Attribute &attrib, const Array<String> &values, const int startIndex = 0);
 
 	typedef Map<String, Attribute> AttributesMap; //changed to map since 1.47 to easily insert values to a single old attribute from multiple new attributes
-	typedef Map<String, AttributeConvert> AttributeConvertMap; //since 1.47 - map of new attribute names to old attribute names
 
 private:
 	String m_effect;
@@ -109,8 +108,6 @@ private:
 	AttributesMap m_attributes;
 	String m_filePath;		// @example: /material/example.mat
 	String m_alias;
-
-	static AttributeConvertMap m_convertMap;
 
 	friend Model;
 };
