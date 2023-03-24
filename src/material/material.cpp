@@ -32,6 +32,8 @@
 #include <fs/file.h>
 #include <fs/uberfilesystem.h>
 
+bool Material::s_outputMatFormat147Enabled = false;
+
 Material::Attribute::Attribute()
 	: m_valueType(FLOAT)
 	, m_valueCount(0)
@@ -164,6 +166,18 @@ String Material::toDeclaration(const String &prefix) const
 	}
 	result += prefix + "}\n";
 	return result;
+}
+
+Pix::Value Material::toPixDefinition() const
+{
+	if (s_outputMatFormat147Enabled)
+	{
+		return toPixDefinitionPost147();
+	}
+	else
+	{
+		return toPixDefinitionPre147();
+	}
 }
 
 Pix::Value Material::toPixDeclaration() const

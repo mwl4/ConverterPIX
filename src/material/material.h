@@ -55,6 +55,7 @@ public:
 
 	String toDeclaration(const String &prefix = "") const;
 
+	Pix::Value toPixDefinition() const;
 	Pix::Value toPixDefinitionPre147() const;
 	Pix::Value toPixDefinitionPost147() const;
 	Pix::Value toPixDeclaration() const;
@@ -73,6 +74,8 @@ public:
 	static void setValues(Material::Attribute &attrib, const Array<String> &values, const int startIndex = 0);
 
 	typedef Map<String, Attribute> AttributesMap; //changed to map since 1.47 to easily insert values to a single old attribute from multiple new attributes
+
+	static bool s_outputMatFormat147Enabled;
 
 private:
 	String m_effect;

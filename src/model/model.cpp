@@ -1503,7 +1503,7 @@ bool Model::saveToPit(String exportPath) const
 		look["Name"] = l.m_name;
 		for (const auto &mat : l.m_materials)
 		{
-			look["Material"] = mat.toPixDefinitionPre147();
+			look["Material"] = mat.toPixDefinition();
 		}
 	}
 
