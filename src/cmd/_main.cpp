@@ -176,6 +176,10 @@ int main(int argc, char *argv[])
 			mode = SHOW_FILE;
 			parameter = &path;
 		}
+		else if (arg == "-matFormat147")
+		{
+			Material::s_outputMatFormat147Enabled = true;
+		}
 		else
 		{
 			optionalArgs.push_back(arg);

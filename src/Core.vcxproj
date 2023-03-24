@@ -23,6 +23,7 @@
     <ClInclude Include="fs\zipfilesystem.h" />
     <ClInclude Include="fs\zipfs_file.h" />
     <ClInclude Include="material\material.h" />
+    <ClInclude Include="material\material_converter_147.h" />
     <ClInclude Include="math\aabox.h" />
     <ClInclude Include="math\matrix.h" />
     <ClInclude Include="math\quaternion.h" />
@@ -92,6 +93,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="material\material.cpp" />
+    <ClCompile Include="material\material_converter_147.cpp" />
+    <ClCompile Include="material\material_post_147.cpp" />
+    <ClCompile Include="material\material_pre_147.cpp" />
     <ClCompile Include="model\animation.cpp" />
     <ClCompile Include="model\collision.cpp" />
     <ClCompile Include="model\model.cpp" />
