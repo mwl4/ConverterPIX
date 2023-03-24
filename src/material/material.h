@@ -73,7 +73,7 @@ public:
 
 	static void setValues(Material::Attribute &attrib, const Array<String> &values, const int startIndex = 0);
 
-	typedef Map<String, Attribute> AttributesMap;
+	using AttributesMap = Map<String, Attribute>;
 
 	static bool s_outputMatFormat147Enabled;
 

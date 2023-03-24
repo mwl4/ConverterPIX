@@ -44,8 +44,8 @@ class MaterialConverter147
 		friend MaterialConverter147;
 	};
 
-	typedef Map<String, AttributeConvert> AttributeConvertMapPre147; //since 1.47 - map of new attribute names to old attribute names
-	typedef Map<String, Array<AttributeConvert> > AttributeConvertMapPost147; //since 1.47 - map of new attribute names to old attribute names
+	using AttributeConvertMapPre147 = Map<String, AttributeConvert>; // map of new attribute names to old attribute names
+	using AttributeConvertMapPost147 = Map<String, Array<AttributeConvert> >; // map of old attribute names to new attribute names
 
 	static AttributeConvertMapPre147 m_convertMapToPre147;
 
