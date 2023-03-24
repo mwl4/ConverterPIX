@@ -47,26 +47,6 @@ public:
 		String m_stringValue;
 	};
 
-	class AttributeConvert
-	{
-	public:
-		AttributeConvert(String oldName, int valueCount, int startIndex);
-	private:
-		String m_oldName;
-		uint32_t m_valueCount;
-		/* some new attributes map to a single old attribute
-		* example:
-		* detail_fadeout_from -> aux[5][0]
-		* detail_fadeout_range -> aux[5][1]
-		* detail_blend_bias -> aux[5][2]
-		* detail_uv_scale -> aux[5][3]
-		* that's why we need the startIndex to insert the value at specified offset
-		*/
-		uint32_t m_startIndex;
-
-		friend Material;
-	};
-
 public:
 	bool load(String filePath);
 	void loadPre147Format(String &content);
