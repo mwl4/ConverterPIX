@@ -73,7 +73,7 @@ public:
 
 	static void setValues(Material::Attribute &attrib, const Array<String> &values, const int startIndex = 0);
 
-	typedef Map<String, Attribute> AttributesMap; //changed to map since 1.47 to easily insert values to a single old attribute from multiple new attributes
+	typedef Map<String, Attribute> AttributesMap;
 
 	static bool s_outputMatFormat147Enabled;
 
