@@ -153,54 +153,7 @@ bool Material::load(String filePath)
 
 	return true;
 }
-/*
-String Material::toDefinition(const String &prefix) const
-{
-	String result;
-	result += prefix + "Material {\n";
-	{
-		result += prefix + fmt::sprintf(TAB "Alias: \"%s\"\n", alias().c_str());
-		result += prefix + fmt::sprintf(TAB "Effect: \"%s\"\n", m_effect.c_str());
-		result += prefix + fmt::sprintf(TAB "Flags: %i\n", 0);
-		result += prefix + fmt::sprintf(TAB "AttributeCount: %i\n", (int32_t)m_attributes.size());
-		result += prefix + fmt::sprintf(TAB "TextureCount: %i\n", (int32_t)m_textures.size());
-		for (AttributesMap::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it)
-		{
-			result += prefix + TAB + "Attribute {\n";
-			{
-				result += prefix + fmt::sprintf(TAB TAB "Format: %s" SEOL, it->second.getFormat());
-				result += prefix + fmt::sprintf(TAB TAB "Tag: \"%s\"" SEOL, it->second.m_name.c_str());
-				result += prefix + fmt::sprintf(TAB TAB "Value: ( ");
-				if (it->second.m_valueType == Attribute::FLOAT)
-				{
-					for (uint32_t j = 0; j < it->second.m_valueCount; ++j)
-					{
-						result += fmt::sprintf("%f ", it->second.m_value[j]);
-					}
-				}
-				else
-				{
-					result += "\"" + it->second.m_stringValue + "\" ";
-				}
-				result += ")" SEOL;
-			}
-			result += prefix + TAB + "}\n";
-		}
-		for (size_t i = 0; i < m_textures.size(); ++i)
-		{
-			const Texture *const tex = &m_textures[i];
-			result += prefix + TAB + "Texture {\n";
-			{
-				result += prefix + fmt::sprintf(TAB TAB "Tag: \"texture[%i]:%s\"\n", (int)i, tex->m_textureName.c_str());
-				result += prefix + fmt::sprintf(TAB TAB "Value: \"%s\"\n", String(tex->m_texture.c_str()).substr(0, tex->m_texture.length() - 5).c_str());
-			}
-			result += prefix + TAB + "}\n";
-		}
-	}
-	result += prefix + "}\n";
-	return result;
-}
-*/
+
 String Material::toDeclaration(const String &prefix) const
 {
 	String result;

@@ -53,14 +53,6 @@ public:
 	void loadPost147Format(String &content);
 	void destroy();
 
-	/**
-	 * @brief Creates PIT definition
-	 *
-	 * @param[in] prefix The prefix for each line of generated definition
-	 * @return @c The definition of material
-	 */
-	//String toDefinition(const String &prefix = "") const;
-
 	String toDeclaration(const String &prefix = "") const;
 
 	Pix::Value toPixDefinitionPre147() const;
