@@ -108,7 +108,7 @@ using Pair			= std::pair<FIRST, SECOND>;
 #define TAB		"     "
 #define SEOL	"\n"
 #define FLT_FT	"&%08x"
-#define DLT_FT	"&%016x"
+#define DBL_FT	"&%016x"
 
 #ifndef MAX_PATH
 #define MAX_PATH 260

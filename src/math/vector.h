@@ -177,7 +177,7 @@ namespace prism
 		String result;
 		for (int i = 0; i < N; ++i)
 		{
-			result += String(i == 0 ? "" : "  ") + fmt::sprintf(FLT_FT, dlh(vec[i]));
+			result += String(i == 0 ? "" : "  ") + fmt::sprintf(DBL_FT, dlh(vec[i]));
 		}
 		return result;
 	}
