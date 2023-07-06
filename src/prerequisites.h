@@ -108,6 +108,7 @@ using Pair			= std::pair<FIRST, SECOND>;
 #define TAB		"     "
 #define SEOL	"\n"
 #define FLT_FT	"&%08x"
+#define DLT_FT	"&%016x"
 
 #ifndef MAX_PATH
 #define MAX_PATH 260
@@ -200,6 +201,11 @@ double lin2s(double x);
 inline uint32_t flh(float x)
 {
 	return *(uint32_t *)(&x);
+}
+
+inline uint64_t dlh(double x)
+{
+	return *(uint64_t*)(&x);
 }
 
 String removeSpaces(String str);

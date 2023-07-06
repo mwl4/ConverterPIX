@@ -63,26 +63,40 @@ void Material::loadPost147Format(String& content)
 					warning("material", m_filePath, "Unable to parse texture type!");
 					continue;
 				}
-				std::getline(ssbuffer, content); //assuming the "source" attribute is in the next line
-				middle = content.find(':');
-				if (removeSpaces(content.substr(0, middle)) != "source")
-				{
-					warning("material", m_filePath, "Unexpected texture attribute: " + removeSpaces(content.substr(0, middle)));
-					continue;
-				}
-				value = removeSpaces(content.substr(middle + 1));
-				quoteLeft = value.find('\"');
-				if (quoteLeft != String::npos)
-				{
-					value = betweenQuotes(value);
-				}
 
 				Texture newTexture;
-				newTexture.m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
 				newTexture.m_textureName = textureType;
-				m_textures.push_back(newTexture);
 
-				std::getline(ssbuffer, content); //read the closing brace
+				do
+				{
+					std::getline(ssbuffer, content);
+					if (content.find('}') != String::npos)
+						break;
+
+					middle = content.find(':');
+					String attr = removeSpaces(content.substr(0, middle));
+					value = removeSpaces(content.substr(middle + 1));
+					quoteLeft = value.find('\"');
+					if (quoteLeft != String::npos)
+					{
+						value = betweenQuotes(value);
+					}
+
+					if (attr == "source")
+					{
+						newTexture.m_texture = value[0] == '/' ? value.c_str() : directory(m_filePath) + "/" + value.c_str();
+					}
+					else
+					{
+						Attribute attrib;
+						attrib.m_name = attr;
+						attrib.m_valueType = Attribute::STRING;
+						attrib.m_stringValue = value;
+						newTexture.m_attributes.push_back(attrib);
+					}
+				} while (value.find('}') == String::npos);
+
+				m_textures.push_back(newTexture);
 				continue;
 			}
 			else

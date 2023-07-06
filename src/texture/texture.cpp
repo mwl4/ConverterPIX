@@ -22,6 +22,7 @@
 
 #include <prerequisites.h>
 
+#include "material/material.h"
 #include "texture.h"
 
 #include <resource_lib.h>
