@@ -33,6 +33,8 @@ private:
 	String m_texture;
 	String m_textureName;
 
+	Array<Material::Attribute> m_attributes;
+
 	SharedPtr<TextureObject> m_texObj;
 
 	friend Material;

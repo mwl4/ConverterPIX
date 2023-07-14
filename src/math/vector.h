@@ -172,6 +172,17 @@ namespace prism
 	}
 
 	template < size_t N >
+	static String to_string(const prism::vec_t<double, N>& vec)
+	{
+		String result;
+		for (int i = 0; i < N; ++i)
+		{
+			result += String(i == 0 ? "" : "  ") + fmt::sprintf(DBL_FT, dlh(vec[i]));
+		}
+		return result;
+	}
+
+	template < size_t N >
 	static String to_string(const int (&vec)[N])
 	{
 		String result;
