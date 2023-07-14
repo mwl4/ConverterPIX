@@ -30,6 +30,8 @@
 
 #include <utils/string_tokenizer.h>
 
+static constexpr uint32_t HASHFS_MAX_ENTRIES = 250000;
+
 HashFileSystem::HashFileSystem(const String &root)
 {
 	m_rootFilename = root;
@@ -243,7 +245,7 @@ bool HashFileSystem::readHashFS()
 		return false;
 	}
 
-	if (m_header.m_entries_count > 200000)
+	if (m_header.m_entries_count > HASHFS_MAX_ENTRIES)
 	{
 		error("hashfs", m_rootFilename, "Entry table size exceeds internal limits!");
 		return false;
