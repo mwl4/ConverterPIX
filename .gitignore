@@ -16,3 +16,6 @@
 
 obj/
 obj_d/
+
+src/.vs/
+bin/
