@@ -449,7 +449,7 @@ bool convertWholeBase(String basepath, String exportpath)
 			continue;
 
 		const Optional< String > extension = extractExtension(f.GetPath());
-		if (extension.has_value() && extension.value() == ".pmg" || extension.value() == ".tobj")
+		if (extension.has_value() && (extension.value() == ".pmg" || extension.value() == ".tobj"))
 		{
 			++size;
 		}
