@@ -68,6 +68,7 @@
     <ClInclude Include="utils\explicit_singleton.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\string_tokenizer.h" />
+    <ClInclude Include="utils\string_utils.h" />
     <ClInclude Include="utils\token.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="version.h" />
@@ -111,6 +112,7 @@
     <ClCompile Include="texture\texture.cpp" />
     <ClCompile Include="texture\texture_object.cpp" />
     <ClCompile Include="utils\string_tokenizer.cpp" />
+    <ClCompile Include="utils\string_utils.cpp" />
     <ClCompile Include="utils\token.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -123,14 +125,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -167,6 +169,7 @@
       <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,6 +188,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PrecompiledHeaderFile>prerequisites.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

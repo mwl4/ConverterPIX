@@ -221,6 +221,9 @@
     <ClInclude Include="material\material_converter_147.h">
       <Filter>Source Files\material</Filter>
     </ClInclude>
+    <ClInclude Include="utils\string_utils.h">
+      <Filter>Source Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fs\file.cpp">
@@ -312,6 +315,9 @@
     </ClCompile>
     <ClCompile Include="material\material_converter_147.cpp">
       <Filter>Source Files\material</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\string_utils.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
