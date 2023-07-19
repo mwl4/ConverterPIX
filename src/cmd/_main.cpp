@@ -448,7 +448,7 @@ bool convertWholeBase(String basepath, String exportpath)
 		if (f.IsDirectory())
 			continue;
 
-		const Optional< String > extension = extractExtension(f.GetPath());
+		const Optional<String> extension = extractExtension(f.GetPath());
 		if (extension.has_value() && (extension.value() == ".pmg" || extension.value() == ".tobj"))
 		{
 			++size;
@@ -462,7 +462,7 @@ bool convertWholeBase(String basepath, String exportpath)
 			continue;
 
 		const String filename = f.GetPath().substr(basepath.length());
-		const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
+		const Optional<String> extension = extractExtension(f.GetPath());
 		if (extension == ".pmg")
 		{
 			const String modelPath = filename.substr(0, filename.length() - 4);
