@@ -57,6 +57,7 @@
 #include <array>
 #include <sstream>
 #include <unordered_map>
+#include <optional>
 
 //
 /// Utils
@@ -102,6 +103,9 @@ using UniquePtr		= std::unique_ptr<T>;
 
 template < typename FIRST, typename SECOND >
 using Pair			= std::pair<FIRST, SECOND>;
+
+template< typename T >
+using Optional		= std::optional< T >;
 
 #include <callbacks.h>
 

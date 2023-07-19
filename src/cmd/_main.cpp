@@ -27,7 +27,7 @@
 #include <model/animation.h>
 #include <texture/texture_object.h>
 #include <texture/texture.h>
-
+#include <utils/string_utils.h>
 #include <structs/dds.h>
 #include <fs/file.h>
 #include <fs/sysfilesystem.h>
@@ -448,8 +448,8 @@ bool convertWholeBase(String basepath, String exportpath)
 		if (f.IsDirectory())
 			continue;
 
-		const String extension = f.GetPath().substr(f.GetPath().rfind('.'));
-		if (extension == ".pmg" || extension == ".tobj")
+		const Optional< String > extension = extractExtension(f.GetPath());
+		if (extension.has_value() && extension.value() == ".pmg" || extension.value() == ".tobj")
 		{
 			++size;
 		}
