@@ -16,7 +16,11 @@
     <ClInclude Include="fs\file.h" />
     <ClInclude Include="fs\filesystem.h" />
     <ClInclude Include="fs\hashfilesystem.h" />
+    <ClInclude Include="fs\hashfs_v2.h" />
     <ClInclude Include="fs\hashfs_file.h" />
+    <ClInclude Include="fs\hashfs_v2_file.h" />
+    <ClInclude Include="fs\memfs.h" />
+    <ClInclude Include="fs\memfs_file.h" />
     <ClInclude Include="fs\sysfilesystem.h" />
     <ClInclude Include="fs\sysfs_file.h" />
     <ClInclude Include="fs\uberfilesystem.h" />
@@ -48,8 +52,10 @@
     <ClInclude Include="prefab\trigger_point.h" />
     <ClInclude Include="prerequisites.h" />
     <ClInclude Include="resource_lib.h" />
+    <ClInclude Include="structs\fs.h" />
     <ClInclude Include="structs\dds.h" />
     <ClInclude Include="structs\hashfs.h" />
+    <ClInclude Include="structs\hashfs_0x02.h" />
     <ClInclude Include="structs\pma_0x03.h" />
     <ClInclude Include="structs\pma_0x04.h" />
     <ClInclude Include="structs\pma_0x05.h" />
@@ -65,7 +71,9 @@
     <ClInclude Include="structs\zip.h" />
     <ClInclude Include="texture\texture.h" />
     <ClInclude Include="texture\texture_object.h" />
+    <ClInclude Include="utils\compression.h" />
     <ClInclude Include="utils\explicit_singleton.h" />
+    <ClInclude Include="utils\format_utils.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\string_tokenizer.h" />
     <ClInclude Include="utils\string_utils.h" />
@@ -79,7 +87,11 @@
     <ClCompile Include="fs\file.cpp" />
     <ClCompile Include="fs\filesystem.cpp" />
     <ClCompile Include="fs\hashfilesystem.cpp" />
+    <ClCompile Include="fs\hashfs_v2.cpp" />
     <ClCompile Include="fs\hashfs_file.cpp" />
+    <ClCompile Include="fs\hashfs_v2_file.cpp" />
+    <ClCompile Include="fs\memfs.cpp" />
+    <ClCompile Include="fs\memfs_file.cpp" />
     <ClCompile Include="fs\sysfilesystem.cpp" />
     <ClCompile Include="fs\sysfs_file.cpp" />
     <ClCompile Include="fs\uberfilesystem.cpp" />
@@ -111,6 +123,8 @@
     <ClCompile Include="structs\dds.cpp" />
     <ClCompile Include="texture\texture.cpp" />
     <ClCompile Include="texture\texture_object.cpp" />
+    <ClCompile Include="utils\compression.cpp" />
+    <ClCompile Include="utils\format_utils.cpp" />
     <ClCompile Include="utils\string_tokenizer.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />
     <ClCompile Include="utils\token.cpp" />
@@ -166,7 +180,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>prerequisites.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt/include;./libs/GDeflate;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -184,7 +198,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./libs;./libs/glm;./libs/fmt/include;./libs/GDeflate;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PrecompiledHeaderFile>prerequisites.h</PrecompiledHeaderFile>

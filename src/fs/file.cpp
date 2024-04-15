@@ -273,9 +273,9 @@ bool copyFile(File *const input, File *const output)
 {
 	input->rewind();
 	uint64_t toCopy = input->size();
-	const uint64_t bufferSize = 1 * 1024 * 1024;
+	const uint64_t bufferSize = 10 * 1024 * 1024;
 	uint8_t *buffer = new uint8_t[bufferSize];
-	for (uint64_t readed = 0; (readed = input->read((char *)buffer, 1, std::min(bufferSize, toCopy))) != 0; toCopy -= readed)
+	for (uint64_t readed = 0; toCopy > 0 && (readed = input->read((char *)buffer, 1, std::min(bufferSize, toCopy))) != 0; toCopy -= readed)
 	{
 		output->write(buffer, 1, readed);
 	}

@@ -218,6 +218,17 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	return result;
 }
 
+bool HashFileSystem::mstat( MetaStat *result, const String &path )
+{
+    // We must return true if such path exists in the filesystem
+	if( exists( path ) || dirExists( path ) )
+	{
+		result->m_filesystem = this;
+		return true;
+	}
+	else return false;
+}
+
 bool HashFileSystem::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
 {
 	return m_root->blockRead(buffer, offset, bytes);

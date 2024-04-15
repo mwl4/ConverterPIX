@@ -267,23 +267,8 @@ int main(int argc, char *argv[])
 			{
 				exportpath = basepath[0] + "_exp";
 			}
-			auto file = getUFS()->open(path, FileSystem::read | FileSystem::binary);
-			if (file)
-			{
-				auto output = getSFS()->open(exportpath + path, FileSystem::write | FileSystem::binary);
-				if (output)
-				{
-					copyFile(file.get(), output.get());
-				}
-				else
-				{
-					printf("Unable to open file to write: %s\n", (exportpath + path).c_str());
-				}
-			}
-			else
-			{
-				printf("Unable to open file to read: %s\n", path.c_str());
-			}
+			SysFileSystem outputFileSystem( exportpath );
+			extractFile( *getUFS(), path, outputFileSystem );
 		} break;
 		case SHOW_FILE:
 		{
@@ -317,6 +302,7 @@ int main(int argc, char *argv[])
 			{
 				exportpath = basepath[0] + "_exp";
 			}
+			SysFileSystem outputFileSystem( exportpath );
 			auto files = getUFS()->readDir(path, true, true);
 			if (!files)
 			{
@@ -325,27 +311,9 @@ int main(int argc, char *argv[])
 			}
 			for (const auto &f : *files)
 			{
-				if (f.IsDirectory())
+				if( !f.IsDirectory() )
 				{
-					continue;
-				}
-
-				auto file = getUFS()->open(f.GetPath(), FileSystem::read | FileSystem::binary);
-				if (file)
-				{
-					auto output = getSFS()->open(exportpath + f.GetPath(), FileSystem::write | FileSystem::binary);
-					if (output)
-					{
-						copyFile(file.get(), output.get());
-					}
-					else
-					{
-						printf("Unable to open file to write: %s\n", (exportpath + f.GetPath()).c_str());
-					}
-				}
-				else
-				{
-					printf("Unable to open file to read: %s\n", f.GetPath().c_str());
+					extractFile( *getUFS(), f.GetPath(), outputFileSystem );
 				}
 			}
 		} break;

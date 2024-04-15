@@ -41,6 +41,7 @@ public:
 	virtual bool exists(const String &filename) override;
 	virtual bool dirExists(const String &dirpath) override;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
+	virtual bool mstat( MetaStat *result, const String &path ) override;
 
 	FileSystem *mount(UniquePtr<FileSystem> fs, Priority priority);
 	void unmount(FileSystem *fs);

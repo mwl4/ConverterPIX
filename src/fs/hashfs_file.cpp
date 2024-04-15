@@ -177,6 +177,10 @@ void HashFsFile::flush()
 {
 }
 
+void HashFsFile::mstat( MetaStat *result )
+{
+}
+
 void HashFsFile::inflateInitialize()
 {
 	m_stream.zalloc = Z_NULL;

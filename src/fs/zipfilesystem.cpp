@@ -191,6 +191,17 @@ auto ZipFileSystem::readDir(const String &path, bool absolutePaths, bool recursi
 	return result;
 }
 
+bool ZipFileSystem::mstat( MetaStat *result, const String &path )
+{
+	// We must return true if such path exists in the filesystem
+	if( exists( path ) || dirExists( path ) )
+	{
+		result->m_filesystem = this;
+		return true;
+	}
+	else return false;
+}
+
 bool ZipFileSystem::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
 {
 	return m_root->blockRead(buffer, offset, bytes);

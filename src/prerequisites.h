@@ -58,6 +58,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <optional>
+#include <functional>
+#include <type_traits>
 
 //
 /// Utils
@@ -135,6 +137,11 @@ using Optional		= std::optional< T >;
 
 #define ENSURE_SIZE(structure, expected) static_assert(sizeof(structure) == expected, "Invalid size")
 #define COMMA ,
+
+#define CP_ENUM_CLASS_BITFIELD( enumClass ) \
+	inline enumClass operator&( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) & static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
+	inline enumClass operator|( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) | static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
+	inline bool operator!( enumClass a ) { return !static_cast<std::underlying_type_t<enumClass>>( a ); }
 
 namespace prism
 {
@@ -284,5 +291,31 @@ struct EnableIf<true, T> { typedef T type; };
 
 template <typename T>
 struct EnableIfArithmetic : EnableIf<IsIntegral<T>::value || IsFloatingPoint<T>::value, int> {};
+
+template< typename T, unsigned long long N >
+char( &ArraySizeHelper( const T( & )[ N ] ) )[ N + 1 ];
+
+#define CP_ARRAY_SIZE( ARRAY ) ( sizeof( ArraySizeHelper( ARRAY ) ) - 1 )
+
+template< typename P, typename A >
+P alignForward( P pointer, A alignment )
+{
+    intptr_t alignment_signed = ( intptr_t )alignment;
+    const uintptr_t addr = ( uintptr_t )( pointer );
+    const uintptr_t aligned_addr = ( addr + ( alignment_signed - 1 ) ) & -alignment_signed;
+    return ( P )( addr + ( aligned_addr - addr ) );
+}
+
+const uint32_t TEXTURE_DATA_PITCH_ALIGNMENT =       256; // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
+const uint32_t TEXTURE_DATA_PLACEMENT_ALIGNMENT =   512; // D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT
+
+void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destination );
+
+template< typename T1, typename T2 >
+T1 *as( T2 *p )
+{
+	T1 *const result = p;
+	return result;
+}
 
 /* eof */

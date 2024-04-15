@@ -122,6 +122,18 @@ auto UberFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	return result;
 }
 
+bool UberFileSystem::mstat( MetaStat *result, const String &path )
+{
+	for( auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it )
+	{
+		if( ( *it ).second->mstat( result, path ) )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 FileSystem *UberFileSystem::mount(UniquePtr<FileSystem> fs, Priority priority)
 {
 	m_filesystems[priority] = std::move(fs);

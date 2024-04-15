@@ -53,9 +53,12 @@ public:
 	};
 
 public:
-	bool load(String filepath);
-	bool loadDDS(String filepath);
-	bool saveToMidFormats(String exportpath);
+	bool load( String filepath );
+	bool saveToMidFormats( String exportpath );
+
+private:
+	bool load( FileSystem *fs, String filepath );
+	bool loadDDS( FileSystem *fs, String filepath );
 
 private:
 	uint32_t m_texturesCount = 0;
@@ -84,5 +87,7 @@ private:
 
 	friend Model;
 };
+
+bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, bool ddsOnlyHeader = false );
 
 /* eof */

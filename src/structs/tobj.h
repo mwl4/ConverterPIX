@@ -25,32 +25,59 @@
 
 namespace prism
 {
+	enum class tobj_type_t : u8
+	{
+		generic =					2,
+		cubic =						5,
+	};
+
+	enum class mag_filter_t : u8
+	{
+		nearest =					0,
+		linear =					1,
+		default =					3
+	};
+
+	enum class min_filter_t : u8
+	{
+		nearest =					0,
+		linear =					1,
+		default =					3
+	};
+
+	enum class mip_filter_t : u8
+	{
+		trilinear =					1,
+		nomips =					2,
+		default =					3
+	};
+
 	struct tobj_header_t
 	{
-		u32 m_version;
-		u32 m_unkn0;
-		u32 m_unkn1;
-		u32 m_unkn2;
-		u32 m_unkn3;
-		u16 m_unkn4;
-		u8 m_bias;
-		u8 m_unkn4_0;
-		u8 m_type;			// 0x2 - generic, 0x5 - cubic
-		u8 m_unkn5;			// 2 or 0
-		u8 m_mag_filter;	// { nearest = 0, linear = 1, default = 3 }
-		u8 m_min_filter;	// { nearest = 0, linear = 1, default = 3 }
-		u8 m_mip_filter;	// { trilinear = 1, nomips = 2, default = 3 }
-		u8 m_unkn6;			// always 0?
-		u8 m_addr_u;		// { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3,
-		u8 m_addr_v;		//   mirror = 4, mirror_clamp = 5, mirror_clamp_to_edge = 6
-		u8 m_addr_w;		// }
-		u8 m_nocompress;
-		u8 m_unkn7;
-		u8 m_noanisotropic;
-		u8 m_unkn9;
-		u8 m_unkn10;
-		u8 m_custom_color_space;	// color_space srgb(0[default]), tsnormal(1), color_space linear(1)
-		u8 m_unkn11;
+		u32 m_version;				// +0
+		u32 m_unkn1;				// +8
+		u32 m_unkn0;				// +4
+		u32 m_unkn2;				// +12
+		u32 m_unkn3;				// +16
+		u16 m_unkn4;				// +20
+		u8 m_bias;					// +22
+		u8 m_unkn4_0;				// +23
+		tobj_type_t m_type;			// +24 0x2 - generic, 0x5 - cubic
+		u8 m_unkn5;					// +25 2 or 0
+		mag_filter_t m_mag_filter;	// +26 { nearest = 0, linear = 1, default = 3 }
+		min_filter_t m_min_filter;	// +27 { nearest = 0, linear = 1, default = 3 }
+		mip_filter_t m_mip_filter;	// +28 { trilinear = 1, nomips = 2, default = 3 }
+		u8 m_unkn6;					// +29 always 0?
+		u8 m_addr_u;				// +30 { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3,
+		u8 m_addr_v;				// +31  mirror = 4, mirror_clamp = 5, mirror_clamp_to_edge = 6
+		u8 m_addr_w;				// +32 }
+		u8 m_nocompress;			// +33
+		u8 m_unkn7;					// +34
+		u8 m_noanisotropic;			// +35
+		u8 m_unkn9;					// +36
+		u8 m_unkn10;				// +37
+		u8 m_custom_color_space;	// +38 color_space srgb(0[default]), tsnormal(1), color_space linear(1)
+		u8 m_unkn11;				// +39
 
 		static const u32 SUPPORTED_MAGIC = 1890650625;
 	};	ENSURE_SIZE(tobj_header_t, 40);

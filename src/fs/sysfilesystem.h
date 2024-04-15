@@ -38,8 +38,12 @@ public:
 	virtual bool exists(const String &filename) override;
 	virtual bool dirExists(const String &dirpath) override;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
+	virtual bool mstat( MetaStat *result, const String &path ) override;
 
 	String getError() const;
+
+private:
+	static bool dirExistsAbsolute( const String &dirpath );
 
 private:
 	String m_root; // does not contain / at end

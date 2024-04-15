@@ -45,6 +45,7 @@ public:
 	virtual bool exists(const String &filename) override;
 	virtual bool dirExists(const String &dirpath) override;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) override;
+	virtual bool mstat( MetaStat *result, const String &path ) override;
 
 	bool ioRead(void *const buffer, uint64_t bytes, uint64_t offset);
 

@@ -22,6 +22,11 @@
 
 #pragma once
 
+#include "utils/token.h"
+#include "structs/fs.h"
+
+class MetaStat;
+
 class FileSystem
 {
 public:
@@ -54,6 +59,9 @@ public:
 	virtual bool exists(const String &filename) = 0;
 	virtual bool dirExists(const String &dirpath) = 0;
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) = 0;
+	virtual bool mstat( MetaStat *result, const String &path ) = 0;
+
+	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues );
 };
 
 class FileSystem::Entry
@@ -83,6 +91,50 @@ private:
 	bool m_directory = false;
 	bool m_encrypted = false;
 	FileSystem *m_filesystem = nullptr;
+};
+
+class MetaStat
+{
+public:
+	class Meta
+	{
+	private:
+		static constexpr u32 c_valueCapacity = 13;
+
+	public:
+		const prism::token_t &name() const { return m_name; }
+		
+		u32 count() const { return m_count; }
+
+		template< typename T >
+		const T &value() const
+		{
+			static_assert( std::is_same<T, prism::fs_meta_value_t[ std::extent<T>::value ]>::value, "Unexpected type given." );
+			assert( std::extent< T >::value == m_count );
+			return reinterpret_cast<const T &>( m_value );
+		}
+
+		template< typename T >
+		void setValue( const T &newValue )
+		{
+			static_assert( std::is_same<T, prism::fs_meta_value_t[ std::extent<T>::value ]>::value, "Unexpected type given." );
+			static_assert( std::extent<T>::value <= c_valueCapacity, "Capacity needs to be increased." );
+			m_count = std::extent<T>::value;
+			memcpy( m_value, newValue, sizeof( prism::fs_meta_value_t ) * m_count );
+		}
+
+	public:
+		prism::token_t m_name;
+		u32 m_count = 0;
+		prism::fs_meta_value_t m_value[ c_valueCapacity ];
+	};
+
+	FileSystem *m_filesystem = nullptr;
+
+	Array< Meta > m_meta;
+
+	Meta *find( prism::token_t metaName );
+	const Meta *find( prism::token_t metaName ) const;
 };
 
 constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const FileSystem::FsOpenMode f)
