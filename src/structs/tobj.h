@@ -47,9 +47,21 @@ namespace prism
 
 	enum class mip_filter_t : u8
 	{
+		nearest =					0,
 		trilinear =					1,
 		nomips =					2,
 		default =					3
+	};
+
+	enum class tobj_addr_t : u8
+	{
+		repeat =					0,
+		clamp =						1,
+		clamp_to_edge =				2,
+		clamp_to_border =			3,
+		mirror =					4,
+		mirror_clamp =				5,
+		mirror_clamp_to_edge =		6,
 	};
 
 	struct tobj_header_t
@@ -64,13 +76,13 @@ namespace prism
 		u8 m_unkn4_0;				// +23
 		tobj_type_t m_type;			// +24 0x2 - generic, 0x5 - cubic
 		u8 m_unkn5;					// +25 2 or 0
-		mag_filter_t m_mag_filter;	// +26 { nearest = 0, linear = 1, default = 3 }
-		min_filter_t m_min_filter;	// +27 { nearest = 0, linear = 1, default = 3 }
-		mip_filter_t m_mip_filter;	// +28 { trilinear = 1, nomips = 2, default = 3 }
+		mag_filter_t m_mag_filter;	// +26
+		min_filter_t m_min_filter;	// +27
+		mip_filter_t m_mip_filter;	// +28
 		u8 m_unkn6;					// +29 always 0?
-		u8 m_addr_u;				// +30 { repeat = 0, clamp = 1, clamp_to_edge = 2, clamp_to_border = 3,
-		u8 m_addr_v;				// +31  mirror = 4, mirror_clamp = 5, mirror_clamp_to_edge = 6
-		u8 m_addr_w;				// +32 }
+		tobj_addr_t m_addr_u;		// +30
+		tobj_addr_t m_addr_v;		// +31
+		tobj_addr_t m_addr_w;		// +32
 		u8 m_nocompress;			// +33
 		u8 m_unkn7;					// +34
 		u8 m_noanisotropic;			// +35

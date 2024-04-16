@@ -352,6 +352,9 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
     const MetaStat::Meta *const imgMeta = inputTobjMetaStat.find( tn( "img" ) );
     assert( imgMeta );
 
+    const MetaStat::Meta *const sampleMeta = inputTobjMetaStat.find( tn( "sample" ) );
+    assert( sampleMeta );
+
     const prism::fs_meta_img_value_t &imgMetaValue = imgMeta->value< prism::fs_meta_img_value_t >();
 
     const uint32_t imgWidth = prism::fs_meta_img_get_width( imgMetaValue );
@@ -359,7 +362,21 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
     const uint32_t mipmapCount = prism::fs_meta_img_get_mipmap_count( imgMetaValue );
     const prism::format_t format = prism::fs_meta_img_get_format( imgMetaValue );
     const bool isCube = prism::fs_meta_img_is_cube( imgMetaValue );
-    const uint32_t imgSomething4 = prism::fs_meta_img_get_something4( imgMetaValue );
+    const uint32_t imgPitchAlignment = prism::fs_meta_img_get_pitch_alignment( imgMetaValue );
+    const uint32_t imgImageAlignment = prism::fs_meta_img_get_image_alignment( imgMetaValue );
+    const uint32_t imgCount = prism::fs_meta_img_get_count( imgMetaValue );
+
+    assert( ( imgImageAlignment % TEXTURE_DATA_PLACEMENT_ALIGNMENT ) == 0 );
+    assert( ( imgPitchAlignment % TEXTURE_DATA_PITCH_ALIGNMENT ) == 0 );
+
+    const prism::fs_meta_sample_value_t &sampleMetaValue = sampleMeta->value< prism::fs_meta_sample_value_t >();
+
+    const prism::mag_filter_t sampleMagFilter = prism::fs_meta_sample_get_mag_filter( sampleMetaValue );
+    const prism::min_filter_t sampleMinFilter = prism::fs_meta_sample_get_min_filter( sampleMetaValue );
+    const prism::mip_filter_t sampleMipFilter = prism::fs_meta_sample_get_mip_filter( sampleMetaValue );
+    const prism::tobj_addr_t sampleAddrU = prism::fs_meta_sample_get_addr_u( sampleMetaValue );
+    const prism::tobj_addr_t sampleAddrV = prism::fs_meta_sample_get_addr_v( sampleMetaValue );
+    const prism::tobj_addr_t sampleAddrW = prism::fs_meta_sample_get_addr_w( sampleMetaValue );
 
     const String outputDDSFilePath = inputTobjFilePath.substr( 0, inputTobjFilePath.length() - ( sizeof( "tobj" ) - 1 ) ) + "dds";
 
@@ -369,9 +386,12 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
         tobjHeader.m_version = prism::tobj_header_t::SUPPORTED_MAGIC;
         tobjHeader.m_unkn4 = 1;
         tobjHeader.m_type = isCube ? prism::tobj_type_t::cubic : prism::tobj_type_t::generic;
-        tobjHeader.m_mag_filter = prism::mag_filter_t::default;
-        tobjHeader.m_min_filter = prism::min_filter_t::default;
-        tobjHeader.m_mip_filter = prism::mip_filter_t::default;
+        tobjHeader.m_mag_filter = sampleMagFilter;
+        tobjHeader.m_min_filter = sampleMinFilter;
+        tobjHeader.m_mip_filter = sampleMipFilter;
+        tobjHeader.m_addr_u = sampleAddrU;
+        tobjHeader.m_addr_v = sampleAddrV;
+        tobjHeader.m_addr_w = sampleAddrW;
         tobjHeader.m_unkn10 = 1;
         outputTobjFile->write( &tobjHeader, sizeof( tobjHeader ), 1 );
 
@@ -434,26 +454,30 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
             Array< uint8_t > inputTobjContent;
             inputTobjContent.resize( size_t( inputTobjFile->size() ) );
             inputTobjFile->blockRead( inputTobjContent.data(), 0, inputTobjContent.size() );
-
+            
             SubresourceData subdata[ 32 ] = { 0 };
-
             size_t twidth, theight, tdepth, skipMap;
             fillInitData( imgWidth, imgHeight, 1, mipmapCount, 1, format, 0, inputTobjContent.size(), inputTobjContent.data(), twidth, theight, tdepth, skipMap, subdata );
 
             uint32_t currentOffset = 0;
 
-            for( uint32_t i = 0; i < mipmapCount; ++i )
+            for( uint32_t currentImg = 0; currentImg < imgCount; ++currentImg )
             {
-                SubresourceData &mipmapSubdata = subdata[ i ];
-
-                currentOffset = alignForward( currentOffset, TEXTURE_DATA_PLACEMENT_ALIGNMENT );
-
-                for( uint32_t doneBytes = 0; doneBytes < mipmapSubdata.m_slicePitch; )
+                for( uint32_t i = 0; i < mipmapCount; ++i )
                 {
-                    currentOffset = alignForward( currentOffset, TEXTURE_DATA_PITCH_ALIGNMENT );
-                    outputDDSFile->write( inputTobjContent.data() + currentOffset, sizeof( uint8_t ), mipmapSubdata.m_rowPitch );
-                    currentOffset += mipmapSubdata.m_rowPitch;
-                    doneBytes += mipmapSubdata.m_rowPitch;
+                    SubresourceData &mipmapSubdata = subdata[ i ];
+                    const u32 slicePitch = mipmapSubdata.m_slicePitch;
+                    const u32 rowPitch = mipmapSubdata.m_rowPitch;
+
+                    currentOffset = alignForward( currentOffset, imgImageAlignment );
+
+                    for( u32 doneBytes = 0; doneBytes < slicePitch; doneBytes += rowPitch )
+                    {
+                        currentOffset = alignForward( currentOffset, imgPitchAlignment );
+                        assert( currentOffset + rowPitch <= inputTobjContent.size() );
+                        outputDDSFile->write( inputTobjContent.data() + currentOffset, sizeof( uint8_t ), rowPitch );
+                        currentOffset += rowPitch;
+                    }
                 }
             }
         }

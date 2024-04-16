@@ -21,6 +21,9 @@
  *****************************************************************************/
 
 #pragma once
+
+#include "tobj.h"
+
 #pragma pack(push, 1)
 
 namespace prism
@@ -214,19 +217,19 @@ inline bool fs_meta_img_is_cube( const fs_meta_img_value_t &value )
     return ( value[ 1 ] >> 12 ) & 3;
 }
 
-inline u32 fs_meta_img_get_something2( const fs_meta_img_value_t &value )
+inline u32 fs_meta_img_get_pitch_alignment( const fs_meta_img_value_t &value )
 {
-    return 1 << ( ( value[ 1 ] >> 20 ) & 0xF );
+    return 1 << ( ( value[ 1 ] >> 20 ) & 0b1111 );
 }
 
-inline u32 fs_meta_img_get_something3( const fs_meta_img_value_t &value )
+inline u32 fs_meta_img_get_image_alignment( const fs_meta_img_value_t &value )
 {
-    return 1 << ( ( value[ 1 ] >> 24 ) & 0xF );
+    return 1 << ( ( value[ 1 ] >> 24 ) & 0b1111 );
 }
 
-inline u32 fs_meta_img_get_something4( const fs_meta_img_value_t &value )
+inline u32 fs_meta_img_get_count( const fs_meta_img_value_t &value )
 {
-    return ( ( value[ 1 ] >> 14 ) & 0x3F ) + 1;
+    return ( ( value[ 1 ] >> 14 ) & 0b111111 ) + 1;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -234,6 +237,49 @@ inline u32 fs_meta_img_get_something4( const fs_meta_img_value_t &value )
 constexpr static u32 fs_meta_sample_value_count = 1;
 
 using fs_meta_sample_value_t = fs_meta_value_t[ fs_meta_sample_value_count ];
+
+inline mag_filter_t fs_meta_sample_get_mag_filter( const fs_meta_sample_value_t &value )
+{
+	return static_cast< mag_filter_t >( value[ 0 ] & 0b1 );				// [0] 00000000 00000000 00000000 0000000X
+}
+
+inline min_filter_t fs_meta_sample_get_min_filter( const fs_meta_sample_value_t &value )
+{
+    return static_cast< min_filter_t >( ( value[ 0 ] >> 1 ) & 0b1 );	// [0] 00000000 00000000 00000000 000000X0
+}
+
+inline mip_filter_t fs_meta_sample_get_mip_filter( const fs_meta_sample_value_t &value )
+{
+    return static_cast< mip_filter_t >( ( value[ 0 ] >> 2 ) & 0b11 );	// [0] 00000000 00000000 00000000 0000XX00
+}
+
+inline tobj_addr_t fs_meta_addr_mode_to_tobj( u32 value )
+{
+    switch( value )
+    {
+    case 0: return tobj_addr_t::repeat;
+    case 1: return tobj_addr_t::mirror;
+    case 2: return tobj_addr_t::clamp_to_edge;
+    case 3: return tobj_addr_t::clamp_to_border;
+    }
+    assert( false );
+    return tobj_addr_t::repeat;
+}
+
+inline tobj_addr_t fs_meta_sample_get_addr_u( const fs_meta_sample_value_t &value )
+{
+    return fs_meta_addr_mode_to_tobj( ( value[ 0 ] >> 4 ) & 0b111 );	// [0] 00000000 00000000 00000000 0XXX0000
+}
+
+inline tobj_addr_t fs_meta_sample_get_addr_v( const fs_meta_sample_value_t &value )
+{
+    return fs_meta_addr_mode_to_tobj( ( value[ 0 ] >> 7 ) & 0b111 );	// [0] 00000000 00000000 000000XX X0000000
+}
+
+inline tobj_addr_t fs_meta_sample_get_addr_w( const fs_meta_sample_value_t &value )
+{
+    return fs_meta_addr_mode_to_tobj( ( value[ 0 ] >> 10 ) & 0b111 );	// [0] 00000000 00000000 000XXX00 00000000
+}
 
 //////////////////////////////////////////////////////////////////////////
 
