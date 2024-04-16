@@ -24,31 +24,31 @@
 
 #include "utils/compression.h"
 
-bool unCompress(void *output, uint64_t outputCapacity, const void *input, uint64_t inputSize)
+bool unCompress_zlib( void *output, uint64_t outputCapacity, const void *input, uint64_t inputSize )
 {
-    z_stream stream = {};
-    stream.zalloc = Z_NULL;
-    stream.zfree = Z_NULL;
-    stream.opaque = Z_NULL;
-    stream.avail_in = 0;
-    stream.next_in = Z_NULL;
-    if (inflateInit(&stream) != Z_OK)
-    {
-        return false;
-    }
+	z_stream stream = {};
+	stream.zalloc = Z_NULL;
+	stream.zfree = Z_NULL;
+	stream.opaque = Z_NULL;
+	stream.avail_in = 0;
+	stream.next_in = Z_NULL;
+	if( inflateInit( &stream ) != Z_OK )
+	{
+		return false;
+	}
 
-    stream.avail_in = static_cast<decltype(stream.avail_in)>(inputSize);
-    stream.next_in = static_cast<decltype(stream.next_in)>(const_cast<void *>(input));
+	stream.avail_in = static_cast< decltype( stream.avail_in ) >( inputSize );
+	stream.next_in = static_cast< decltype( stream.next_in ) >( const_cast< void * >( input ) );
 
-    stream.avail_out = static_cast<decltype(stream.avail_out)>(outputCapacity);
-    stream.next_out = static_cast<decltype(stream.next_out)>(output);
+	stream.avail_out = static_cast< decltype( stream.avail_out ) >( outputCapacity );
+	stream.next_out = static_cast< decltype( stream.next_out ) >( output );
 
-    int ret = inflate(&stream, Z_FINISH);
-    assert(ret != Z_STREAM_ERROR);
+	int ret = inflate( &stream, Z_FINISH );
+	assert( ret != Z_STREAM_ERROR );
 
-    inflateEnd(&stream);
+	inflateEnd( &stream );
 
-    return ret == Z_OK || ret == Z_STREAM_END;
+	return ret == Z_OK || ret == Z_STREAM_END;
 }
 
 /* eof */

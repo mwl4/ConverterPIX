@@ -22,6 +22,6 @@
 
 #pragma once
 
-bool unCompress(void *output, uint64_t outputCapacity, const void *input, uint64_t inputSize);
+bool unCompress_zlib(void *output, uint64_t outputCapacity, const void *input, uint64_t inputSize);
 
 /* eof */

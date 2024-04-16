@@ -350,7 +350,7 @@ bool HashFsV2::readHashFS()
 			error( "hashfs_v2", m_rootFilename, "Failed to read entry table!" );
 			return false;
 		}
-		if( !unCompress( m_entryTable.data(), m_entryTable.size() * sizeof( hashfs_v2_entry_t ), compressedEntryTable.data(), compressedEntryTable.size() ) )
+		if( !unCompress_zlib( m_entryTable.data(), m_entryTable.size() * sizeof( hashfs_v2_entry_t ), compressedEntryTable.data(), compressedEntryTable.size() ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to uncompress entry table!" );
 			return false;
@@ -378,7 +378,7 @@ bool HashFsV2::readHashFS()
 			error( "hashfs_v2", m_rootFilename, "Failed to read metadata table!" );
 			return false;
 		}
-		if( !unCompress( m_metadataTable.data(), m_metadataTable.size() * sizeof( u32 ), compressedMetadataTable.data(), compressedMetadataTable.size() ) )
+		if( !unCompress_zlib( m_metadataTable.data(), m_metadataTable.size() * sizeof( u32 ), compressedMetadataTable.data(), compressedMetadataTable.size() ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to uncompress metadata table!" );
 			return false;
