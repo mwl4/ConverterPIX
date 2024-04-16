@@ -62,7 +62,7 @@ private:
 
 private:
 	uint32_t m_texturesCount = 0;
-	String m_textures[6];
+	SizedArray<String, 6> m_textures;
 
 	Type m_type;
 

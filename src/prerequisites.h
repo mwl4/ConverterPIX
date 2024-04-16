@@ -318,4 +318,14 @@ T1 *as( T2 *p )
 	return result;
 }
 
+template< typename T, typename Container >
+const T &interpretBufferAt( const Container &container, const uint64_t offset, const uint64_t count = 1 )
+{
+	static_assert( std::is_same_v< Container::value_type, u8 >, "value type should be u8!" );
+
+	assert( size_t( offset + count * sizeof( T ) ) <= container.size() );
+
+	return *reinterpret_cast< const T * >( container.data() + offset );
+}
+
 /* eof */

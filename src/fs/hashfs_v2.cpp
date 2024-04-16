@@ -41,7 +41,10 @@ HashFsV2::HashFsV2( const String &root )
 		error( "hashfs_v2", root, "Unable to open root file" );
 		return;
 	}
-	readHashFS();
+	if( !readHashFS() )
+	{
+		assert( false );
+	}
 }
 
 HashFsV2::~HashFsV2() = default;
@@ -78,10 +81,10 @@ UniquePtr<File> HashFsV2::open( const String &filename, FsOpenMode mode )
 		return nullptr;
 	}
 
-    prism::fs_meta_plain_value_t plainMetaValues = { 0 };
-    prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
+	prism::fs_meta_plain_value_t plainMetaValues = { 0 };
+	prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
 
-    return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
+	return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
 }
 
 bool HashFsV2::mkdir( const String &directory )
@@ -147,36 +150,38 @@ auto HashFsV2::readDir( const String &path, bool absolutePaths, bool recursive )
 	String dirpath = path.size() != 1 ? removeSlashAtEnd( path ) : path;
 
 	prism::hashfs_v2_entry_t *const entry = findEntry( dirpath );
-	if( !entry )
+	if( entry == nullptr )
 	{
-		error_f( "hashfs_v2", m_rootFilename, "Failed to open dirlist entry (%s)", path );
+		error_f( "hashfs_v2", m_rootFilename, "Failed to open dirlist entry (%s)!", path );
 		return nullptr;
 	}
 
 	if( !( entry->m_flags & prism::hashfs_v2_entry_flags_t::directory ) )
 	{
-		error_f( "hashfs_v2", m_rootFilename, "Entry is not directory" );
+		error_f( "hashfs_v2", m_rootFilename, "Entry is not directory!" );
 		return nullptr;
 	}
 
 	const u32 *const plainMetadata = findMetadata( entry, prism::hashfs_v2_meta_t::directory );
 	if( plainMetadata == nullptr )
 	{
-        error_f( "hashfs_v2", m_rootFilename, "Entry metadata is not available" );
-        return nullptr;
+		error_f( "hashfs_v2", m_rootFilename, "Entry metadata is not available!" );
+		return nullptr;
 	}
 
-    prism::fs_meta_plain_value_t plainMetaValues = { 0 };
-    prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
+	prism::fs_meta_plain_value_t plainMetaValues = { 0 };
+	prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
 
 	HashFsV2File directoryFile( path, this, entry, plainMetaValues );
 
-	const size_t size = static_cast< size_t >( directoryFile.size() );
+	Array<u8> buffer( size_t( directoryFile.size() ) );
+	if( !directoryFile.blockRead( buffer.data(), 0, buffer.size() ) )
+	{
+		error_f( "hashfs_v2", m_rootFilename, "Entry could not be read!" );
+		return nullptr;
+	}
 
-	UniquePtr<char[]> buffer( new char[ size ] );
-	directoryFile.blockRead( buffer.get(), 0, size );
-
-	const uint32_t countOfItems = *reinterpret_cast< uint32_t * >( buffer.get() );
+	const uint32_t countOfItems = interpretBufferAt<uint32_t>( buffer, 0 );
 
 	auto result = std::make_unique<List<Entry>>();
 
@@ -185,10 +190,10 @@ auto HashFsV2::readDir( const String &path, bool absolutePaths, bool recursive )
 
 	for( uint32_t i = 0; i < countOfItems; ++i )
 	{
-		const uint8_t pathLength = *reinterpret_cast< uint8_t * >( buffer.get() + currentLengthOffset );
+		const uint8_t pathLength = interpretBufferAt<uint8_t>( buffer, currentLengthOffset );
 		currentLengthOffset += sizeof( uint8_t );
 
-		const String path( ( const char * )( buffer.get() + currentStringOffset ), size_t( pathLength ) );
+		const String path( &interpretBufferAt<char>( buffer, currentStringOffset, pathLength ), size_t( pathLength ) );
 		currentStringOffset += pathLength;
 
 		if( path[ 0 ] == '/' ) // directory
@@ -253,11 +258,11 @@ bool HashFsV2::mstat( MetaStat *result, const String &path )
 
 UniquePtr<File> HashFsV2::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues )
 {
-    prism::hashfs_v2_entry_t *const entry = findEntry( filename );
-    if( !entry )
-    {
-        return nullptr;
-    }
+	prism::hashfs_v2_entry_t *const entry = findEntry( filename );
+	if( !entry )
+	{
+		return nullptr;
+	}
 
 	return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
 }
@@ -298,9 +303,9 @@ void HashFsV2::mstatEntry( MetaStat *result, const prism::hashfs_v2_entry_t *ent
 	} );
 }
 
-bool HashFsV2::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
+bool HashFsV2::ioRead( void *const buffer, uint64_t bytes, uint64_t offset )
 {
-	return m_root->blockRead(buffer, offset, bytes);
+	return m_root->blockRead( buffer, offset, bytes );
 }
 
 bool HashFsV2::readHashFS()
@@ -339,8 +344,7 @@ bool HashFsV2::readHashFS()
 	}
 	else
 	{
-		Array<u8> compressedEntryTable;
-		compressedEntryTable.resize( m_header.m_entry_table_compressed_size );
+		Array<u8> compressedEntryTable( size_t( m_header.m_entry_table_compressed_size ) );
 		if( !m_root->blockRead( compressedEntryTable.data(), m_header.m_entry_table_offset, compressedEntryTable.size() ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to read entry table!" );
@@ -367,8 +371,7 @@ bool HashFsV2::readHashFS()
 	}
 	else
 	{
-		Array<u8> compressedMetadataTable;
-		compressedMetadataTable.resize( m_header.m_metadata_table_compressed_size );
+		Array<u8> compressedMetadataTable( static_cast<size_t>( m_header.m_metadata_table_compressed_size ) );
 		if( !m_root->blockRead( compressedMetadataTable.data(), m_header.m_metadata_table_offset, compressedMetadataTable.size() ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to read metadata table!" );
