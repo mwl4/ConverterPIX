@@ -138,8 +138,6 @@ bool HashFsV2::dirExists( const String &dirpath )
 
 auto HashFsV2::readDir( const String &path, bool absolutePaths, bool recursive ) -> UniquePtr<List<Entry>>
 {
-	using namespace prism;
-
 	if( path.empty() )
 	{
 		error( "hashfs_v2", m_rootFilename, "readDir: Path is empty!" );
@@ -148,7 +146,7 @@ auto HashFsV2::readDir( const String &path, bool absolutePaths, bool recursive )
 
 	String dirpath = path.size() != 1 ? removeSlashAtEnd( path ) : path;
 
-	hashfs_v2_entry_t *const entry = findEntry( dirpath );
+	prism::hashfs_v2_entry_t *const entry = findEntry( dirpath );
 	if( !entry )
 	{
 		error_f( "hashfs_v2", m_rootFilename, "Failed to open dirlist entry (%s)", path );
@@ -307,15 +305,13 @@ bool HashFsV2::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
 
 bool HashFsV2::readHashFS()
 {
-	using namespace prism;
-
-	if( !m_root->blockRead( &m_header, 0, sizeof( hashfs_v2_header_t ) ) )
+	if( !m_root->blockRead( &m_header, 0, sizeof( prism::hashfs_v2_header_t ) ) )
 	{
 		error( "hashfs_v2", m_rootFilename, "Failed to read header!" );
 		return false;
 	}
 
-	if( m_header.m_version != hashfs_v2_header_t::SUPPORTED_VERSION )
+	if( m_header.m_version != prism::hashfs_v2_header_t::SUPPORTED_VERSION )
 	{
 		error_f( "hashfs_v2", m_rootFilename, "Unsupported version (%u)", m_header.m_version );
 		return false;
@@ -329,9 +325,9 @@ bool HashFsV2::readHashFS()
 
 	m_entryTable.resize( m_header.m_entry_table_count );
 
-	const u32 entryTableSize = m_header.m_entry_table_count * sizeof( hashfs_v2_entry_t );
+	const u32 entryTableSize = m_header.m_entry_table_count * sizeof( prism::hashfs_v2_entry_t );
 
-	static_assert( std::is_same_v< decltype( m_entryTable )::value_type, hashfs_v2_entry_t>, "" ); // following code assumes that m_entryTable is simple container for entries
+	static_assert( std::is_same_v< decltype( m_entryTable )::value_type, prism::hashfs_v2_entry_t>, "" ); // following code assumes that m_entryTable is simple container for entries
 
 	if( entryTableSize == m_header.m_entry_table_compressed_size ) // entry table is not compressed
 	{
@@ -350,7 +346,7 @@ bool HashFsV2::readHashFS()
 			error( "hashfs_v2", m_rootFilename, "Failed to read entry table!" );
 			return false;
 		}
-		if( !unCompress_zlib( m_entryTable.data(), m_entryTable.size() * sizeof( hashfs_v2_entry_t ), compressedEntryTable.data(), compressedEntryTable.size() ) )
+		if( !unCompress_zlib( m_entryTable.data(), m_entryTable.size() * sizeof( prism::hashfs_v2_entry_t ), compressedEntryTable.data(), compressedEntryTable.size() ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to uncompress entry table!" );
 			return false;
@@ -415,8 +411,6 @@ void HashFsV2::walkMetadata( const prism::hashfs_v2_entry_t *entry, std::functio
 
 prism::hashfs_v2_entry_t *HashFsV2::findEntry( const String &path )
 {
-	using namespace prism;
-
 	if( m_entryTable.empty() )
 	{
 		return nullptr;
@@ -432,7 +426,7 @@ prism::hashfs_v2_entry_t *HashFsV2::findEntry( const String &path )
 		pathToFind = path.c_str() + 1;
 	}
 
-	const u64 hash = city_hash_64( pathToFind.c_str(), pathToFind.length() );
+	const u64 hash = prism::city_hash_64( pathToFind.c_str(), pathToFind.length() );
 
 	for( s64 index, l = 0, r = m_entryTable.size() - 1; l <= r;) // binary search
 	{
