@@ -123,7 +123,7 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 
 			if( !m_filesystem->ioRead( inbuffer, bytes, m_deviceOffset + m_position ) )
 			{
-				error( "hashfs", m_filepath, "Unable to read from filesystem file" );
+				error( "hashfs_v2", m_filepath, "Unable to read from filesystem file" );
 				return 0;
 			}
 
@@ -138,7 +138,7 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 
 			if( ret != Z_OK && ret != Z_STREAM_END )
 			{
-				error_f( "hashfs", m_filepath, "zLib error: %s", zError( ret ) );
+				error_f( "hashfs_v2", m_filepath, "zLib error: %s", zError( ret ) );
 				return 0;
 			}
 
@@ -157,13 +157,13 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 		Array< uint8_t > compressedBuffer( static_cast< size_t >( m_compressedSize ) );
 		if( !m_filesystem->ioRead( compressedBuffer.data(), m_compressedSize, m_deviceOffset ) )
 		{
-			error( "hashfs", m_filepath, "Unable to read from filesystem file" );
+			error( "hashfs_v2", m_filepath, "Unable to read from filesystem file" );
 			return 0;
 		}
 
 		if( !GDeflate::Decompress( reinterpret_cast< uint8_t * >( buffer ), size_t( bytesCount ), compressedBuffer.data(), compressedBuffer.size(), 1 ) )
 		{
-			error( "hashfs", m_filepath, "GDeflate returned error!" );
+			error( "hashfs_v2", m_filepath, "GDeflate returned error!" );
 			return 0;
 		}
 
