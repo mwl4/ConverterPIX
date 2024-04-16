@@ -90,28 +90,28 @@ namespace prism
 
 	CP_ENUM_CLASS_BITFIELD( hashfs_v2_meta_t );
 
-	inline void hashfs_v2_meta_img_get_value( const u32 *metadata, fs_meta_img_value_t &out_value )
+	inline void hashfs_v2_meta_img_get_value( const u32 *metadata, fs_meta_img_t &out_value )
 	{
-		static_assert( CP_ARRAY_SIZE( out_value ) == 2, "Fix code below." );
-		out_value[ 0 ] = metadata[ 0 ];
-		out_value[ 1 ] = metadata[ 1 ];
+		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 2, "Fix code below." );
+		out_value.m_value[ 0 ] = metadata[ 0 ];
+		out_value.m_value[ 1 ] = metadata[ 1 ];
 	}
 
-	inline void hashfs_v2_meta_sample_get_value( const u32 *metadata, fs_meta_sample_value_t &out_value )
+	inline void hashfs_v2_meta_sample_get_value( const u32 *metadata, fs_meta_sample_t &out_value )
 	{
-		static_assert( CP_ARRAY_SIZE( out_value ) == 1, "Fix code below." );
-		out_value[ 0 ] = metadata[ 0 ];
+		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 1, "Fix code below." );
+		out_value.m_value[ 0 ] = metadata[ 0 ];
 	}
 
-	inline void hashfs_v2_meta_plain_get_value( const u32 *metadata, fs_meta_plain_value_t &out_value )
+	inline void hashfs_v2_meta_plain_get_value( const u32 *metadata, fs_meta_plain_t &out_value )
 	{
-		static_assert( CP_ARRAY_SIZE( out_value ) == 6, "Fix code below." );
-		out_value[ 0 ] = ( ( metadata[ 0 ] >> 4 ) | ( metadata[ 1 ] & 0xF0FFFFFF ) ) >> 24;
-		out_value[ 1 ] = metadata[ 0 ] & 0xFFFFFFF;
-		out_value[ 2 ] = metadata[ 2 ] & 0xFFFFFFF;
-		out_value[ 3 ] = metadata[ 1 ] & 0xFFFFFFF;
-		out_value[ 4 ] = 16 * metadata[ 3 ];
-		out_value[ 5 ] = static_cast< u32 >( ( 16ull * static_cast< u64 >( metadata[ 3 ] ) ) >> 32 );
+		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 6, "Fix code below." );
+		out_value.m_value[ 0 ] = ( ( metadata[ 0 ] >> 4 ) | ( metadata[ 1 ] & 0xF0FFFFFF ) ) >> 24;
+		out_value.m_value[ 1 ] = metadata[ 0 ] & 0xFFFFFFF;
+		out_value.m_value[ 2 ] = metadata[ 2 ] & 0xFFFFFFF;
+		out_value.m_value[ 3 ] = metadata[ 1 ] & 0xFFFFFFF;
+		out_value.m_value[ 4 ] = 16 * metadata[ 3 ];
+		out_value.m_value[ 5 ] = static_cast< u32 >( ( 16ull * static_cast< u64 >( metadata[ 3 ] ) ) >> 32 );
 	}
 } // namespace prism
 

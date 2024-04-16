@@ -26,12 +26,12 @@
 
 #include "hashfs_v2.h"
 
-HashFsV2File::HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_value_t &plainMetaValues )
+HashFsV2File::HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_t &plainMetaValues )
 	: m_filepath( filepath )
 	, m_filesystem( filesystem )
 	, m_entry( entry )
 {
-	m_compression = prism::fs_meta_plain_get_compression( plainMetaValues );
+	m_compression = plainMetaValues.get_compression();
 
 	if( m_compression == prism::fs_compression_t::nocompress )
 	{
@@ -50,9 +50,9 @@ HashFsV2File::HashFsV2File( const String &filepath, HashFsV2 *filesystem, const 
 		assert( false );
 	}
 
-	m_compressedSize = prism::fs_meta_plain_get_compressed_size( plainMetaValues );
-	m_size = prism::fs_meta_plain_get_size( plainMetaValues );
-	m_deviceOffset = prism::fs_meta_plain_get_offset( plainMetaValues );
+	m_compressedSize = plainMetaValues.get_compressed_size();
+	m_size = plainMetaValues.get_size();
+	m_deviceOffset = plainMetaValues.get_offset();
 }
 
 HashFsV2File::~HashFsV2File()

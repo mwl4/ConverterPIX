@@ -40,7 +40,7 @@ FileSystem::~FileSystem()
 {
 }
 
-UniquePtr<File> FileSystem::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues )
+UniquePtr<File> FileSystem::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues )
 {
 	return nullptr;
 }

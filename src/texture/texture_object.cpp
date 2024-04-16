@@ -346,7 +346,7 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
 		return false;
 	}
 
-	const prism::fs_meta_plain_value_t &plainMetaValue = plainMeta->value<prism::fs_meta_plain_value_t>();
+	const prism::fs_meta_plain_t &plainMetaValue = plainMeta->value<prism::fs_meta_plain_t>();
 
 	const MetaStat::Meta *const imgMeta = inputTobjMetaStat.find( tn( "img" ) );
 	assert( imgMeta );
@@ -354,28 +354,28 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
 	const MetaStat::Meta *const sampleMeta = inputTobjMetaStat.find( tn( "sample" ) );
 	assert( sampleMeta );
 
-	const prism::fs_meta_img_value_t &imgMetaValue = imgMeta->value<prism::fs_meta_img_value_t>();
+	const prism::fs_meta_img_t &imgMetaValue = imgMeta->value<prism::fs_meta_img_t>();
 
-	const uint32_t imgWidth = prism::fs_meta_img_get_width( imgMetaValue );
-	const uint32_t imgHeight = prism::fs_meta_img_get_height( imgMetaValue );
-	const uint32_t mipmapCount = prism::fs_meta_img_get_mipmap_count( imgMetaValue );
-	const prism::format_t format = prism::fs_meta_img_get_format( imgMetaValue );
-	const bool isCube = prism::fs_meta_img_is_cube( imgMetaValue );
-	const uint32_t imgPitchAlignment = prism::fs_meta_img_get_pitch_alignment( imgMetaValue );
-	const uint32_t imgImageAlignment = prism::fs_meta_img_get_image_alignment( imgMetaValue );
-	const uint32_t imgCount = prism::fs_meta_img_get_count( imgMetaValue );
+	const uint32_t imgWidth = imgMetaValue.get_width();
+	const uint32_t imgHeight = imgMetaValue.get_height();
+	const uint32_t mipmapCount = imgMetaValue.get_mipmap_count();
+	const prism::format_t format = imgMetaValue.get_format();
+	const bool isCube = imgMetaValue.is_cube();
+	const uint32_t imgPitchAlignment = imgMetaValue.get_pitch_alignment();
+	const uint32_t imgImageAlignment = imgMetaValue.get_image_alignment();
+	const uint32_t imgCount = imgMetaValue.get_count();
 
 	assert( ( imgImageAlignment % TEXTURE_DATA_PLACEMENT_ALIGNMENT ) == 0 );
 	assert( ( imgPitchAlignment % TEXTURE_DATA_PITCH_ALIGNMENT ) == 0 );
 
-	const prism::fs_meta_sample_value_t &sampleMetaValue = sampleMeta->value<prism::fs_meta_sample_value_t>();
+	const prism::fs_meta_sample_t &sampleMetaValue = sampleMeta->value<prism::fs_meta_sample_t>();
 
-	const prism::mag_filter_t sampleMagFilter = prism::fs_meta_sample_get_mag_filter( sampleMetaValue );
-	const prism::min_filter_t sampleMinFilter = prism::fs_meta_sample_get_min_filter( sampleMetaValue );
-	const prism::mip_filter_t sampleMipFilter = prism::fs_meta_sample_get_mip_filter( sampleMetaValue );
-	const prism::tobj_addr_t sampleAddrU = prism::fs_meta_sample_get_addr_u( sampleMetaValue );
-	const prism::tobj_addr_t sampleAddrV = prism::fs_meta_sample_get_addr_v( sampleMetaValue );
-	const prism::tobj_addr_t sampleAddrW = prism::fs_meta_sample_get_addr_w( sampleMetaValue );
+	const prism::mag_filter_t sampleMagFilter = sampleMetaValue.get_mag_filter();
+	const prism::min_filter_t sampleMinFilter = sampleMetaValue.get_min_filter();
+	const prism::mip_filter_t sampleMipFilter = sampleMetaValue.get_mip_filter();
+	const prism::tobj_addr_t sampleAddrU = sampleMetaValue.get_addr_u();
+	const prism::tobj_addr_t sampleAddrV = sampleMetaValue.get_addr_v();
+	const prism::tobj_addr_t sampleAddrW = sampleMetaValue.get_addr_w();
 
 	const String outputDDSFilePath = inputTobjFilePath.substr( 0, inputTobjFilePath.length() - ( sizeof( "tobj" ) - 1 ) ) + "dds";
 

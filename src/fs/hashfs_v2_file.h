@@ -33,7 +33,7 @@ class HashFsV2;
 class HashFsV2File : public File
 {
 public:
-    HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_value_t &plainMetaValues );
+    HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_t &plainMetaValues );
     HashFsV2File( const HashFsV2File & ) = delete;
     HashFsV2File( HashFsV2File && ) = delete;
     virtual ~HashFsV2File();

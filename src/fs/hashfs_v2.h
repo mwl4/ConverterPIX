@@ -47,7 +47,7 @@ public:
 	virtual UniquePtr<List<Entry>> readDir( const String &path, bool absolutePaths, bool recursive ) override;
 	virtual bool mstat( MetaStat *result, const String &path ) override;
 
-	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues ) override;
+	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues ) override;
 
 	bool ioRead( void *const buffer, uint64_t bytes, uint64_t offset );
 

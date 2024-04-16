@@ -61,7 +61,7 @@ public:
 	virtual UniquePtr<List<Entry>> readDir(const String &path, bool absolutePaths, bool recursive) = 0;
 	virtual bool mstat( MetaStat *result, const String &path ) = 0;
 
-	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues );
+	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues );
 };
 
 class FileSystem::Entry
@@ -109,24 +109,24 @@ public:
 		template< typename T >
 		const T &value() const
 		{
-			static_assert( std::is_same<T, prism::fs_meta_value_t[ std::extent<T>::value ]>::value, "Unexpected type given." );
-			assert( std::extent< T >::value == m_count );
+			static_assert( std::is_same<decltype( T::m_value ), u32[ std::extent<decltype( T::m_value )>::value ]>::value, "Unexpected type given." );
+			assert( std::extent<decltype( T::m_value )>::value == m_count );
 			return reinterpret_cast<const T &>( m_value );
 		}
 
 		template< typename T >
 		void setValue( const T &newValue )
 		{
-			static_assert( std::is_same<T, prism::fs_meta_value_t[ std::extent<T>::value ]>::value, "Unexpected type given." );
-			static_assert( std::extent<T>::value <= c_valueCapacity, "Capacity needs to be increased." );
-			m_count = std::extent<T>::value;
-			memcpy( m_value, newValue, sizeof( prism::fs_meta_value_t ) * m_count );
+			static_assert( std::is_same<decltype( T::m_value ), u32[ std::extent<decltype( T::m_value )>::value ]>::value, "Unexpected type given." );
+			static_assert( std::extent<decltype( T::m_value )>::value <= c_valueCapacity, "Capacity needs to be increased." );
+			m_count = std::extent<decltype( T::m_value )>::value;
+			memcpy( m_value, newValue.m_value, sizeof( u32 ) * m_count );
 		}
 
 	public:
 		prism::token_t m_name;
 		u32 m_count = 0;
-		prism::fs_meta_value_t m_value[ c_valueCapacity ];
+		u32 m_value[ c_valueCapacity ];
 	};
 
 	FileSystem *m_filesystem = nullptr;

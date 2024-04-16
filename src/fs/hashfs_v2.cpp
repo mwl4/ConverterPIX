@@ -81,7 +81,7 @@ UniquePtr<File> HashFsV2::open( const String &filename, FsOpenMode mode )
 		return nullptr;
 	}
 
-	prism::fs_meta_plain_value_t plainMetaValues = { 0 };
+	prism::fs_meta_plain_t plainMetaValues = { 0 };
 	prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
 
 	return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
@@ -169,7 +169,7 @@ auto HashFsV2::readDir( const String &path, bool absolutePaths, bool recursive )
 		return nullptr;
 	}
 
-	prism::fs_meta_plain_value_t plainMetaValues = { 0 };
+	prism::fs_meta_plain_t plainMetaValues = { 0 };
 	prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
 
 	HashFsV2File directoryFile( path, this, entry, plainMetaValues );
@@ -256,7 +256,7 @@ bool HashFsV2::mstat( MetaStat *result, const String &path )
 	return true;
 }
 
-UniquePtr<File> HashFsV2::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_value_t &plainMetaValues )
+UniquePtr<File> HashFsV2::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues )
 {
 	prism::hashfs_v2_entry_t *const entry = findEntry( filename );
 	if( !entry )
@@ -274,13 +274,13 @@ void HashFsV2::mstatEntry( MetaStat *result, const prism::hashfs_v2_entry_t *ent
 		MetaStat::Meta metaToAdd;
 		if( meta == prism::hashfs_v2_meta_t::img )
 		{
-			prism::fs_meta_img_value_t value;
+			prism::fs_meta_img_t value;
 			prism::hashfs_v2_meta_img_get_value( metadata, value );
 			metaToAdd.setValue( value );
 		}
 		else if( meta == prism::hashfs_v2_meta_t::sample )
 		{
-			prism::fs_meta_sample_value_t value;
+			prism::fs_meta_sample_t value;
 			prism::hashfs_v2_meta_sample_get_value( metadata, value );
 			metaToAdd.setValue( value );
 		}
@@ -290,7 +290,7 @@ void HashFsV2::mstatEntry( MetaStat *result, const prism::hashfs_v2_entry_t *ent
 		}
 		else if( !!( meta & prism::hashfs_v2_meta_t::plain ) )
 		{
-			prism::fs_meta_plain_value_t value;
+			prism::fs_meta_plain_t value;
 			prism::hashfs_v2_meta_plain_get_value( metadata, value );
 			metaToAdd.setValue( value );
 		}
