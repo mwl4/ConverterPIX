@@ -135,6 +135,14 @@ public:
 
 	Meta *find( prism::token_t metaName );
 	const Meta *find( prism::token_t metaName ) const;
+
+	template< typename T >
+	const T &get() const
+	{
+		const Meta *const meta = find( prism::token_t( T::c_name ) );
+		assert( meta != nullptr );
+		return meta->value< T >();
+	}
 };
 
 constexpr FileSystem::FsOpenMode operator|(const FileSystem::FsOpenMode t, const FileSystem::FsOpenMode f)

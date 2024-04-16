@@ -23,6 +23,7 @@
 #pragma once
 
 #include "tobj.h"
+#include "../utils/token.h"
 
 #pragma pack(push, 1)
 
@@ -41,6 +42,8 @@ enum class fs_compression_t : u8
 class fs_meta_img_t
 {
 public:
+	static constexpr c_token_t c_name = tn( "img" );
+
 	u32 m_value[ 2 ];
 
 	u32 get_width() const				// [0] 00000000 00000000 XXXXXXXX XXXXXXXX
@@ -60,7 +63,7 @@ public:
 
 	format_t get_format() const			// [1] 00000000 00000000 0000XXXX XXXX0000
 	{
-		return static_cast< format_t >( m_value[ 1 ] >> 4 );
+		return static_cast<format_t>( m_value[ 1 ] >> 4 );
 	}
 
 	bool is_cube() const				// [1] 00000000 00000000 00XX0000 00000000
@@ -100,21 +103,23 @@ inline tobj_addr_t fs_meta_addr_mode_to_tobj( u32 value )
 class fs_meta_sample_t
 {
 public:
+	static constexpr c_token_t c_name = tn( "sample" );
+
 	u32 m_value[ 1 ];
 
 	mag_filter_t get_mag_filter() const	// [0] 00000000 00000000 00000000 0000000X
 	{
-		return static_cast< mag_filter_t >( m_value[ 0 ] & 0b1 );
+		return static_cast<mag_filter_t>( m_value[ 0 ] & 0b1 );
 	}
 
 	min_filter_t get_min_filter() const	// [0] 00000000 00000000 00000000 000000X0
 	{
-		return static_cast< min_filter_t >( ( m_value[ 0 ] >> 1 ) & 0b1 );
+		return static_cast<min_filter_t>( ( m_value[ 0 ] >> 1 ) & 0b1 );
 	}
 
 	mip_filter_t get_mip_filter() const	// [0] 00000000 00000000 00000000 0000XX00
 	{
-		return static_cast< mip_filter_t >( ( m_value[ 0 ] >> 2 ) & 0b11 );
+		return static_cast<mip_filter_t>( ( m_value[ 0 ] >> 2 ) & 0b11 );
 	}
 
 	tobj_addr_t get_addr_u() const		// [0] 00000000 00000000 00000000 0XXX0000
@@ -136,11 +141,13 @@ public:
 class fs_meta_plain_t
 {
 public:
+	static constexpr c_token_t c_name = tn( "plain" );
+
 	u32 m_value[ 6 ];
 
 	fs_compression_t get_compression() const	// [0] 00000000 00000000 00000000 0000XXXX
 	{
-		return static_cast< fs_compression_t >( m_value[ 0 ] & 0b1111 );
+		return static_cast<fs_compression_t>( m_value[ 0 ] & 0b1111 );
 	}
 
 	u64 get_compressed_size() const				// [1] XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

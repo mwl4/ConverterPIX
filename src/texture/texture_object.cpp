@@ -348,13 +348,7 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
 
 	const prism::fs_meta_plain_t &plainMetaValue = plainMeta->value<prism::fs_meta_plain_t>();
 
-	const MetaStat::Meta *const imgMeta = inputTobjMetaStat.find( tn( "img" ) );
-	assert( imgMeta );
-
-	const MetaStat::Meta *const sampleMeta = inputTobjMetaStat.find( tn( "sample" ) );
-	assert( sampleMeta );
-
-	const prism::fs_meta_img_t &imgMetaValue = imgMeta->value<prism::fs_meta_img_t>();
+	const prism::fs_meta_img_t &imgMetaValue = inputTobjMetaStat.get<prism::fs_meta_img_t>();
 
 	const uint32_t imgWidth = imgMetaValue.get_width();
 	const uint32_t imgHeight = imgMetaValue.get_height();
@@ -368,7 +362,7 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
 	assert( ( imgImageAlignment % TEXTURE_DATA_PLACEMENT_ALIGNMENT ) == 0 );
 	assert( ( imgPitchAlignment % TEXTURE_DATA_PITCH_ALIGNMENT ) == 0 );
 
-	const prism::fs_meta_sample_t &sampleMetaValue = sampleMeta->value<prism::fs_meta_sample_t>();
+	const prism::fs_meta_sample_t &sampleMetaValue = inputTobjMetaStat.get< prism::fs_meta_sample_t >();
 
 	const prism::mag_filter_t sampleMagFilter = sampleMetaValue.get_mag_filter();
 	const prism::min_filter_t sampleMinFilter = sampleMetaValue.get_min_filter();
