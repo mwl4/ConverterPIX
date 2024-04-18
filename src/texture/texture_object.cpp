@@ -65,11 +65,6 @@ bool TextureObject::load( String filepath )
 				printf( "Unable to extract tobj: %s\n", filepath.c_str() );
 				return false;
 			}
-			if( !convertTextureObjectToOldFormats( memFileSystem, filepath, memFileSystem, true ) )
-			{
-				printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
-				return false;
-			}
 			return load( &memFileSystem, filepath );
 		}
 	}
@@ -79,6 +74,13 @@ bool TextureObject::load( String filepath )
 
 bool TextureObject::load( FileSystem *fs, String filepath )
 {
+	// Makes sure texture object is in proper format
+	if( !convertTextureObjectToOldFormats( *fs, filepath, *fs, true ) )
+	{
+		printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
+		return false;
+	}
+
 	m_filepath = filepath;
 	auto file = fs->open( m_filepath, FileSystem::read | FileSystem::binary );
 	if( !file )
@@ -240,15 +242,16 @@ bool TextureObject::saveToMidFormats( String exportpath )
 				printf( "Unable to extract tobj: %s\n", m_filepath.c_str() );
 				return false;
 			}
-			if( !convertTextureObjectToOldFormats( inputOptionalFileSystem.value(), m_filepath, inputOptionalFileSystem.value() ) )
-			{
-				printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
-				return false;
-			}
 		}
 	}
 
 	FileSystem *const inputFileSystem = inputOptionalFileSystem.has_value() ? as<FileSystem>( &inputOptionalFileSystem.value() ) : as<FileSystem>( getUFS() );
+
+	if( !convertTextureObjectToOldFormats( *inputFileSystem, m_filepath, *inputFileSystem ) )
+	{
+		printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
+		return false;
+	}
 
 	*file << fmt::sprintf("map %s" SEOL, mapType(m_type).c_str());
 	for (uint32_t i = 0; i < m_texturesCount; ++i)
@@ -584,11 +587,11 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 			return true;
 		}
 		Array<u8> ddsBufferHeaderDxt10( static_cast<size_t>( sizeof( dds::header_dxt10 ) ) );
-        if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
-        {
-            warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
-            return false;
-        }
+		if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
+		{
+			warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
+			return false;
+		}
 		const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBufferHeaderDxt10, 0 );
 
 		Array<u8> ddsBufferBits;
@@ -596,13 +599,13 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 		{
 			const u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
 			ddsBufferBits.resize( static_cast<size_t>( ddsFile->size() ) - allHeadersLength );
-            if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
-            {
-                warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
-                return false;
-            }
+			if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
+			{
+				warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
+				return false;
+			}
 		}
-        ddsFile.reset();
+		ddsFile.reset();
 
 		dds::header ddsHeaderConverted = ddsHeader;
 
@@ -677,22 +680,22 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 
 		if( ddsOnlyHeader == false )
 		{
-            if( ddsImagesBitsConverted.has_value() )
-            {
-                if( !ddsFileOutput->blockWrite( ddsImagesBitsConverted.value().data(), ddsImagesBitsConverted.value().size() ) )
-                {
-                    warning_f( "tobj", tobjFilePath, "Write to texture \'%s\' failed!", textureFilePath );
-                    return false;
-                }
-            }
-            else
-            {
-                if( !ddsFileOutput->blockWrite( ddsBufferBits.data(), ddsBufferBits.size() ) )
-                {
-                    warning_f( "tobj", tobjFilePath, "Write to texture \'%s\' failed!", textureFilePath );
-                    return false;
-                }
-            }
+			if( ddsImagesBitsConverted.has_value() )
+			{
+				if( !ddsFileOutput->blockWrite( ddsImagesBitsConverted.value().data(), ddsImagesBitsConverted.value().size() ) )
+				{
+					warning_f( "tobj", tobjFilePath, "Write to texture \'%s\' failed!", textureFilePath );
+					return false;
+				}
+			}
+			else
+			{
+				if( !ddsFileOutput->blockWrite( ddsBufferBits.data(), ddsBufferBits.size() ) )
+				{
+					warning_f( "tobj", tobjFilePath, "Write to texture \'%s\' failed!", textureFilePath );
+					return false;
+				}
+			}
 		}
 
 		return true;
@@ -737,25 +740,25 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 					warning( "tobj", tobjFilePath, "Only DX10 cubemap textures can be extracted" );
 					return false;
 				}
-                Array<u8> ddsBufferHeaderDxt10( static_cast< size_t >( sizeof( dds::header_dxt10 ) ) );
-                if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
-                {
-                    warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
-                    return false;
-                }
-                const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBufferHeaderDxt10, 0 );
+				Array<u8> ddsBufferHeaderDxt10( static_cast< size_t >( sizeof( dds::header_dxt10 ) ) );
+				if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
+				{
+					warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
+					return false;
+				}
+				const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBufferHeaderDxt10, 0 );
 
-                Array<u8> ddsBufferBits;
-                if( ddsOnlyHeader == false )
-                {
-                    const u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
-                    ddsBufferBits.resize( static_cast< size_t >( ddsFile->size() ) - allHeadersLength );
-                    if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
-                    {
-                        warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
-                        return false;
-                    }
-                }
+				Array<u8> ddsBufferBits;
+				if( ddsOnlyHeader == false )
+				{
+					const u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
+					ddsBufferBits.resize( static_cast< size_t >( ddsFile->size() ) - allHeadersLength );
+					if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
+					{
+						warning_f( "tobj", tobjFilePath, "DDS file: \'%s\' is corrupted", textureFilePath );
+						return false;
+					}
+				}
 				ddsFile.reset();
 
 				dds::header ddsHeaderConverted = ddsHeader;
