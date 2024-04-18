@@ -88,6 +88,7 @@ private:
 	friend Model;
 };
 
-bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, bool ddsOnlyHeader = false );
+bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
+bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
 
 /* eof */

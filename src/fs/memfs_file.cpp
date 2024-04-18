@@ -50,7 +50,7 @@ uint64_t MemFile::read( void *buffer, uint64_t elementSize, uint64_t elementCoun
     const size_t bytesToRead = static_cast<size_t>( elementSize * elementCount );
     const size_t bytesLeftInContent = content.size() - static_cast<size_t>( m_readPosition );
     const size_t bytesActuallyRead = std::min( bytesToRead, bytesLeftInContent );
-    memcpy( buffer, content.data(), bytesActuallyRead );
+    memcpy( buffer, content.data() + m_readPosition, bytesActuallyRead );
     m_readPosition += bytesActuallyRead;
     return bytesActuallyRead;
 }

@@ -25,17 +25,29 @@
 
 namespace dds
 {
-	enum pixel_flags : u32
+	constexpr inline u32 s2u32( const char( &s )[ 4 + 1 ] )
 	{
-		PF_ALPHAPIXELS					= 0x1,
-		PF_ALPHA						= 0x2,
-		PF_FOUR_CC						= 0x4,
-		PF_RGB							= 0x40,
-		PF_YUV							= 0x200,
-		PF_LUMINANCE					= 0x20000,
+		return ( ( u32 )( u8 )( s[ 0 ] ) ) | ( ( u32 )( u8 )( s[ 1 ] ) << 8 ) | ( ( u32 )( u8 )( s[ 2 ] ) << 16 ) | ( ( u32 )( u8 )( s[ 3 ] ) << 24 );
+	}
 
-		PF_RGBA							= PF_ALPHAPIXELS | PF_RGB
+	inline String uint2s( const u32 value )
+	{
+		return String( ( const char * )( &value ), 4 );
+	}
+
+	enum class pixel_flags : u32
+	{
+		alphapixels =					0x1,
+		alpha =							0x2,
+		four_cc =						0x4,
+		rgb =							0x40,
+		yuv =							0x200,
+		luminance =						0x20000,
+
+		rgba =							alphapixels | rgb
 	};
+
+	CP_ENUM_CLASS_BITFIELD( pixel_flags );
 
 	struct pixel_format
 	{
@@ -47,19 +59,25 @@ namespace dds
 		u32 m_g_bit_mask;				// +20
 		u32 m_b_bit_mask;				// +24
 		u32 m_a_bit_mask;				// +28
-	};	ENSURE_SIZE(pixel_format, 32);
-
-	enum header_flags
-	{
-		HF_CAPS							= 0x1,
-		HF_HEIGHT						= 0x2,
-		HF_WIDTH						= 0x4,
-		HF_PITCH						= 0x8,
-		HF_PIXELFORMAT					= 0x1000,
-		HF_MIPMAPCOUNT					= 0x20000,
-		HF_LINEARSIZE					= 0x80000,
-		HF_DEPTH						= 0x800000
 	};
+	
+	ENSURE_SIZE( pixel_format, 32 );
+
+	inline bool operator==( const pixel_format &a, const pixel_format &b ) { return memcmp( &a, &b, sizeof( pixel_format ) ) == 0; }
+
+	enum class header_flags : u32
+	{
+		caps =							0x1,
+		height =						0x2,
+		width =							0x4,
+		pitch =							0x8,
+		pixelformat =					0x1000,
+		mipmapcount =					0x20000,
+		linearsize =					0x80000,
+		depth =							0x800000
+	};
+
+	CP_ENUM_CLASS_BITFIELD( header_flags );
 
 	enum class resource_dimension : u32
 	{
@@ -219,12 +237,14 @@ namespace dds
 
 	CP_ENUM_CLASS_BITFIELD( caps2 );
 
+	constexpr u32 MAGIC = s2u32( "DDS " );
+
 	struct header
 	{
 		// notice magic number is not included in this structure, so offset in file is yet +4
 
 		u32 m_size;								// +0
-		u32 m_flags;							// +4
+		header_flags m_flags;					// +4
 		u32 m_height;							// +8
 		u32 m_width;							// +12
 		u32 m_pitch_or_linear_size;				// +16
@@ -237,11 +257,12 @@ namespace dds
 		u32 m_caps3;							// +112
 		u32 m_caps4;							// +116
 		u32 m_reserved2;						// +120
-	};	ENSURE_SIZE( header, 124 );
+	};
+	
+	ENSURE_SIZE( header, 124 );
 	
 	enum class misc : u32
 	{
-		none =									0,
 		texturecube =							0x4
 	};
 
@@ -257,17 +278,7 @@ namespace dds
 
 	};	ENSURE_SIZE( header_dxt10, 20 );
 
-	constexpr inline u32 s2u32( const char( &s )[ 4 + 1 ] )
-	{
-		return ( ( u32 )( u8 )( s[ 0 ] ) ) | ( ( u32 )( u8 )( s[ 1 ] ) << 8 ) | ( ( u32 )( u8 )( s[ 2 ] ) << 16 ) | ( ( u32 )( u8 )( s[ 3 ] ) << 24 );
-	}
-
-	inline String uint2s( const u32 value )
-	{
-		return String( ( const char * )( &value ), 4 );
-	}
-
-	constexpr u32 MAGIC = s2u32( "DDS " );
+	constexpr u32 DXT10 = s2u32( "DX10" );
 
 	enum compression_format
 	{
@@ -277,52 +288,44 @@ namespace dds
 		COMPRESS_DXT3 = s2u32( "DXT3" ), // ARGB, 8bpp, explicit alpha
 		COMPRESS_DXT4 = s2u32( "DXT4" ), // n/d
 		COMPRESS_DXT5 = s2u32( "DXT5" ), // ARGB, 8bpp, interpolated alpha
+		COMPRESS_ATI1 = s2u32( "ATI1" ), // n/d
 		COMPRESS_ATI2 = s2u32( "ATI2" ), // n/d
 	};
 
-	struct named_pixel_format
+	struct named_pixel_format : pixel_format
 	{
 		const char *m_name;
-		pixel_format m_data;
 	};
 
-	const named_pixel_format FORMAT_A8R8G8B8 =
-		{ "A8R8G8B8", { sizeof(pixel_format), PF_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_B8G8R8A8 =
+		{ { sizeof( pixel_format ), pixel_flags::rgba, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, "B8G8R8A8" };
 
-	const named_pixel_format FORMAT_A1R5G5B5 =
-		{ "A1R5G5B5", { sizeof(pixel_format), PF_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_B5G5R5A1 =
+		{ { sizeof( pixel_format ), pixel_flags::rgba, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 }, "B5G5R5A1" };
 
-	const named_pixel_format FORMAT_A4R4G4B4 =
-		{ "A4R4G4B4", { sizeof(pixel_format), PF_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_B4G4R4A4 =
+		{ { sizeof( pixel_format ), pixel_flags::rgba, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 }, "B4G4R4A4" };
 
-	const named_pixel_format FORMAT_R8G8B8 =
-		{ "R8G8B8", { sizeof(pixel_format), PF_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_B8G8R8 =
+		{ { sizeof( pixel_format ), pixel_flags::rgb, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, "B8G8R8" };
 
-	const named_pixel_format FORMAT_R5G6B5 =
-		{ "R5G6B5", { sizeof(pixel_format), PF_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_B5G6R5 =
+		{ { sizeof( pixel_format ), pixel_flags::rgb, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 }, "R5G6B5" };
 
-	const named_pixel_format FORMAT_R16G16 =
-		{ "R16G16", { sizeof(pixel_format), PF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 } };
+	static constexpr named_pixel_format PIXEL_FORMAT_R16G16 =
+		{ { sizeof( pixel_format ), pixel_flags::rgb, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 }, "R16G16" };
 
-	const Array<named_pixel_format> formats = {
-		FORMAT_A8R8G8B8, FORMAT_A1R5G5B5, FORMAT_A4R4G4B4, FORMAT_R8G8B8, FORMAT_R5G6B5, FORMAT_R16G16
+	static constexpr named_pixel_format formats[] =
+	{
+		PIXEL_FORMAT_B8G8R8A8, PIXEL_FORMAT_B5G5R5A1, PIXEL_FORMAT_B4G4R4A4,
+		PIXEL_FORMAT_B8G8R8, PIXEL_FORMAT_B5G6R5, PIXEL_FORMAT_R16G16
 	};
 
-	inline bool operator==(const pixel_format &lhs, const named_pixel_format &rhs)
+	inline const named_pixel_format *recognize_pixel_format( const pixel_format &pf )
 	{
-		return lhs.m_flags == rhs.m_data.m_flags
-			&& lhs.m_rgb_bit_count == rhs.m_data.m_rgb_bit_count
-			&& lhs.m_r_bit_mask == rhs.m_data.m_r_bit_mask
-			&& lhs.m_g_bit_mask == rhs.m_data.m_g_bit_mask
-			&& lhs.m_b_bit_mask == rhs.m_data.m_b_bit_mask
-			&& lhs.m_a_bit_mask == rhs.m_data.m_a_bit_mask;
-	}
-
-	inline const named_pixel_format *recognize_pixel_format(const pixel_format *pf)
-	{
-		for (const auto &f : formats)
+		for( const named_pixel_format &f : formats )
 		{
-			if ((*pf) == f)
+			if( pf == f )
 			{
 				return &f;
 			}
@@ -330,7 +333,10 @@ namespace dds
 		return nullptr;
 	}
 
-	void print_debug(String filepath);
+	const char *stringize_dxgi_format( dxgi_format format );
+
+	void print_debug( const String &filepath );
+
 } // namespace prism
 
 #pragma pack(pop)

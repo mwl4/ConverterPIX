@@ -53,6 +53,10 @@ public:
 
 	bool blockRead(void *buffer, uint64_t offset, uint64_t size);
 
+	bool blockWrite( const void *buffer, uint64_t size );
+
+	bool getContents( Array<u8> &buffer );
+
 	File &operator<<(bool val);
 	File &operator<<(short val);
 	File &operator<<(unsigned short val);

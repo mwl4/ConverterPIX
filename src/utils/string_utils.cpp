@@ -24,16 +24,44 @@
 
 #include "string_utils.h"
 
-Optional<String> extractExtension(const String &filePath)
+Optional<String> extractExtension( const String &filePath )
 {
-	const size_t dotPosition = filePath.rfind('.');
+    const size_t dotPosition = filePath.rfind( '.' );
 
-	if (dotPosition == String::npos)
-	{
-		return Optional<String>();
-	}
+    if( dotPosition == String::npos )
+    {
+        return Optional<String>();
+    }
 
-	return Optional<String>(filePath.substr(dotPosition));
+    // We need to ensure that dot is part of file name
+    const size_t lastBackOrForwardSlashPosition = std::max( filePath.rfind( '/' ), filePath.rfind( '\\' ) );
+
+    if( lastBackOrForwardSlashPosition != String::npos && dotPosition < lastBackOrForwardSlashPosition )
+    {
+        return Optional<String>();
+    }
+
+    return Optional<String>( filePath.substr( dotPosition ) );
+}
+
+String removeExtension( const String &filePath )
+{
+	const size_t dotPosition = filePath.rfind( '.' );
+
+    if( dotPosition == String::npos )
+    {
+        return filePath;
+    }
+
+    // We need to ensure that dot is part of file name
+    const size_t lastBackOrForwardSlashPosition = std::max( filePath.rfind( '/' ), filePath.rfind( '\\' ) );
+
+    if( lastBackOrForwardSlashPosition != String::npos && dotPosition < lastBackOrForwardSlashPosition )
+    {
+        return filePath;
+    }
+
+    return filePath.substr( 0, dotPosition );
 }
 
 /* eof */

@@ -141,6 +141,8 @@ using Optional		= std::optional< T >;
 #define CP_ENUM_CLASS_BITFIELD( enumClass ) \
 	inline enumClass operator&( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) & static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
 	inline enumClass operator|( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) | static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
+	inline enumClass &operator&=( enumClass &a, enumClass b ) { return a = a & b; } \
+	inline enumClass &operator|=( enumClass &a, enumClass b ) { return a = a | b; } \
 	inline bool operator!( enumClass a ) { return !static_cast<std::underlying_type_t<enumClass>>( a ); }
 
 namespace prism

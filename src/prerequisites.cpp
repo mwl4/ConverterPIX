@@ -165,6 +165,7 @@ void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destinati
 		if( metaStat.m_meta.size() > 0 )
 		{
 			extractTextureObject( filePath, metaStat, destination );
+			convertTextureObjectToOldFormats( destination, filePath, destination );
 			return;
 		}
 	}
@@ -173,7 +174,7 @@ void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destinati
 
 	if( inputFile == nullptr )
 	{
-		printf( "Unable to open file to read: %s\n", filePath.c_str() );
+		printf( "Unable to open file for read: %s\n", filePath.c_str() );
 		return;
 	}
 
@@ -181,7 +182,7 @@ void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destinati
 
 	if( outputFile == nullptr )
 	{
-		printf( "Unable to open file to write: %s\n", ( destination.root() + filePath ).c_str() );
+		printf( "Unable to open file for write: %s\n", ( destination.root() + filePath ).c_str() );
 		return;
 	}
 

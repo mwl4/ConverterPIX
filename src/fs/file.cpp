@@ -269,6 +269,17 @@ bool File::blockRead(void *buffer, uint64_t offset, uint64_t size)
 	return read(buffer, 1, size) == size;
 }
 
+bool File::blockWrite( const void *buffer, uint64_t size )
+{
+	return write( buffer, 1, size ) == size;
+}
+
+bool File::getContents( Array<u8> &buffer )
+{
+	buffer.resize( static_cast<size_t>( size() ) );
+	return blockRead( buffer.data(), 0, buffer.size() );
+}
+
 bool copyFile(File *const input, File *const output)
 {
 	input->rewind();

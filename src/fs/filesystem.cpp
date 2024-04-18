@@ -68,7 +68,7 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 	else if(getSFS()->exists(root))
 	{
 		auto rootfile = getSFS()->open(root, FileSystem::read | FileSystem::binary);
-		char sig[5];
+		char sig[ 5 ] = {};
 		rootfile->blockRead(&sig, 0, sizeof(sig));
 		rootfile.reset();
 		if (sig[0] == 'P' && sig[1] == 'K') // zip

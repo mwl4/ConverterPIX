@@ -24,4 +24,6 @@
 
 Optional<String> extractExtension(const String &filePath);
 
+String removeExtension( const String &filePath );
+
 /* eof */
