@@ -22,6 +22,8 @@
 
 #pragma once
 
+class MetaStat;
+
 class File
 {
 public:
@@ -47,8 +49,13 @@ public:
 	virtual void rewind() = 0;
 	virtual uint64_t tell() const = 0;
 	virtual void flush() = 0;
+    virtual void mstat( MetaStat *result ) = 0;
 
 	bool blockRead(void *buffer, uint64_t offset, uint64_t size);
+
+	bool blockWrite( const void *buffer, uint64_t size );
+
+	bool getContents( Array<u8> &buffer );
 
 	File &operator<<(bool val);
 	File &operator<<(short val);

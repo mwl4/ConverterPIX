@@ -171,6 +171,10 @@ void ZipFsFile::flush()
 {
 }
 
+void ZipFsFile::mstat( MetaStat *result )
+{
+}
+
 void ZipFsFile::inflateInitialize()
 {
 	m_stream.zalloc = Z_NULL;

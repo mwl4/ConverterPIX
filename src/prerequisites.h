@@ -58,6 +58,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <optional>
+#include <functional>
+#include <type_traits>
 
 //
 /// Utils
@@ -136,6 +138,13 @@ using Optional		= std::optional< T >;
 #define ENSURE_SIZE(structure, expected) static_assert(sizeof(structure) == expected, "Invalid size")
 #define COMMA ,
 
+#define CP_ENUM_CLASS_BITFIELD( enumClass ) \
+	inline enumClass operator&( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) & static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
+	inline enumClass operator|( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) | static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
+	inline enumClass &operator&=( enumClass &a, enumClass b ) { return a = a & b; } \
+	inline enumClass &operator|=( enumClass &a, enumClass b ) { return a = a | b; } \
+	inline bool operator!( enumClass a ) { return !static_cast<std::underlying_type_t<enumClass>>( a ); }
+
 namespace prism
 {
 	template <typename T, size_t N>
@@ -144,7 +153,7 @@ namespace prism
 	class mat_sq_t;
 	class token_t;
 
-	u64 city_hash_64(const char *const data, size_t size);
+	u64 city_hash_64( const void *data, size_t size );
 } // namespace prism
 
 class FileSystem;
@@ -216,12 +225,46 @@ String removeSpaces(String str);
 String betweenQuotes(String str);
 void remove(String &str, const String &substr);
 
-String removeSlashAtEnd(const String &s);
-String removeSlashAtBegin(const String &s);
-String makeSlashAtEnd(const String &s);
+/**
+ * Removes exactly one slash or backslash from the end of string
+ * 
+ * "some_directory"   => "some_directory"
+ * "some_directory/"  => "some_directory"
+ * "some_directory//" => "some_directory/"
+ */
+String removeSlashAtEnd( const String &s );
 
-String trimSlashesAtBegin(const String &s);
-String trimSlashesAtEnd(const String &s);
+/**
+ * Removes exactly one slash or backslash at the beginning of string
+ *
+ * "some_directory"   => "some_directory"
+ * "some_directory/"  => "some_directory"
+ * "some_directory//" => "some_directory/"
+ */
+String removeSlashAtBegin( const String &s );
+
+/**
+ * Adds slash at the end of string if it is not there yet
+ * 
+ * "some_filename"   => "/some_filename"
+ * "/some_filename"  => /some_filename"
+ */
+String makeSlashAtEnd( const String &s );
+
+/**
+ * Adds slash at the beginning of string if it is not there yet
+ */
+String makeSlashAtBegin( const String &s );
+
+/**
+ * Removes slashes and backslashes at the beginning of string
+ */
+String trimSlashesAtBegin( const String &s );
+
+/**
+ * Removes slashes and backslashes from the end of string
+ */
+String trimSlashesAtEnd( const String &s );
 
 /**
  * @brief: Returns directory of the file
@@ -284,5 +327,41 @@ struct EnableIf<true, T> { typedef T type; };
 
 template <typename T>
 struct EnableIfArithmetic : EnableIf<IsIntegral<T>::value || IsFloatingPoint<T>::value, int> {};
+
+template< typename T, unsigned long long N >
+char( &ArraySizeHelper( const T( & )[ N ] ) )[ N + 1 ];
+
+#define CP_ARRAY_SIZE( ARRAY ) ( sizeof( ArraySizeHelper( ARRAY ) ) - 1 )
+
+template< typename P, typename A >
+P alignForward( P pointer, A alignment )
+{
+    intptr_t alignment_signed = ( intptr_t )alignment;
+    const uintptr_t addr = ( uintptr_t )( pointer );
+    const uintptr_t aligned_addr = ( addr + ( alignment_signed - 1 ) ) & -alignment_signed;
+    return ( P )( addr + ( aligned_addr - addr ) );
+}
+
+const uint32_t TEXTURE_DATA_PITCH_ALIGNMENT =       256; // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
+const uint32_t TEXTURE_DATA_PLACEMENT_ALIGNMENT =   512; // D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT
+
+void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destination );
+
+template< typename T1, typename T2 >
+T1 *as( T2 *p )
+{
+	T1 *const result = p;
+	return result;
+}
+
+template< typename T, typename Container >
+const T &interpretBufferAt( const Container &container, const uint64_t offset, const uint64_t count = 1 )
+{
+	static_assert( std::is_same_v< typename Container::value_type, u8 >, "value type should be u8!" );
+
+	assert( size_t( offset + count * sizeof( T ) ) <= container.size() );
+
+	return *reinterpret_cast< const T * >( container.data() + offset );
+}
 
 /* eof */

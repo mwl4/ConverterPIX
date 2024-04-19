@@ -27,6 +27,7 @@
 #include "sysfilesystem.h"
 #include "uberfilesystem.h"
 #include "hashfilesystem.h"
+#include "hashfs_v2.h"
 #include "zipfilesystem.h"
 
 #include "file.h"
@@ -37,6 +38,11 @@ FileSystem::FileSystem()
 
 FileSystem::~FileSystem()
 {
+}
+
+UniquePtr<File> FileSystem::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues, bool *outFileExists )
+{
+	return nullptr;
 }
 
 SysFileSystem *getSFS()
@@ -62,7 +68,7 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 	else if(getSFS()->exists(root))
 	{
 		auto rootfile = getSFS()->open(root, FileSystem::read | FileSystem::binary);
-		char sig[4];
+		char sig[ 5 ] = {};
 		rootfile->blockRead(&sig, 0, sizeof(sig));
 		rootfile.reset();
 		if (sig[0] == 'P' && sig[1] == 'K') // zip
@@ -70,9 +76,14 @@ FileSystem *ufsMount(const String &root, scs_bool readOnly, int priority)
 			auto fs = std::make_unique<ZipFileSystem>(root);
 			return getUFS()->mount(std::move(fs), priority);
 		}
-		else if (sig[0] == 'S' && sig[1] == 'C' && sig[2] == 'S' && sig[3] == '#') // scs#
+		else if (sig[0] == 'S' && sig[1] == 'C' && sig[2] == 'S' && sig[3] == '#' && sig[4] == 1 ) // scs# version 1
 		{
 			auto fs = std::make_unique<HashFileSystem>(root);
+			return getUFS()->mount(std::move(fs), priority);
+		}
+		else if (sig[0] == 'S' && sig[1] == 'C' && sig[2] == 'S' && sig[3] == '#' && sig[4] == 2 ) // scs# version 2
+		{
+			auto fs = std::make_unique<HashFsV2>(root);
 			return getUFS()->mount(std::move(fs), priority);
 		}
 	}
@@ -132,6 +143,30 @@ String relativePath(const String &filepath, const String &directory)
 	}
 	result += path.substr(lastpos);
 	return result.c_str();
+}
+
+auto MetaStat::find( prism::token_t metaName ) -> Meta *
+{
+	for( Meta &meta : m_meta )
+	{
+		if( meta.name().m_value == metaName.m_value )
+		{
+			return &meta;
+		}
+	}
+	return nullptr;
+}
+
+auto MetaStat::find( prism::token_t metaName ) const -> const Meta *
+{
+	for( const Meta &meta : m_meta )
+	{
+		if( meta.name().m_value == metaName.m_value )
+		{
+			return &meta;
+		}
+	}
+	return nullptr;
 }
 
 /* eof */

@@ -42,6 +42,7 @@ public:
 	virtual void rewind() override;
 	virtual uint64_t tell() const override;
 	virtual void flush() override;
+	virtual void mstat( MetaStat *result ) override;
 
 private:
 	String			m_filepath;

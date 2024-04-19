@@ -53,13 +53,16 @@ public:
 	};
 
 public:
-	bool load(String filepath);
-	bool loadDDS(String filepath);
-	bool saveToMidFormats(String exportpath);
+	bool load( String filepath );
+	bool saveToMidFormats( String exportpath );
+
+private:
+	bool load( FileSystem *fs, String filepath );
+	bool loadDDS( FileSystem *fs, String filepath );
 
 private:
 	uint32_t m_texturesCount = 0;
-	String m_textures[6];
+	SizedArray<String, 6> m_textures;
 
 	Type m_type;
 
@@ -84,5 +87,10 @@ private:
 
 	friend Model;
 };
+
+bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
+bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
+
+extern bool s_ddsDxt10; // By default false, off. If turned on, DDS files will not be converted to non-DXT10 format.
 
 /* eof */

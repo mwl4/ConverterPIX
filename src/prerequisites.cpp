@@ -24,6 +24,11 @@
 
 #include <cityhash/city.h>
 
+#include "fs/filesystem.h"
+#include "fs/file.h"
+#include "utils/string_utils.h"
+#include "texture/texture_object.h"
+
 double s2lin(double x)
 {
 	const double a = 0.055f;
@@ -80,6 +85,23 @@ String makeSlashAtEnd(const String &s)
 {
 	const bool noneedslash = (s[s.length() - 1] == '/') || (s[s.length() - 1] == '\\');
 	return noneedslash ? s : s + '/';
+}
+
+String makeSlashAtBegin( const String &s )
+{
+    if( s.length() == 0 )
+    {
+        return "/";
+    }
+
+    if( s[ 0 ] == '/' || s[ 0 ] == '\\' )
+    {
+        return s;
+    }
+    else
+    {
+        return "/" + s;
+    }
 }
 
 String trimSlashesAtBegin(const String &s)
@@ -139,10 +161,49 @@ String valueToQuotedString(const char *const value)
 
 namespace prism
 {
-	u64 city_hash_64(const char *const data, size_t size)
+	u64 city_hash_64( const void *data, size_t size )
 	{
-		return CityHash64(data, size);
+		return CityHash64( static_cast<const char *>( data ), size );
 	}
 } // namespace prism
+
+void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destination )
+{
+	const Optional<String > extension = extractExtension( filePath );
+	if( extension.has_value() && extension.value() == ".tobj" )
+	{
+        MetaStat metaStat;
+        if( !fileSystem.mstat( &metaStat, filePath ) )
+        {
+			printf( "Unable to mstat file: %s\n", filePath.c_str() );
+            return;
+        }
+
+		if( metaStat.m_meta.size() > 0 )
+		{
+			extractTextureObject( filePath, metaStat, destination );
+			convertTextureObjectToOldFormats( destination, filePath, destination );
+			return;
+		}
+	}
+
+	auto inputFile = fileSystem.open( filePath, FileSystem::read | FileSystem::binary );
+
+	if( inputFile == nullptr )
+	{
+		printf( "Unable to open file for read: %s\n", filePath.c_str() );
+		return;
+	}
+
+	auto outputFile = destination.open( filePath, FileSystem::write | FileSystem::binary );
+
+	if( outputFile == nullptr )
+	{
+		printf( "Unable to open file for write: %s\n", ( destination.root( filePath ) ).c_str() );
+		return;
+	}
+
+	copyFile( inputFile.get(), outputFile.get() );
+}
 
 /* eof */

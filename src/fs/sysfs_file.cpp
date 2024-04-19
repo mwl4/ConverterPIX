@@ -83,4 +83,8 @@ void SysFsFile::flush()
 	::fflush(m_fp);
 }
 
+void SysFsFile::mstat( MetaStat *result )
+{
+}
+
 /* eof */

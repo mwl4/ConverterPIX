@@ -50,7 +50,7 @@ HashFileSystem::~HashFileSystem()
 
 String HashFileSystem::root() const
 {
-	return m_rootFilename;
+	return m_rootFilename + "/";
 }
 
 String HashFileSystem::name() const
@@ -58,23 +58,28 @@ String HashFileSystem::name() const
 	return "hashfs";
 }
 
-UniquePtr<File> HashFileSystem::open(const String &filename, FsOpenMode mode)
+UniquePtr<File> HashFileSystem::open( const String &filename, FsOpenMode mode, bool *outFileExists )
 {
-	using namespace prism;
-
-	hashfs_entry_t *const entry = findEntry(filename);
+	prism::hashfs_entry_t *const entry = findEntry( filename );
 	if (!entry)
 	{
-		return UniquePtr<File>();
+		return nullptr;
 	}
 
-	if (entry->m_flags & HASHFS_ENCRYPTED)
+	if( outFileExists ) *outFileExists = true;
+
+	if( entry->m_flags & prism::HASHFS_ENCRYPTED )
 	{
-		error("hashfs", filename, "Encrypted files are not supported!");
-		return UniquePtr<File>();
+		error( "hashfs", filename, "Encrypted files are not supported!" );
+		return nullptr;
 	}
 
-	return std::make_unique<HashFsFile>(filename, this, entry);
+	return std::make_unique<HashFsFile>( filename, this, entry );
+}
+
+bool HashFileSystem::remove( const String &filePath )
+{
+	return false;
 }
 
 bool HashFileSystem::mkdir(const String &directory)
@@ -216,6 +221,17 @@ auto HashFileSystem::readDir(const String &path, bool absolutePaths, bool recurs
 	}
 
 	return result;
+}
+
+bool HashFileSystem::mstat( MetaStat *result, const String &path )
+{
+	// We must return true if such path exists in the filesystem
+	if( exists( path ) || dirExists( path ) )
+	{
+		result->m_filesystem = this;
+		return true;
+	}
+	else return false;
 }
 
 bool HashFileSystem::ioRead(void *const buffer, uint64_t bytes, uint64_t offset)
