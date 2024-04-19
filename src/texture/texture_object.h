@@ -57,6 +57,7 @@ public:
 	bool saveToMidFormats( String exportpath );
 
 private:
+	bool loadPre( FileSystem *fs, String filepath );
 	bool load( FileSystem *fs, String filepath );
 	bool loadDDS( FileSystem *fs, String filepath );
 

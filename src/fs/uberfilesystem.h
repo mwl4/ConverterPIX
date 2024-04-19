@@ -45,10 +45,12 @@ public:
 	virtual bool mstat( MetaStat *result, const String &path ) override;
 
 	FileSystem *mount(UniquePtr<FileSystem> fs, Priority priority);
+	FileSystem *mount(FileSystem *fs, Priority priority);
 	void unmount(FileSystem *fs);
 
 private:
-	std::map<Priority, UniquePtr<FileSystem>> m_filesystems;
+	std::map<Priority, FileSystem*> m_filesystems;
+	Array<UniquePtr<FileSystem>> m_ownedFileSystems;
 };
 
 /* eof */

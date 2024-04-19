@@ -143,20 +143,32 @@ bool UberFileSystem::mstat( MetaStat *result, const String &path )
 
 FileSystem *UberFileSystem::mount(UniquePtr<FileSystem> fs, Priority priority)
 {
-	m_filesystems[priority] = std::move(fs);
-	return m_filesystems[priority].get();
+	m_ownedFileSystems.push_back( std::move( fs ) );
+	FileSystem *const fsPtr = m_ownedFileSystems.back().get();
+	m_filesystems[ priority ] = fsPtr;
+	return fsPtr;
+}
+
+FileSystem *UberFileSystem::mount( FileSystem *fs, Priority priority )
+{
+	m_filesystems[ priority ] = fs;
+	return fs;
 }
 
 void UberFileSystem::unmount(FileSystem *filesystem)
 {
-	for (const auto &fs : m_filesystems)
+	for( const auto &fs : m_filesystems )
 	{
-		if (fs.second.get() == filesystem)
-		{
-			m_filesystems.erase(fs.first);
-			return;
-		}
+        if( fs.second == filesystem )
+        {
+            m_filesystems.erase( fs.first );
+			break;
+        }
 	}
+	m_ownedFileSystems.erase( std::remove_if( m_ownedFileSystems.begin(), m_ownedFileSystems.end(), [ filesystem ]( const auto &fs )
+	{
+		return fs.get() == filesystem;
+	} ), m_ownedFileSystems.end() );
 }
 
 /* eof */
