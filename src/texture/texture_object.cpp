@@ -67,22 +67,33 @@ bool TextureObject::load( String filepath )
 				printf( "Unable to extract tobj: %s\n", filepath.c_str() );
 				return false;
 			}
-			return load( &memFileSystem, filepath );
+			return loadPre( &memFileSystem, filepath );
 		}
 	}
 
-	return load( getUFS(), filepath );
+	return loadPre( getUFS(), filepath );
+}
+
+bool TextureObject::loadPre( FileSystem *fs, String filepath )
+{
+	MemFileSystem memFileSystem;
+
+    UberFileSystem localUfs;
+    localUfs.mount( fs, 1 );
+	localUfs.mount( &memFileSystem, 2 );
+
+	// Makes sure texture object is in proper format
+    if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, memFileSystem, false /* cannot be turned on, because it may overwrite files on disk */ ) )
+    {
+        printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
+        return false;
+    }
+
+	return load( &localUfs, filepath );
 }
 
 bool TextureObject::load( FileSystem *fs, String filepath )
 {
-	// Makes sure texture object is in proper format
-	if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, *fs, false /* cannot be turned on, because it may overwrite files on disk */) )
-	{
-		printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
-		return false;
-	}
-
 	m_filepath = filepath;
 	auto file = fs->open( m_filepath, FileSystem::read | FileSystem::binary );
 	if( !file )
