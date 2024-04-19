@@ -38,6 +38,8 @@
 #include "utils/format_utils.h"
 #include "utils/string_utils.h"
 
+bool s_ddsDxt10 = false;
+
 static String resolveTextureFilePath( String textureFilePath, String tobjFilePath )
 {
 	// basically handles texture file path relative to tobj file path
@@ -921,12 +923,15 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 
 		if( extractExtension( textureFilePath ).value_or( "" ) == ".dds" )
 		{
-			for( const String &generatedTextureFilePath : generatedTextureFilePaths )
+			if( s_ddsDxt10 == false )
 			{
-				if( !convertDDSFromDX10FormatIfNeeded( fileSystemToWriteTo, resolveTextureFilePath( generatedTextureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+				for( const String &generatedTextureFilePath : generatedTextureFilePaths )
 				{
-					error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", generatedTextureFilePath );
-					return false;
+					if( !convertDDSFromDX10FormatIfNeeded( fileSystemToWriteTo, resolveTextureFilePath( generatedTextureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+					{
+						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", generatedTextureFilePath );
+						return false;
+					}
 				}
 			}
 		}
@@ -937,10 +942,13 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 		{
 			if( extractExtension( textureFilePath ).value_or( "" ) == ".dds" )
 			{
-				if( !convertDDSFromDX10FormatIfNeeded( fs, resolveTextureFilePath( textureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+				if( s_ddsDxt10 == false )
 				{
-					error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", textureFilePath );
-					return false;
+					if( !convertDDSFromDX10FormatIfNeeded( fs, resolveTextureFilePath( textureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+					{
+						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", textureFilePath );
+						return false;
+					}
 				}
 			}
 		}

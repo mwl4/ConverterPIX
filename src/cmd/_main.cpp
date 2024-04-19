@@ -180,6 +180,10 @@ int main(int argc, char *argv[])
 		{
 			Material::s_outputMatFormat147Enabled = true;
 		}
+		else if( arg == "-ddsDxt10" )
+		{
+			s_ddsDxt10 = true;
+		}
 		else
 		{
 			optionalArgs.push_back(arg);
