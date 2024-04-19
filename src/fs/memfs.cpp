@@ -152,7 +152,7 @@ auto MemFileSystem::findFileEntry( const String &path ) const -> StoredEntry *
             return entry;
         }
     }
-    return false;
+    return nullptr;
 }
 
 auto MemFileSystem::findOrCreateFileEntry( const String &path, bool *outOptCreated ) -> StoredEntry *
@@ -174,7 +174,7 @@ auto MemFileSystem::findOrCreateFileEntry( const String &path, bool *outOptCreat
             }
         }
     }
-    return false;
+    return nullptr;
 }
 
 /* eof */
