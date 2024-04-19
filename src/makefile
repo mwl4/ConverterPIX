@@ -20,6 +20,7 @@ LIBS+=./libs/libs/libcityhash.a
 LIBS+=./libs/libs/libzlib.a
 LIBS+=./libs/libs/libGDeflate.a
 LIBS+=./libs/libs/libdeflate.a
+LIBS+=-pthread
 
 CXXSOURCE=$(wildcard *.cpp)
 CXXSOURCE+=$(wildcard fs/*.cpp)
