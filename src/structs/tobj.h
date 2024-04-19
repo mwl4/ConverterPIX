@@ -35,14 +35,14 @@ namespace prism
 	{
 		nearest =					0,
 		linear =					1,
-		default =					3
+		default_v =					3
 	};
 
 	enum class min_filter_t : u8
 	{
 		nearest =					0,
 		linear =					1,
-		default =					3
+		default_v =					3
 	};
 
 	enum class mip_filter_t : u8
@@ -50,7 +50,7 @@ namespace prism
 		nearest =					0,
 		trilinear =					1,
 		nomips =					2,
-		default =					3
+		default_v =					3
 	};
 
 	enum class tobj_addr_t : u8
