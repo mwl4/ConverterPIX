@@ -350,8 +350,8 @@ bool fillInitData( size_t width,
 
                 assert( index < mipCount * arraySize );
                 initData[ index ].m_data = ( const void * )pSrcBits;
-                initData[ index ].m_rowPitch = static_cast< UINT >( RowBytes );
-                initData[ index ].m_slicePitch = static_cast< UINT >( NumBytes );
+                initData[ index ].m_rowPitch = static_cast< u32 >( RowBytes );
+                initData[ index ].m_slicePitch = static_cast< u32 >( NumBytes );
                 ++index;
             }
             else if( !j )
