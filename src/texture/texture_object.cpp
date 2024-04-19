@@ -77,7 +77,7 @@ bool TextureObject::load( String filepath )
 bool TextureObject::load( FileSystem *fs, String filepath )
 {
 	// Makes sure texture object is in proper format
-	if( !convertTextureObjectToOldFormats( *fs, filepath, *fs, true ) )
+	if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, *fs, false /* cannot be turned on, because it may overwrite files on disk */) )
 	{
 		printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
 		return false;
@@ -249,7 +249,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 
 	FileSystem *const inputFileSystem = inputOptionalFileSystem.has_value() ? as<FileSystem>( &inputOptionalFileSystem.value() ) : as<FileSystem>( getUFS() );
 
-	if( !convertTextureObjectToOldFormats( *inputFileSystem, m_filepath, *inputFileSystem ) )
+	if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, *inputFileSystem ) )
 	{
 		printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
 		return false;
@@ -521,9 +521,54 @@ static Array<u8> convertImageBits_B8G8R8X8_To_B8G8R8( const u8 *bits, u32 bitsLe
 	return bitsConverted;
 }
 
+bool getDDSBasicFormatInformation( FileSystem &inputFs, const String &textureFilePath, bool &outOldFormat, dds::dxgi_format &outDx10Format )
+{
+	auto ddsFile = inputFs.open( textureFilePath, FileSystem::read | FileSystem::binary );
+	if( ddsFile == nullptr )
+	{
+		error( "dds", textureFilePath, "Cannot open texture object file" );
+		return false;
+	}
+	u32 magic = 0;
+	if( !ddsFile->blockRead( &magic, 0, sizeof( magic ) ) )
+	{
+		error( "dds", textureFilePath, "File is corrupted" );
+		return false;
+	}
+	if( magic != dds::MAGIC )
+	{
+		error_f( "dds", textureFilePath, "Invalid DDS magic: %i expected: %i", magic, dds::MAGIC );
+		return false;
+	}
+	dds::header ddsHeader;
+	if( !ddsFile->blockRead( &ddsHeader, sizeof( magic ), sizeof( ddsHeader ) ) )
+	{
+		error( "dds", textureFilePath, "File is corrupted" );
+		return false;
+	}
+	if( !!( ddsHeader.m_pixel_format.m_flags & dds::pixel_flags::four_cc ) && ddsHeader.m_pixel_format.m_four_cc == dds::DXT10 )
+	{
+		dds::header_dxt10 ddsHeaderDxt10;
+		if( !ddsFile->blockRead( &ddsHeaderDxt10, sizeof( magic ) + sizeof( ddsHeader ), sizeof( ddsHeaderDxt10 ) ) )
+		{
+			error( "dds", textureFilePath, "File is corrupted" );
+			return false;
+		}
+		outOldFormat = false;
+		outDx10Format = ddsHeaderDxt10.m_dxgi_format;
+	}
+	else
+	{
+		outOldFormat = true;
+		outDx10Format = dds::dxgi_format::format_unknown;
+	}
+
+	return true;
+}
+
 // Returns true if texture file has been converted, or if conversion was not needed
 // Returns false on failure
-bool convertDDSFromDX10FormatIfNeeded( FileSystem &inputFs, const String &textureFilePath, FileSystem &outputFs, bool ddsOnlyHeader )
+bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePath, FileSystem &outputFs, bool ddsOnlyHeader )
 {
 	auto ddsFile = inputFs.open( textureFilePath, FileSystem::read | FileSystem::binary );
 	if( !ddsFile )
@@ -531,7 +576,7 @@ bool convertDDSFromDX10FormatIfNeeded( FileSystem &inputFs, const String &textur
 		error( "dds", textureFilePath, "Cannot open texture object file" );
 		return false;
 	}
-	Array<u8> ddsBufferHeader( static_cast< size_t >( sizeof( u32 ) + sizeof( dds::header ) ) ); // magic + header
+	SizedArray<u8, sizeof( u32 ) + sizeof( dds::header )> ddsBufferHeader; // magic + header
 	if( !ddsFile->blockRead( ddsBufferHeader.data(), 0, ddsBufferHeader.size() ) )
 	{
 		error( "dds", textureFilePath, "File is corrupted" );
@@ -881,7 +926,7 @@ bool disassembleCubemapTextureObject( FileSystem &inputFs, const String &tobjFil
 // Additionally, we want to disassemble cubemap DDS into multiple simple DDS files, and TOBJ is modified accordingly.
 // Returns false if some error occurred.
 // Returns true even though conversion has been not made - because tobj+dds is already in the proper format.
-bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader )
+bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader )
 {
 	auto tobjFile = fs.open( tobjFilePath, FileSystem::read | FileSystem::binary );
 	if( !tobjFile )
@@ -906,6 +951,8 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 
 	const Array<String> texturesFilePaths = textureObjectReadTextures( tobjBuffer );
 
+	Array<Pair<FileSystem*, String>> texturesToConvert;
+
 	if( tobjHeader.m_type == prism::tobj_type_t::cubic && texturesFilePaths.size() == 1 )
 	{
 		const String &textureFilePath = texturesFilePaths[ 0 ];
@@ -921,33 +968,90 @@ bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePat
 			fs.remove( resolveTextureFilePath( textureFilePath, tobjFilePath ) );
 		}
 
-		if( extractExtension( textureFilePath ).value_or( "" ) == ".dds" )
+		for( const String &generatedTextureFilePath : generatedTextureFilePaths )
 		{
-			if( s_ddsDxt10 == false )
-			{
-				for( const String &generatedTextureFilePath : generatedTextureFilePaths )
-				{
-					if( !convertDDSFromDX10FormatIfNeeded( fileSystemToWriteTo, resolveTextureFilePath( generatedTextureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
-					{
-						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", generatedTextureFilePath );
-						return false;
-					}
-				}
-			}
+			texturesToConvert.push_back( Pair<FileSystem *, String>( &fileSystemToWriteTo, generatedTextureFilePath ) );
 		}
 	}
 	else
 	{
 		for( const String &textureFilePath : texturesFilePaths )
 		{
-			if( extractExtension( textureFilePath ).value_or( "" ) == ".dds" )
+			texturesToConvert.push_back( Pair<FileSystem *, String>( &fs, textureFilePath ) );
+		}
+	}
+
+	for( const Pair<FileSystem *, String> &textureToConvert : texturesToConvert )
+	{
+		if( extractExtension( textureToConvert.second ).value_or( "" ) == ".dds" )
+		{
+			bool textureOldFormat = false;
+			dds::dxgi_format textureDx10Format = dds::dxgi_format::format_unknown;
+			if( !getDDSBasicFormatInformation( *textureToConvert.first, resolveTextureFilePath( textureToConvert.second, tobjFilePath ), textureOldFormat, textureDx10Format ) )
+			{
+				error_f( "tobj", tobjFilePath, "Unable to get basic information about DDS \'%s\'!", textureToConvert.second );
+				return false;
+			}
+
+			if( textureOldFormat == false )
 			{
 				if( s_ddsDxt10 == false )
 				{
-					if( !convertDDSFromDX10FormatIfNeeded( fs, resolveTextureFilePath( textureFilePath, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+					if( !convertDDSFromDX10Format( *textureToConvert.first, resolveTextureFilePath( textureToConvert.second, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
 					{
-						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", textureFilePath );
+						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", textureToConvert.second );
 						return false;
+					}
+				}
+
+				bool noCompressInTobjToSet = false;
+				static const dds::dxgi_format noCompressFormats[] =
+				{
+					dds::dxgi_format::format_b8g8r8x8_unorm_srgb,
+					dds::dxgi_format::format_b8g8r8x8_unorm,
+					dds::dxgi_format::format_b8g8r8a8_unorm_srgb,
+					dds::dxgi_format::format_b8g8r8a8_unorm,
+					dds::dxgi_format::format_r8_unorm
+				};
+				for( dds::dxgi_format noCompressFormat : noCompressFormats )
+				{
+					if( textureDx10Format == noCompressFormat )
+					{
+						noCompressInTobjToSet = true;
+					}
+				}
+
+				bool customColorSpaceInTobjToSet = false;
+				static const dds::dxgi_format linearColorSpaceFormats[] =
+				{
+					dds::dxgi_format::format_bc2_unorm,
+					dds::dxgi_format::format_bc3_unorm,
+					dds::dxgi_format::format_bc4_unorm,
+					dds::dxgi_format::format_bc4_snorm,
+					dds::dxgi_format::format_bc5_unorm,
+					dds::dxgi_format::format_bc5_snorm,
+					dds::dxgi_format::format_b8g8r8x8_unorm,
+					dds::dxgi_format::format_b8g8r8a8_unorm,
+					dds::dxgi_format::format_r8_unorm
+				};
+				for( dds::dxgi_format linearColorSpaceFormat : noCompressFormats )
+				{
+					if( textureDx10Format == linearColorSpaceFormat )
+					{
+						customColorSpaceInTobjToSet = true;
+					}
+				}
+
+				// workaround for SCS packer not writing m_custom_color_space when extracting files. It should be part of tobj extraction.
+				if( noCompressInTobjToSet || customColorSpaceInTobjToSet )
+				{
+					Array<u8> newTobjBuffer = tobjBuffer;
+					prism::tobj_header_t &newTobjHeader = *reinterpret_cast< prism::tobj_header_t * >( newTobjBuffer.data() );
+					newTobjHeader.m_custom_color_space = customColorSpaceInTobjToSet;
+					newTobjHeader.m_nocompress = noCompressInTobjToSet;
+					if( const auto newTobjFile = fileSystemToWriteTo.open( tobjFilePath, FileSystem::write | FileSystem::binary ) )
+					{
+						newTobjFile->blockWrite( newTobjBuffer.data(), newTobjBuffer.size() );
 					}
 				}
 			}

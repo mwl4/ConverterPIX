@@ -77,7 +77,7 @@ private:
 	u8 m_bias = 0;
 	bool m_noanisotropic = false;
 	bool m_nocompress = false;
-	bool m_customColorSpace = false;
+	bool m_customColorSpace = false; // linear color space
 
 	String m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
@@ -89,7 +89,7 @@ private:
 };
 
 bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
-bool convertTextureObjectToOldFormats( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
+bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
 
 extern bool s_ddsDxt10; // By default false, off. If turned on, DDS files will not be converted to non-DXT10 format.
 

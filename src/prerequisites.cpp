@@ -182,7 +182,7 @@ void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destinati
 		if( metaStat.m_meta.size() > 0 )
 		{
 			extractTextureObject( filePath, metaStat, destination );
-			convertTextureObjectToOldFormats( destination, filePath, destination );
+			convertTextureObjectToOldFormatsIfNeeded( destination, filePath, destination );
 			return;
 		}
 	}
