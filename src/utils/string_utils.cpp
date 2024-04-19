@@ -64,4 +64,14 @@ String removeExtension( const String &filePath )
     return filePath.substr( 0, dotPosition );
 }
 
+bool startsWith( const String &s, const String &prefix )
+{
+    if( prefix.length() > s.length() )
+    {
+        return false;
+    }
+
+    return memcmp( s.data(), prefix.data(), prefix.length() ) == 0;
+}
+
 /* eof */

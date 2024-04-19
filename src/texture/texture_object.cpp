@@ -78,16 +78,16 @@ bool TextureObject::loadPre( FileSystem *fs, String filepath )
 {
 	MemFileSystem memFileSystem;
 
-    UberFileSystem localUfs;
-    localUfs.mount( fs, 1 );
+	UberFileSystem localUfs;
+	localUfs.mount( fs, 1 );
 	localUfs.mount( &memFileSystem, 2 );
 
 	// Makes sure texture object is in proper format
-    if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, memFileSystem, false /* cannot be turned on, because it may overwrite files on disk */ ) )
-    {
-        printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
-        return false;
-    }
+	if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, memFileSystem, false /* cannot be turned on, because it may overwrite files on disk */ ) )
+	{
+		printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
+		return false;
+	}
 
 	return load( &localUfs, filepath );
 }
@@ -144,10 +144,11 @@ bool TextureObject::load( FileSystem *fs, String filepath )
 
 	loadDDS( fs, m_textures[ 0 ] );
 
-	if( !m_tsnormal && m_mipFilter == NOMIPS && m_customColorSpace && m_nocompress )
+	if( m_mipFilter == NOMIPS && m_nocompress && startsWith( filepath, "/material/ui/" ) )
 	{
 		m_ui = true;
 	}
+
 	return true;
 }
 
@@ -1045,7 +1046,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					dds::dxgi_format::format_b8g8r8a8_unorm,
 					dds::dxgi_format::format_r8_unorm
 				};
-				for( dds::dxgi_format linearColorSpaceFormat : noCompressFormats )
+				for( dds::dxgi_format linearColorSpaceFormat : linearColorSpaceFormats )
 				{
 					if( textureDx10Format == linearColorSpaceFormat )
 					{
