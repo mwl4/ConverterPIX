@@ -36,7 +36,7 @@ UberFileSystem::~UberFileSystem()
 
 String UberFileSystem::root() const
 {
-	return "/";
+	return "<ufs>/";
 }
 
 String UberFileSystem::name() const
@@ -44,17 +44,24 @@ String UberFileSystem::name() const
 	return "uberfs";
 }
 
-UniquePtr<File> UberFileSystem::open(const String &filename, FsOpenMode mode)
+UniquePtr<File> UberFileSystem::open(const String &filename, FsOpenMode mode, bool *outFileExists)
 {
 	for (auto it = m_filesystems.rbegin(); it != m_filesystems.rend(); ++it)
 	{
-		UniquePtr<File> file = (*it).second->open(filename, mode);
-		if (file)
+		bool fileExists = false;
+		UniquePtr<File> file = (*it).second->open( filename, mode, &fileExists );
+		if ( fileExists )
 		{
+			if( outFileExists ) *outFileExists = true;
 			return file;
 		}
 	}
 	return UniquePtr<File>();
+}
+
+bool UberFileSystem::remove( const String &filePath )
+{
+	return false;
 }
 
 bool UberFileSystem::mkdir(const String &directory)

@@ -33,10 +33,10 @@ class HashFsV2;
 class HashFsV2File : public File
 {
 public:
-    HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_t &plainMetaValues );
-    HashFsV2File( const HashFsV2File & ) = delete;
-    HashFsV2File( HashFsV2File && ) = delete;
-    virtual ~HashFsV2File();
+	HashFsV2File( const String &filepath, HashFsV2 *filesystem, const prism::hashfs_v2_entry_t *entry, const prism::fs_meta_plain_t &plainMetaValues );
+	HashFsV2File( const HashFsV2File & ) = delete;
+	HashFsV2File( HashFsV2File && ) = delete;
+	virtual ~HashFsV2File();
 
 	HashFsV2File &operator=(const HashFsV2File &) = delete;
 	HashFsV2File &operator=(HashFsV2File &&) = delete;
@@ -63,7 +63,7 @@ private:
 	uint64_t m_size = 0;
 	uint64_t m_deviceOffset = 0;
 
-    z_stream *m_zlibStream = nullptr;
+	z_stream *m_zlibStream = nullptr;
 
 private:
 	void zlibInflateInitialize();

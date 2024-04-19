@@ -87,6 +87,23 @@ String makeSlashAtEnd(const String &s)
 	return noneedslash ? s : s + '/';
 }
 
+String makeSlashAtBegin( const String &s )
+{
+    if( s.length() == 0 )
+    {
+        return "/";
+    }
+
+    if( s[ 0 ] == '/' || s[ 0 ] == '\\' )
+    {
+        return s;
+    }
+    else
+    {
+        return "/" + s;
+    }
+}
+
 String trimSlashesAtBegin(const String &s)
 {
 	size_t count = 0;
@@ -144,9 +161,9 @@ String valueToQuotedString(const char *const value)
 
 namespace prism
 {
-	u64 city_hash_64(const char *const data, size_t size)
+	u64 city_hash_64( const void *data, size_t size )
 	{
-		return CityHash64(data, size);
+		return CityHash64( static_cast<const char *>( data ), size );
 	}
 } // namespace prism
 
@@ -182,7 +199,7 @@ void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destinati
 
 	if( outputFile == nullptr )
 	{
-		printf( "Unable to open file for write: %s\n", ( destination.root() + filePath ).c_str() );
+		printf( "Unable to open file for write: %s\n", ( destination.root( filePath ) ).c_str() );
 		return;
 	}
 

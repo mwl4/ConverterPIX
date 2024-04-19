@@ -54,7 +54,7 @@ ZipFileSystem::~ZipFileSystem()
 
 String ZipFileSystem::root() const
 {
-	return m_rootFilename;
+	return m_rootFilename + "/";
 }
 
 String ZipFileSystem::name() const
@@ -62,7 +62,7 @@ String ZipFileSystem::name() const
 	return "zipfs";
 }
 
-UniquePtr<File> ZipFileSystem::open(const String &filename, FsOpenMode mode)
+UniquePtr<File> ZipFileSystem::open( const String &filename, FsOpenMode mode, bool *outFileExists )
 {
 	ZipEntry *const entry = findEntry(filename);
 	if (!entry)
@@ -70,7 +70,14 @@ UniquePtr<File> ZipFileSystem::open(const String &filename, FsOpenMode mode)
 		return UniquePtr<File>();
 	}
 
+	if( outFileExists ) *outFileExists = true;
+
 	return std::make_unique<ZipFsFile>(filename, this, entry);
+}
+
+bool ZipFileSystem::remove( const String &filePath )
+{
+	return false;
 }
 
 bool ZipFileSystem::mkdir(const String &directory)

@@ -26,7 +26,7 @@
 
 #include "structs/hashfs_0x02.h"
 
-class HashFsV2 : public FileSystem
+class HashFsV2 final : public FileSystem
 {
 public:
 	HashFsV2( const String &root );
@@ -39,7 +39,8 @@ public:
 
 	virtual String root() const override;
 	virtual String name() const override;
-	virtual UniquePtr<File> open( const String &filename, FsOpenMode mode ) override;
+	virtual UniquePtr<File> open( const String &filename, FsOpenMode mode, bool *outFileExists = nullptr ) override;
+	virtual bool remove( const String &filePath ) override;
 	virtual bool mkdir( const String &directory ) override;
 	virtual bool rmdir( const String &directory ) override;
 	virtual bool exists( const String &filename ) override;
@@ -47,7 +48,7 @@ public:
 	virtual UniquePtr<List<Entry>> readDir( const String &path, bool absolutePaths, bool recursive ) override;
 	virtual bool mstat( MetaStat *result, const String &path ) override;
 
-	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues ) override;
+	virtual UniquePtr<File> openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues, bool *outFileExists = nullptr ) override;
 
 	bool ioRead( void *const buffer, uint64_t bytes, uint64_t offset );
 

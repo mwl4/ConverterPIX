@@ -26,14 +26,18 @@
 
 #include "sysfs_file.h"
 
-SysFileSystem::SysFileSystem(const String &root)
-	: m_root(root)
+#include "utils/string_utils.h"
+
+SysFileSystem::SysFileSystem( const String &root )
+	: m_root( root )
 {
+	if( !m_root.empty() )
+	{
+		m_root = makeSlashAtEnd( m_root );
+	}
 }
 
-SysFileSystem::~SysFileSystem()
-{
-}
+SysFileSystem::~SysFileSystem() = default;
 
 String SysFileSystem::root() const
 {
@@ -45,69 +49,84 @@ String SysFileSystem::name() const
 	return "sysfs";
 }
 
-UniquePtr<File> SysFileSystem::open(const String &filename, FsOpenMode mode)
+UniquePtr<File> SysFileSystem::open( const String &filePath, FsOpenMode mode, bool *outFileExists )
 {
-    const String smode =
-        String( mode & read ? "r" : "" )
-        + ( mode & write ? "w" : "" )
-        + ( mode & append ? "a" : "" )
-        + ( mode & binary ? "b" : "" )
-        + ( mode & update ? "+" : "" );
+	const String builtFilePath = buildPath( filePath );
 
-    FILE *fp = fopen( ( m_root + filename ).c_str(), smode.c_str() );
-    if( !fp )
-    {
-        if( !dirExists( directory( filename ) ) && ( mode & write ) )
-        {
-            if( mkdir( directory( filename ) ) )
-            {
-                fp = fopen( ( m_root + filename ).c_str(), smode.c_str() );
-                if( !fp )
-                {
-                    return nullptr;
-                }
-            }
-            else
-            {
-                return nullptr;
-            }
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
+	if( outFileExists )
+	{
+		if( fileExistsStatic( builtFilePath ) )
+		{
+			*outFileExists = true;
+		}
+	}
 
-    auto file = std::make_unique<SysFsFile>();
-    file->m_fp = fp;
-    fseek( file->m_fp, 0, SEEK_SET );
-    return std::move( file );
+	const String smode =
+		String( mode & read ? "r" : "" )
+		+ ( mode & write ? "w" : "" )
+		+ ( mode & append ? "a" : "" )
+		+ ( mode & binary ? "b" : "" )
+		+ ( mode & update ? "+" : "" );
+
+	FILE *fp = fopen( builtFilePath.c_str(), smode.c_str() );
+	if( !fp )
+	{
+		if( !dirExists( directory( filePath ) ) && ( mode & write ) )
+		{
+			if( mkdir( directory( filePath ) ) )
+			{
+				fp = fopen( builtFilePath.c_str(), smode.c_str() );
+				if( !fp )
+				{
+					return nullptr;
+				}
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	auto file = std::make_unique<SysFsFile>();
+	file->m_fp = fp;
+	fseek( file->m_fp, 0, SEEK_SET );
+	return std::move( file );
+}
+
+bool SysFileSystem::remove( const String &filePath )
+{
+	return std::remove( buildPath( filePath ).c_str() ) == 0;
 }
 
 bool SysFileSystem::mkdir(const String &dir)
 {
-    String dirr( m_root + dir.c_str() );
-    std::replace_if( dirr.begin(), dirr.end(), []( char ch )->bool { return ch == '\\'; }, '/' );
+	String dirr( buildPath( dir ) );
+	std::replace_if( dirr.begin(), dirr.end(), []( char ch )->bool { return ch == '\\'; }, '/' );
 
-    if( dirExistsAbsolute( dirr.c_str() ) )
+	if( dirExistsStatic( dirr.c_str() ) )
 	{
-        return true;
-    }
-    dirr += '/';
-    for( size_t pos = dirr.find( '/', dirr.find( '/' ) + 1 ); pos != -1; pos = dirr.find( '/', pos + 1 ) )
-    {
-        if( !dirExistsAbsolute( dirr.substr( 0, pos ).c_str() ) )
-        {
-        #ifdef _WIN32
-            if( ::mkdir( dirr.substr( 0, pos ).c_str() ) != 0 )
-                return false;
-        #else
-            if( ::mkdir( dirr.substr( 0, pos ).c_str(), 0775 ) != 0 )
-                return false;
-        #endif
-        }
-    }
-    return true;
+		return true;
+	}
+	dirr += '/';
+	for( size_t pos = dirr.find( '/', dirr.find( '/' ) + 1 ); pos != -1; pos = dirr.find( '/', pos + 1 ) )
+	{
+		if( !dirExistsStatic( dirr.substr( 0, pos ).c_str() ) )
+		{
+		#ifdef _WIN32
+			if( ::mkdir( dirr.substr( 0, pos ).c_str() ) != 0 )
+				return false;
+		#else
+			if( ::mkdir( dirr.substr( 0, pos ).c_str(), 0775 ) != 0 )
+				return false;
+		#endif
+		}
+	}
+	return true;
 }
 
 bool SysFileSystem::rmdir(const String &directory)
@@ -115,31 +134,25 @@ bool SysFileSystem::rmdir(const String &directory)
 	return false;
 }
 
-bool SysFileSystem::exists(const String &filename)
+bool SysFileSystem::exists( const String &filename )
 {
-	FILE *fp = fopen((m_root + filename).c_str(), "rb");
-	if (fp)
-	{
-		fclose(fp);
-		return true;
-	}
-	return false;
+	return fileExistsStatic( buildPath( filename ) );
 }
 
-bool SysFileSystem::dirExists(const String &dirpath)
+bool SysFileSystem::dirExists( const String &dirpath )
 {
-	return dirExistsAbsolute( m_root + dirpath );
+	return dirExistsStatic( buildPath( dirpath ) );
 }
 
 auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool recursive) -> UniquePtr<List<Entry>>
 {
-	String directoryNoSlash = removeSlashAtEnd(directory);
+	const String directoryNoSlash = trimSlashesAtEnd( directory );
 
 #ifdef _WIN32
 	HANDLE dir;
 	WIN32_FIND_DATA fileData;
 
-	if ((dir = FindFirstFileA((m_root + directoryNoSlash + "/*").c_str(), &fileData)) == INVALID_HANDLE_VALUE)
+	if ((dir = FindFirstFileA((buildPath(directoryNoSlash) + "/*").c_str(), &fileData)) == INVALID_HANDLE_VALUE)
 		return UniquePtr<List<Entry>>();
 
 	auto result = std::make_unique<List<Entry>>();
@@ -173,7 +186,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 	struct dirent *ent;
 	struct stat st;
 
-	dir = opendir(directoryNoSlash.c_str());
+	dir = opendir(buildPath(directoryNoSlash).c_str());
 	while ((ent = readdir(dir)) != 0)
 	{
 		const String fileName = ent->d_name;
@@ -182,7 +195,7 @@ auto SysFileSystem::readDir(const String &directory, bool absolutePaths, bool re
 		if (fileName[0] == '.')
 			continue;
 
-		if (stat(fullFileName.c_str(), &st) == -1)
+		if (stat(buildPath(fullFileName).c_str(), &st) == -1)
 			continue;
 
 		const bool isDirectory = !!(st.st_mode & S_IFDIR);
@@ -220,10 +233,69 @@ String SysFileSystem::getError() const
 	return strerror(errno);
 }
 
-bool SysFileSystem::dirExistsAbsolute( const String &dirpath )
+/**
+ * Be aware that filePath might be not absolute path.
+ * Potentially, it can be absolute path, like:
+ *   (on linux) /home/some_directory/some_file
+ *   (on windows) C:\some_directory\some_file
+ * But it can be also relative path to current directory (cd):
+ *   some_directory/some_file
+ */
+bool SysFileSystem::fileExistsStatic( const String &builtFilePath )
 {
+	String filePathFinal = builtFilePath;
+#ifdef _WIN32
+	std::replace_if( filePathFinal.begin(), filePathFinal.end(), []( char ch )->bool { return ch == '/'; }, '\\' );
+	const DWORD attr = GetFileAttributesA( builtFilePath.c_str() );
+	return attr != INVALID_FILE_ATTRIBUTES && !( attr & FILE_ATTRIBUTE_DIRECTORY );
+#else
+	std::replace_if( filePathFinal.begin(), filePathFinal.end(), []( char ch )->bool { return ch == '\\'; }, '/' );
     struct stat buffer;
-    return ( stat( ( dirpath ).c_str(), &buffer ) == 0 && ( ( buffer.st_mode & S_IFDIR ) != 0 ) );
+    return ( stat( filePathFinal.c_str(), &buffer ) == 0 && ( ( buffer.st_mode & S_IFDIR ) == 0 ) );
+#endif
+}
+
+/**
+ * Be aware that dirPath might be not absolute path.
+ * Potentially, it can be absolute path, like:
+ *   (on linux) /home/some_directory/some_file
+ *   (on windows) C:\some_directory\some_file
+ * But it can be also relative path to current directory (cd):
+ *   some_directory/some_file
+ */
+bool SysFileSystem::dirExistsStatic( const String &builtDirPath )
+{
+    String dirPathFinal = builtDirPath;
+#ifdef _WIN32
+	std::replace_if( dirPathFinal.begin(), dirPathFinal.end(), []( char ch )->bool { return ch == '/'; }, '\\' );
+	const DWORD attr = GetFileAttributesA( dirPathFinal.c_str() );
+	return attr != INVALID_FILE_ATTRIBUTES && !!( attr & FILE_ATTRIBUTE_DIRECTORY );
+#else
+    std::replace_if( dirPathFinal.begin(), dirPathFinal.end(), []( char ch )->bool { return ch == '\\'; }, '/' );
+    struct stat buffer;
+    return ( stat( builtDirPath.c_str(), &buffer ) == 0 && ( ( buffer.st_mode & S_IFDIR ) != 0 ) );
+#endif
+}
+
+String SysFileSystem::buildPath( const String &path ) const
+{
+	// "" +	"some_file"  => "some_file"
+	// "" + "/some_file" => "/some_file"
+	// "" + "C:/some_file" => "C:/some_file"
+
+    // Special handling of global sys fs
+    if( m_root.empty() )
+    {
+        return path;
+    }
+
+	// "/" + "some_file"				=> "/some_file"
+	// "/" + "/some_file"				=> "/some_file"
+	// "some_dir/" + "some_file"		=> "some_dir/some_file"
+	// "some_dir/" + "/some_file"		=> "some_dir/some_file"
+	// "C:/some_dir/" + "some_file"		=> "C:/some_dir/some_file"
+	// "C:/some_dir/" + "/some_file"	=> "C:/some_dir/some_file"
+	return m_root + trimSlashesAtBegin( path );
 }
 
 /* eof */

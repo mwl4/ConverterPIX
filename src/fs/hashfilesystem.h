@@ -26,7 +26,7 @@
 
 #include <structs/hashfs.h>
 
-class HashFileSystem : public FileSystem
+class HashFileSystem final : public FileSystem
 {
 public:
 	HashFileSystem(const String &root);
@@ -39,7 +39,8 @@ public:
 
 	virtual String root() const override;
 	virtual String name() const override;
-	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) override;
+	virtual UniquePtr<File> open( const String &filename, FsOpenMode mode, bool *outFileExists = nullptr ) override;
+	virtual bool remove( const String &filePath ) override;
 	virtual bool mkdir(const String &directory) override;
 	virtual bool rmdir(const String &directory) override;
 	virtual bool exists(const String &filename) override;

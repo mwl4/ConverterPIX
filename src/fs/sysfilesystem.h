@@ -32,7 +32,8 @@ public:
 
 	virtual String root() const override;
 	virtual String name() const override;
-	virtual UniquePtr<File> open(const String &filename, FsOpenMode mode) override;
+	virtual UniquePtr<File> open( const String &filePath, FsOpenMode mode, bool *outFileExists = nullptr ) override;
+	virtual bool remove( const String &filePath ) override;
 	virtual bool mkdir(const String &directory) override;
 	virtual bool rmdir(const String &directory) override;
 	virtual bool exists(const String &filename) override;
@@ -43,10 +44,14 @@ public:
 	String getError() const;
 
 private:
-	static bool dirExistsAbsolute( const String &dirpath );
+	static bool fileExistsStatic( const String &builtFilePath );
+	static bool dirExistsStatic( const String &builtDirPath );
 
 private:
-	String m_root; // does not contain / at end
+	String buildPath( const String &path ) const;
+
+private:
+	String m_root; // if it is not empty, it must contain slash at the end
 };
 
 /* eof */

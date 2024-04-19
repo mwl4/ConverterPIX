@@ -51,7 +51,7 @@ HashFsV2::~HashFsV2() = default;
 
 String HashFsV2::root() const
 {
-	return m_rootFilename;
+	return m_rootFilename + "/";
 }
 
 String HashFsV2::name() const
@@ -59,13 +59,15 @@ String HashFsV2::name() const
 	return "hashfs_v2";
 }
 
-UniquePtr<File> HashFsV2::open( const String &filename, FsOpenMode mode )
+UniquePtr<File> HashFsV2::open( const String &filename, FsOpenMode mode, bool *outFileExists )
 {
 	prism::hashfs_v2_entry_t *const entry = findEntry( filename );
-	if( !entry )
+	if( entry == nullptr )
 	{
 		return nullptr;
 	}
+
+	if( outFileExists ) *outFileExists = true;
 
 	//if (entry->m_flags & HASHFS_ENCRYPTED)
 	//{
@@ -85,6 +87,11 @@ UniquePtr<File> HashFsV2::open( const String &filename, FsOpenMode mode )
 	prism::hashfs_v2_meta_plain_get_value( plainMetadata, plainMetaValues );
 
 	return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
+}
+
+bool HashFsV2::remove( const String &filePath )
+{
+	return false;
 }
 
 bool HashFsV2::mkdir( const String &directory )
@@ -256,13 +263,16 @@ bool HashFsV2::mstat( MetaStat *result, const String &path )
 	return true;
 }
 
-UniquePtr<File> HashFsV2::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues )
+UniquePtr<File> HashFsV2::openForReadingWithPlainMeta( const String &filename, const prism::fs_meta_plain_t &plainMetaValues, bool *outFileExists )
 {
 	prism::hashfs_v2_entry_t *const entry = findEntry( filename );
-	if( !entry )
+	if( entry == nullptr )
 	{
+		if( outFileExists ) *outFileExists = false;
 		return nullptr;
 	}
+
+	if( outFileExists ) *outFileExists = true;
 
 	return std::make_unique<HashFsV2File>( filename, this, entry, plainMetaValues );
 }

@@ -10,7 +10,7 @@ MemFileSystem::~MemFileSystem() = default;
 
 String MemFileSystem::root() const
 {
-    return fmt::sprintf( "memfs_%p", ( void* )this );
+    return fmt::sprintf( "<memfs_%p>/", ( void* )this );
 }
 
 String MemFileSystem::name() const
@@ -18,7 +18,7 @@ String MemFileSystem::name() const
     return "memfs";
 }
 
-UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode )
+UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode, bool *outFileExists )
 {
     assert( mode & binary ); // only binary mode is supported now
     assert( !( mode & update ) ); // update mode is not supported
@@ -27,6 +27,8 @@ UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode )
     {
         if( StoredEntry *const entry = findFileEntry( filename ) )
         {
+            if( outFileExists ) *outFileExists = true;
+
             if( entry->m_openedForWrite == false )
             {
                 return std::make_unique<MemFile>( entry, true );
@@ -38,6 +40,8 @@ UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode )
         bool created = false;
         if( StoredEntry *const entry = findOrCreateFileEntry( filename, &created ) )
         {
+            if( outFileExists ) *outFileExists = true;
+
             if( entry->m_openedForReadCount == 0 && entry->m_openedForWrite == false )
             {
                 if( created == false ) // clear file content if file was already there
@@ -53,6 +57,8 @@ UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode )
     {
         if( StoredEntry *const entry = findFileEntry( filename ) )
         {
+            if( outFileExists ) *outFileExists = true;
+
             if( entry->m_openedForReadCount == 0 && entry->m_openedForWrite == false )
             {
                 return std::make_unique<MemFile>( entry, false );
@@ -62,16 +68,19 @@ UniquePtr<File> MemFileSystem::open( const String &filename, FsOpenMode mode )
     return nullptr;
 }
 
+bool MemFileSystem::remove( const String &filePath )
+{
+    return false; // not supported
+}
+
 bool MemFileSystem::mkdir( const String &directory )
 {
-    assert( false ); // not supported
-    return false;
+    return false; // not supported
 }
 
 bool MemFileSystem::rmdir( const String &directory )
 {
-    assert( false ); // not supported
-    return false;
+    return false; // not supported
 }
 
 bool MemFileSystem::exists( const String &filename )
@@ -94,8 +103,7 @@ bool MemFileSystem::dirExists( const String &dirpath )
 
 auto MemFileSystem::readDir( const String &path, bool absolutePaths, bool recursive ) -> UniquePtr<List<Entry>>
 {
-    assert( false ); // not supported
-    return nullptr;
+    return nullptr; // not supported
 }
 
 bool MemFileSystem::mstat( MetaStat *result, const String &path )

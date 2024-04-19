@@ -153,7 +153,7 @@ namespace prism
 	class mat_sq_t;
 	class token_t;
 
-	u64 city_hash_64(const char *const data, size_t size);
+	u64 city_hash_64( const void *data, size_t size );
 } // namespace prism
 
 class FileSystem;
@@ -225,12 +225,46 @@ String removeSpaces(String str);
 String betweenQuotes(String str);
 void remove(String &str, const String &substr);
 
-String removeSlashAtEnd(const String &s);
-String removeSlashAtBegin(const String &s);
-String makeSlashAtEnd(const String &s);
+/**
+ * Removes exactly one slash or backslash from the end of string
+ * 
+ * "some_directory"   => "some_directory"
+ * "some_directory/"  => "some_directory"
+ * "some_directory//" => "some_directory/"
+ */
+String removeSlashAtEnd( const String &s );
 
-String trimSlashesAtBegin(const String &s);
-String trimSlashesAtEnd(const String &s);
+/**
+ * Removes exactly one slash or backslash at the beginning of string
+ *
+ * "some_directory"   => "some_directory"
+ * "some_directory/"  => "some_directory"
+ * "some_directory//" => "some_directory/"
+ */
+String removeSlashAtBegin( const String &s );
+
+/**
+ * Adds slash at the end of string if it is not there yet
+ * 
+ * "some_filename"   => "/some_filename"
+ * "/some_filename"  => /some_filename"
+ */
+String makeSlashAtEnd( const String &s );
+
+/**
+ * Adds slash at the beginning of string if it is not there yet
+ */
+String makeSlashAtBegin( const String &s );
+
+/**
+ * Removes slashes and backslashes at the beginning of string
+ */
+String trimSlashesAtBegin( const String &s );
+
+/**
+ * Removes slashes and backslashes from the end of string
+ */
+String trimSlashesAtEnd( const String &s );
 
 /**
  * @brief: Returns directory of the file
