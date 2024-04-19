@@ -11,12 +11,15 @@ INCLUDES=-I./
 INCLUDES+=-I./libs
 INCLUDES+=-I./libs/glm
 INCLUDES+=-I./libs/fmt/include
+INCLUDES+=-I./libs/GDeflate
 
 LDFLAGS=-g
 
 LIBS=./libs/libs/libfmt.a
 LIBS+=./libs/libs/libcityhash.a
 LIBS+=./libs/libs/libzlib.a
+LIBS+=./libs/libs/libGDeflate.a
+LIBS+=./libs/libs/libdeflate.a
 
 CXXSOURCE=$(wildcard *.cpp)
 CXXSOURCE+=$(wildcard fs/*.cpp)
