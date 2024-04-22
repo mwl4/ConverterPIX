@@ -688,14 +688,14 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 	}
 	else
 	{
-		error_f( "dds", textureFilePath, "File cannot be converted, as format %s(%u) is not supported!", outputFs.root( textureFilePath ), dds::stringize_dxgi_format( ddsFormat ), ( u32 )ddsFormat );
+		error_f( "dds", textureFilePath, "File cannot be converted, as format %s(%u) is not supported!", dds::stringize_dxgi_format( ddsFormat ), ( u32 )ddsFormat );
 		return false;
 	}
 
 	auto ddsFileOutput = outputFs.open( textureFilePath, FileSystem::write | FileSystem::binary );
 	if( !ddsFileOutput )
 	{
-		warning_f( "dds", textureFilePath, "Cannot open texture \'%s\' for write!", outputFs.root( textureFilePath ) );
+		warning( "dds", textureFilePath, "Cannot open texture for write!" );
 		return false;
 	}
 
