@@ -143,7 +143,8 @@ using Optional		= std::optional< T >;
 	inline enumClass operator|( enumClass a, enumClass b ) { return enumClass( static_cast<std::underlying_type_t<enumClass>>( a ) | static_cast<std::underlying_type_t<enumClass>>( b ) ); } \
 	inline enumClass &operator&=( enumClass &a, enumClass b ) { return a = a & b; } \
 	inline enumClass &operator|=( enumClass &a, enumClass b ) { return a = a | b; } \
-	inline bool operator!( enumClass a ) { return !static_cast<std::underlying_type_t<enumClass>>( a ); }
+	inline bool operator!( enumClass a ) { return !static_cast<std::underlying_type_t<enumClass>>( a ); } \
+	inline enumClass operator~( enumClass a ) { return enumClass( ~static_cast<std::underlying_type_t<enumClass>>( a ) ); }
 
 namespace prism
 {
@@ -363,5 +364,36 @@ const T &interpretBufferAt( const Container &container, const uint64_t offset, c
 
 	return *reinterpret_cast< const T * >( container.data() + offset );
 }
+
+template< typename T >
+class Span
+{
+public:
+	using element_type = T;
+	using value_type = std::remove_cv_t<T>;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using pointer = T *;
+	using const_pointer = const T *;
+	using reference = T &;
+	using const_reference = const T &;
+
+private:
+	pointer m_data = nullptr;
+	size_type m_size = 0;
+
+public:
+	constexpr Span() : m_data( nullptr ), m_size( 0 ) {}
+
+	constexpr Span( T *data, size_type size ) : m_data( data ), m_size( size ) {}
+
+	constexpr T *data() const noexcept { return m_data; }
+
+	constexpr size_type size() const noexcept { return m_size; }
+
+	constexpr size_type size_bytes() const noexcept { return m_size * sizeof( element_type ); }
+
+	[[nodiscard]] constexpr bool empty() const noexcept { return m_size == 0; }
+};
 
 /* eof */

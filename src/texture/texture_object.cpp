@@ -46,47 +46,64 @@ static String resolveTextureFilePath( String textureFilePath, String tobjFilePat
 	return textureFilePath[ 0 ] == '/' ? textureFilePath : directory( tobjFilePath ) + "/" + textureFilePath;
 }
 
+// Loads .tobj file from UFS, and prepares object to be written to mid formats (along with texture).
+// It is now pretty complicated, because:
+// Prior 1.50 tobj files are stored in HashFS_v1 or ZipFS or SysFS, where TOBJ and DDS files are simply stored as a files, and DDS is in non-DXT10 format, cubemap is individual 6 DDS files.
+// Since 1.50 tobj files can be stored in all file systems listed above + in HashFS_v2.
+// Texture object in HashFS_v2 is stored as single file, with extension .tobj, but it does not contain .tobj binary file anymore. It contains DDS bits only. All other properties are stored as metadata.
+// Additionally, cubemaps are packed together to just one DDS. In order to be able to load it all to Blender, we have to disassemble them into 6 individual DDS files.
+// We must also handle case, when files are extracted from HashFS_v2 with SCS Extractor, and loaded here from SysFS.
 bool TextureObject::load( String filepath )
 {
 	const Optional<String > extension = extractExtension( filepath );
-	assert( extension.has_value() && extension.value() == ".tobj" );
-
-	// extract and load from memory if needed
+	if( !extension.has_value() || extension.value() != ".tobj" )
 	{
-		MetaStat metaStat;
-		if( !getUFS()->mstat( &metaStat, filepath ) )
-		{
-			printf( "Unable to mstat file: %s\n", filepath.c_str() );
-			return false;
-		}
-		if( metaStat.m_meta.size() > 0 )
-		{
-			MemFileSystem memFileSystem;
-			if( !extractTextureObject( filepath, metaStat, memFileSystem, false /* cannot be turned on because of cubemap image duplication remover */ ) )
-			{
-				printf( "Unable to extract tobj: %s\n", filepath.c_str() );
-				return false;
-			}
-			return loadPre( &memFileSystem, filepath );
-		}
+		warning( "tobj", filepath, "This loader supports only .tobj files!" );
+		return false;
 	}
 
-	return loadPre( getUFS(), filepath );
+	return loadPreFirstStep( getUFS(), filepath );
 }
 
-bool TextureObject::loadPre( FileSystem *fs, String filepath )
+// In first step, we make sure TOBJ is extracted along with DDS files.
+bool TextureObject::loadPreFirstStep( FileSystem *fs, String filepath )
 {
-	MemFileSystem memFileSystem;
+	// extract and load from memory if needed
+	MetaStat metaStat;
+	if( !fs->mstat( &metaStat, filepath ) )
+	{
+		warning_f( "tobj", filepath, "Unable to mstat file!" );
+		return false;
+	}
+	if( metaStat.m_meta.size() > 0 )
+	{
+		MemFileSystem memFileSystem;
+		if( !extractTextureObject( filepath, metaStat, memFileSystem, false /* cannot be turned on because of cubemap image duplication remover */ ) )
+		{
+			warning_f( "tobj", filepath, "Unable to extract file!" );
+			return false;
+		}
+		return loadPreSecondStep( &memFileSystem, filepath );
+	}
 
+	return loadPreSecondStep( fs, filepath );
+}
+
+bool TextureObject::loadPreSecondStep( FileSystem *fs, String filepath )
+{
 	UberFileSystem localUfs;
 	localUfs.mount( fs, 1 );
-	localUfs.mount( &memFileSystem, 2 );
 
-	// Makes sure texture object is in proper format
-	if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, memFileSystem, false /* cannot be turned on, because it may overwrite files on disk */ ) )
 	{
-		printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
-		return false;
+		// mount temporary device to which we will write potential results
+		FileSystem &fsToWriteTo = *localUfs.mount( std::make_unique< MemFileSystem >(), 2 );
+
+		// Makes sure texture object is in proper format
+		if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, fsToWriteTo ) )
+		{
+			printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
+			return false;
+		}
 	}
 
 	return load( &localUfs, filepath );
@@ -146,7 +163,7 @@ bool TextureObject::load( FileSystem *fs, String filepath )
 
 	if( m_mipFilter == NOMIPS && m_nocompress && startsWith( filepath, "/material/ui/" ) )
 	{
-		m_ui = true;
+		m_usage = Usage::ui;
 	}
 
 	return true;
@@ -175,14 +192,14 @@ bool TextureObject::loadDDS( FileSystem *fs, String filepath )
 		error_f( "dds", filepath, "Invalid dds magic: %i expected: %i", magic, dds::MAGIC );
 		return false;
 	}
-	const dds::header *const header = &interpretBufferAt<dds::header>( buffer, sizeof( magic ) );
+	const dds::header &header = interpretBufferAt<dds::header>( buffer, sizeof( magic ) );
 
 	if( m_customColorSpace )
 	{
-		if( ( !!( header->m_pixel_format.m_flags & dds::pixel_flags::four_cc ) && header->m_pixel_format.m_four_cc == dds::COMPRESS_ATI2 )
-			|| ( header->m_pixel_format == dds::PIXEL_FORMAT_R16G16 ) )
+		if( ( !!( header.m_pixel_format.m_flags & dds::pixel_flags::four_cc ) && header.m_pixel_format.m_four_cc == dds::COMPRESS_ATI2 )
+			|| ( header.m_pixel_format == dds::PIXEL_FORMAT_R16G16 ) )
 		{
-			m_tsnormal = true;
+			m_usage = Usage::tsnormal;
 		}
 	}
 	return true;
@@ -241,17 +258,18 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		return "UNKNOWN";
 	};
 
-	Optional< MemFileSystem > inputOptionalFileSystem;
+	Optional< MemFileSystem > optionalExtractedTobjFs;
 	{
 		MetaStat metaStat;
 		if( !getUFS()->mstat( &metaStat, m_filepath ) )
 		{
+			warning_f( "tobj", m_filepath, "Unable to mstat file!" );
 			return false;
 		}
 		if( metaStat.m_meta.size() > 0 )
 		{
-			inputOptionalFileSystem.emplace();
-			if( !extractTextureObject( m_filepath, metaStat, inputOptionalFileSystem.value() ) )
+			optionalExtractedTobjFs.emplace();
+			if( !extractTextureObject( m_filepath, metaStat, optionalExtractedTobjFs.value() ) )
 			{
 				printf( "Unable to extract tobj: %s\n", m_filepath.c_str() );
 				return false;
@@ -259,12 +277,18 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		}
 	}
 
-	FileSystem *const inputFileSystem = inputOptionalFileSystem.has_value() ? as<FileSystem>( &inputOptionalFileSystem.value() ) : as<FileSystem>( getUFS() );
+	FileSystem *const inputFileSystem = optionalExtractedTobjFs.has_value() ? as<FileSystem>( &optionalExtractedTobjFs.value() ) : as<FileSystem>( getUFS() );
 
-	if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, *inputFileSystem ) )
+	UberFileSystem conversionLocalUfs;
+	conversionLocalUfs.mount( inputFileSystem, 1 );
 	{
-		printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
-		return false;
+		// mount temporary device to which we will write potential results
+		FileSystem &conversionFsToWriteTo = *conversionLocalUfs.mount( std::make_unique< MemFileSystem >(), 2 );
+		if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, conversionFsToWriteTo ) )
+		{
+			printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
+			return false;
+		}
 	}
 
 	*file << fmt::sprintf("map %s" SEOL, mapType(m_type).c_str());
@@ -272,7 +296,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 	{
 		*file << TAB << m_textures[i].c_str() << SEOL;
 
-		auto inputf = inputFileSystem->open(m_textures[i], FileSystem::read | FileSystem::binary);
+		auto inputf = conversionLocalUfs.open(m_textures[i], FileSystem::read | FileSystem::binary);
 		if (!inputf)
 		{
 			printf("Could not open file: \"%s\" to copy-read!\n", m_textures[i].c_str());
@@ -301,7 +325,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 	}
 	else
 	{
-		if (!m_ui && m_mipFilter == TextureObject::NOMIPS)
+		if ( m_usage != Usage::ui && m_mipFilter == TextureObject::NOMIPS)
 		{
 			*file << "nomips" << SEOL;
 		}
@@ -316,19 +340,19 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		*file << "noanisotropic" << SEOL;
 	}
 
-	if (!m_ui && m_nocompress)
+	if ( m_usage != Usage::ui && m_nocompress)
 	{
 		*file << "nocompress" << SEOL;
 	}
 
-	if (!m_tsnormal && !m_ui && m_customColorSpace)
+	if (m_usage == Usage::none && m_customColorSpace)
 	{
 		*file << "color_space linear" << SEOL;
 	}
 
-	if (m_tsnormal || m_ui)
+	if (m_usage != Usage::none)
 	{
-		*file << "usage " << (m_tsnormal ? "tsnormal" : "ui") << SEOL;
+		*file << "usage " << ( m_usage == Usage::tsnormal ? "tsnormal" : "ui") << SEOL;
 	}
 
 	if (m_bias != 0)
@@ -533,6 +557,39 @@ static Array<u8> convertImageBits_B8G8R8X8_To_B8G8R8( const u8 *bits, u32 bitsLe
 	return bitsConverted;
 }
 
+static Array<u8> convertImageBits_R9G9B9E5_SHAREDEXP_To_E5B9G9R9( const u8 *bits, u32 bitsLength, u32 width, u32 height, u32 facesCount, u32 imagesCount )
+{
+	auto bitsConverted = Array<u8>( static_cast< size_t >( bitsLength ) );
+	u32 currentOffset = 0;
+	u32 currentImageWidth = width, currentImageHeight = height;
+	for( u32 faceIndex = 0; faceIndex < facesCount; ++faceIndex )
+	{
+		for( u32 imageIndex = 0; imageIndex < imagesCount; ++imageIndex )
+		{
+			const u32 currentImagePixelsCount = currentImageWidth * currentImageHeight;
+			for( u32 donePixels = 0; donePixels < currentImagePixelsCount; ++donePixels )
+			{
+				const u32 bitsU32 = *reinterpret_cast<const u32 *>( &bits[ currentOffset ] );
+				u32 &bitsConvertedU32 = *reinterpret_cast<u32 *>( &bitsConverted[ currentOffset ] );
+				
+				//bitsConvertedU32 = ( ( ( bitsU32 >> 27 ) & 0b11111 )     << 0  ) | // E
+				//				     ( ( ( bitsU32 >> 18 ) & 0b111111111 ) << 5  ) | // B
+				//				     ( ( ( bitsU32 >> 9  ) & 0b111111111 ) << 14 ) | // G
+				//				     ( ( ( bitsU32 >> 0  ) & 0b111111111 ) << 23 );  // R
+
+				// Okay, that is really weird. Basing on all my experience, I should move bits around here.
+				// But basing on /asset/skybox/shared/grayscale.dds it is not really the case.
+				bitsConvertedU32 = bitsU32;
+
+				currentOffset += sizeof( u32 );
+			}
+			currentImageWidth = ( currentImageWidth > 1 ) ? currentImageWidth / 2 : 1;
+			currentImageHeight = ( currentImageHeight > 1 ) ? currentImageHeight / 2 : 1;
+		}
+	}
+	return bitsConverted;
+}
+
 bool getDDSBasicFormatInformation( FileSystem &inputFs, const String &textureFilePath, bool &outOldFormat, dds::dxgi_format &outDx10Format )
 {
 	auto ddsFile = inputFs.open( textureFilePath, FileSystem::read | FileSystem::binary );
@@ -541,31 +598,30 @@ bool getDDSBasicFormatInformation( FileSystem &inputFs, const String &textureFil
 		error( "dds", textureFilePath, "Cannot open texture object file" );
 		return false;
 	}
-	u32 magic = 0;
-	if( !ddsFile->blockRead( &magic, 0, sizeof( magic ) ) )
+	SizedArray<u8, sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 )> ddsHeaderBuffer;
+	const u64 ddsHeaderBufferSize = ddsFile->read( ddsHeaderBuffer.data(), sizeof( u8 ), ddsHeaderBuffer.size() );
+	if( ddsHeaderBufferSize < sizeof( u32 ) + sizeof( dds::header ) )
 	{
-		error( "dds", textureFilePath, "File is corrupted" );
+		error( "dds", textureFilePath, "File is corrupted: unable to read DDS magic + header!" );
 		return false;
 	}
+
+	const u32 magic = interpretBufferAt<u32>( ddsHeaderBuffer, 0 );
 	if( magic != dds::MAGIC )
 	{
 		error_f( "dds", textureFilePath, "Invalid DDS magic: %i expected: %i", magic, dds::MAGIC );
 		return false;
 	}
-	dds::header ddsHeader;
-	if( !ddsFile->blockRead( &ddsHeader, sizeof( magic ), sizeof( ddsHeader ) ) )
-	{
-		error( "dds", textureFilePath, "File is corrupted" );
-		return false;
-	}
+	const dds::header &ddsHeader = interpretBufferAt<dds::header>( ddsHeaderBuffer, sizeof( magic ) );
 	if( !!( ddsHeader.m_pixel_format.m_flags & dds::pixel_flags::four_cc ) && ddsHeader.m_pixel_format.m_four_cc == dds::DXT10 )
 	{
-		dds::header_dxt10 ddsHeaderDxt10;
-		if( !ddsFile->blockRead( &ddsHeaderDxt10, sizeof( magic ) + sizeof( ddsHeader ), sizeof( ddsHeaderDxt10 ) ) )
+		if( ddsHeaderBufferSize < sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 ) )
 		{
-			error( "dds", textureFilePath, "File is corrupted" );
+			error( "dds", textureFilePath, "File is corrupted: unable to read DDS DXT10 header!" );
 			return false;
 		}
+		const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsHeaderBuffer, sizeof( u32 ) + sizeof( dds::header ) );
+
 		outOldFormat = false;
 		outDx10Format = ddsHeaderDxt10.m_dxgi_format;
 	}
@@ -580,7 +636,7 @@ bool getDDSBasicFormatInformation( FileSystem &inputFs, const String &textureFil
 
 // Returns true if texture file has been converted, or if conversion was not needed
 // Returns false on failure
-bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePath, FileSystem &outputFs, bool ddsOnlyHeader )
+bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePath, FileSystem &outputFs )
 {
 	auto ddsFile = inputFs.open( textureFilePath, FileSystem::read | FileSystem::binary );
 	if( !ddsFile )
@@ -588,19 +644,23 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 		error( "dds", textureFilePath, "Cannot open texture object file" );
 		return false;
 	}
-	SizedArray<u8, sizeof( u32 ) + sizeof( dds::header )> ddsBufferHeader; // magic + header
-	if( !ddsFile->blockRead( ddsBufferHeader.data(), 0, ddsBufferHeader.size() ) )
+
+	constexpr static u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
+
+	Array<u8> ddsBuffer( static_cast<size_t>( ddsFile->size() ) );
+	if( !ddsFile->blockRead( ddsBuffer.data(), 0, ddsBuffer.size() ) )
 	{
-		error( "dds", textureFilePath, "File is corrupted" );
+		error( "dds", textureFilePath, "Unable to read file!" );
 		return false;
 	}
-	const u32 magic = interpretBufferAt<u32>( ddsBufferHeader, 0 );
+
+	const u32 magic = interpretBufferAt<u32>( ddsBuffer, 0 );
 	if( magic != dds::MAGIC )
 	{
 		error_f( "dds", textureFilePath, "Invalid DDS magic: %i expected: %i", magic, dds::MAGIC );
 		return false;
 	}
-	const dds::header &ddsHeader = interpretBufferAt<dds::header>( ddsBufferHeader, sizeof( magic ) );
+	const dds::header &ddsHeader = interpretBufferAt<dds::header>( ddsBuffer, sizeof( magic ) );
 	if( !( ddsHeader.m_pixel_format.m_flags & dds::pixel_flags::four_cc ) )
 	{
 		return true;
@@ -609,29 +669,15 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 	{
 		return true;
 	}
-	Array<u8> ddsBufferHeaderDxt10( static_cast< size_t >( sizeof( dds::header_dxt10 ) ) );
-	if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
-	{
-		error( "dds", textureFilePath, "File is corrupted" );
-		return false;
-	}
-	const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBufferHeaderDxt10, 0 );
+	const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBuffer, sizeof( u32 ) + sizeof( dds::header ) );
 
-	Array<u8> ddsBufferBits;
-	if( ddsOnlyHeader == false )
-	{
-		const u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
-		ddsBufferBits.resize( static_cast< size_t >( ddsFile->size() ) - allHeadersLength );
-		if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
-		{
-			error( "dds", textureFilePath, "File is corrupted" );
-			return false;
-		}
-	}
+	const Span<u8> ddsBufferBits = Span<u8>( ddsBuffer.data() + allHeadersLength, static_cast<size_t>( ddsBuffer.size() - allHeadersLength ) );
+
 	ddsFile.reset();
 
 	dds::header ddsHeaderConverted = ddsHeader;
 
+	ddsHeaderConverted.m_flags &= ~dds::header_flags::pitch;
 	ddsHeaderConverted.m_flags |= dds::header_flags::linearsize;
 	ddsHeaderConverted.m_pitch_or_linear_size = ddsHeaderConverted.m_width * ddsHeaderConverted.m_height;
 
@@ -673,10 +719,7 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 	else if( ddsFormat == dds::dxgi_format::format_b8g8r8x8_unorm_srgb || ddsFormat == dds::dxgi_format::format_b8g8r8x8_unorm )
 	{
 		ddsHeaderConverted.m_pixel_format = dds::PIXEL_FORMAT_B8G8R8;
-		if( ddsOnlyHeader == false )
-		{
-			ddsImagesBitsConverted = convertImageBits_B8G8R8X8_To_B8G8R8( ddsBufferBits.data(), ddsBufferBits.size(), ddsHeader.m_width, ddsHeader.m_height, facesStoredInDDS, imagesStoredInDDS );
-		}
+		ddsImagesBitsConverted = convertImageBits_B8G8R8X8_To_B8G8R8( ddsBufferBits.data(), ddsBufferBits.size(), ddsHeader.m_width, ddsHeader.m_height, facesStoredInDDS, imagesStoredInDDS );
 	}
 	else if( ddsFormat == dds::dxgi_format::format_b8g8r8a8_unorm_srgb || ddsFormat == dds::dxgi_format::format_b8g8r8a8_unorm )
 	{
@@ -686,9 +729,14 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 	{
 		ddsHeaderConverted.m_pixel_format = dds::PIXEL_FORMAT_R8;
 	}
+	else if( ddsFormat == dds::dxgi_format::format_r9g9b9e5_sharedexp )
+	{
+		ddsHeaderConverted.m_pixel_format = dds::PIXEL_FORMAT_E5B9G9R9;
+		ddsImagesBitsConverted = convertImageBits_R9G9B9E5_SHAREDEXP_To_E5B9G9R9( ddsBufferBits.data(), ddsBufferBits.size(), ddsHeader.m_width, ddsHeader.m_height, facesStoredInDDS, imagesStoredInDDS );
+	}
 	else
 	{
-		error_f( "dds", textureFilePath, "File cannot be converted, as format %s(%u) is not supported!", outputFs.root( textureFilePath ), dds::stringize_dxgi_format( ddsFormat ), ( u32 )ddsFormat );
+		error_f( "dds", textureFilePath, "File cannot be converted, as format %s(%u) is not supported!", dds::stringize_dxgi_format( ddsFormat ), ( u32 )ddsFormat );
 		return false;
 	}
 
@@ -706,24 +754,14 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 		return false;
 	}
 
-	if( ddsOnlyHeader == false )
+	const Span<u8> ddsImagesBitsToWrite = ddsImagesBitsConverted.has_value()
+		? Span<u8>( ddsImagesBitsConverted.value().data(), ddsImagesBitsConverted.value().size() )
+		: Span<u8>( ddsBufferBits.data(), ddsBufferBits.size() );
+
+	if( !ddsFileOutput->blockWrite( ddsImagesBitsToWrite.data(), ddsImagesBitsToWrite.size() ) )
 	{
-		if( ddsImagesBitsConverted.has_value() )
-		{
-			if( !ddsFileOutput->blockWrite( ddsImagesBitsConverted.value().data(), ddsImagesBitsConverted.value().size() ) )
-			{
-				warning_f( "dds", textureFilePath, "Write to file failed!" );
-				return false;
-			}
-		}
-		else
-		{
-			if( !ddsFileOutput->blockWrite( ddsBufferBits.data(), ddsBufferBits.size() ) )
-			{
-				warning_f( "dds", textureFilePath, "Write to file failed!" );
-				return false;
-			}
-		}
+		warning_f( "dds", textureFilePath, "Write to file failed!" );
+		return false;
 	}
 
 	return true;
@@ -742,7 +780,7 @@ Array<String> textureObjectReadTextures( const Array<u8> &tobjBuffer )
 	return texturesFilePaths;
 }
 
-bool disassembleCubemapTextureObject_DDS( FileSystem &inputFs, const String &tobjFilePath, const String &textureFilePath, FileSystem &outputFs, Array<String> &generatedTextureFilePath, bool ddsOnlyHeader )
+bool disassembleCubemapTextureObject_DDS( FileSystem &inputFs, const String &tobjFilePath, const String &textureFilePath, FileSystem &outputFs, Array<String> &generatedTextureFilePath )
 {
 	auto ddsFile = inputFs.open( resolveTextureFilePath( textureFilePath, tobjFilePath ), FileSystem::read | FileSystem::binary );
 	if( !ddsFile )
@@ -750,19 +788,22 @@ bool disassembleCubemapTextureObject_DDS( FileSystem &inputFs, const String &tob
 		error_f( "tobj", tobjFilePath, "dds \'%s\': Cannot open texture file!", inputFs.root( textureFilePath ) );
 		return false;
 	}
-	Array<u8> ddsBufferHeader( static_cast< size_t >( sizeof( u32 ) + sizeof( dds::header ) ) ); // magic + header
-	if( !ddsFile->blockRead( ddsBufferHeader.data(), 0, ddsBufferHeader.size() ) )
+
+	constexpr static u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
+
+	Array<u8> ddsBuffer( static_cast<size_t>( ddsFile->size() ) );
+	if( !ddsFile->blockRead( ddsBuffer.data(), 0, ddsBuffer.size() ) )
 	{
-		error_f( "tobj", tobjFilePath, "dds \'%s\': Unable to read DDS header!", textureFilePath );
+		error( "dds", textureFilePath, "Unable to read file!" );
 		return false;
 	}
-	const u32 magic = interpretBufferAt<u32>( ddsBufferHeader, 0 );
+	const u32 magic = interpretBufferAt<u32>( ddsBuffer, 0 );
 	if( magic != dds::MAGIC )
 	{
 		error_f( "tobj", tobjFilePath, "dds \'%s\': File has invalid magic: %i expected: %i!", textureFilePath, magic, dds::MAGIC );
 		return false;
 	}
-	const dds::header &ddsHeader = interpretBufferAt<dds::header>( ddsBufferHeader, sizeof( magic ) );
+	const dds::header &ddsHeader = interpretBufferAt<dds::header>( ddsBuffer, sizeof( magic ) );
 	if( !( ddsHeader.m_caps2 & dds::caps2::cubemap ) )
 	{
 		error_f( "tobj", tobjFilePath, "dds \'%s\': File is not cubemap!", textureFilePath );
@@ -783,21 +824,10 @@ bool disassembleCubemapTextureObject_DDS( FileSystem &inputFs, const String &tob
 		error_f( "tobj", tobjFilePath, "dds \'%s\': Only DX10 cubemap textures can be extracted", textureFilePath );
 		return false;
 	}
-	Array<u8> ddsBufferHeaderDxt10( static_cast< size_t >( sizeof( dds::header_dxt10 ) ) );
-	if( !ddsFile->blockRead( ddsBufferHeaderDxt10.data(), sizeof( u32 ) + sizeof( dds::header ), ddsBufferHeaderDxt10.size() ) )
-	{
-		error_f( "tobj", tobjFilePath, "dds \'%s\': Unable to read DXT10 header!", textureFilePath );
-		return false;
-	}
-	const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBufferHeaderDxt10, 0 );
+	const dds::header_dxt10 &ddsHeaderDxt10 = interpretBufferAt<dds::header_dxt10>( ddsBuffer, sizeof( magic ) + sizeof( ddsHeader ) );
 
-	const u32 allHeadersLength = sizeof( u32 ) + sizeof( dds::header ) + sizeof( dds::header_dxt10 );
-	Array<u8> ddsBufferBits( static_cast< size_t >( ddsFile->size() ) - allHeadersLength );
-	if( !ddsFile->blockRead( ddsBufferBits.data(), allHeadersLength, ddsBufferBits.size() ) )
-	{
-		error_f( "tobj", tobjFilePath, "dds: \'%s\': Unable to read bits!", textureFilePath );
-		return false;
-	}
+	const Span<u8> ddsBufferBits = Span<u8>( ddsBuffer.data() + allHeadersLength, static_cast< size_t >( ddsBuffer.size() - allHeadersLength ) );
+
 	ddsFile.reset();
 
 	constexpr u32 facesCount = 6;
@@ -873,27 +903,26 @@ bool disassembleCubemapTextureObject_DDS( FileSystem &inputFs, const String &tob
 			!ddsFileOutput->blockWrite( &ddsHeaderConverted, sizeof( ddsHeaderConverted ) ) ||
 			!ddsFileOutput->blockWrite( &ddsHeaderDxt10Converted, sizeof( ddsHeaderDxt10Converted ) ) )
 		{
-			warning_f( "tobj", tobjFilePath, "dds: \'%s\': Write to file failed!", currentTextureFilePath );
+			warning_f( "tobj", tobjFilePath, "dds: \'%s\': Write to file failed (headers)!", currentTextureFilePath );
+			return false;
 		}
-		if( ddsOnlyHeader == false )
+		if( !ddsFileOutput->blockWrite( ddsBufferBits.data() + faceBitsSize * faceIndex, faceBitsSize ) )
 		{
-			if( !ddsFileOutput->blockWrite( ddsBufferBits.data() + faceBitsSize * faceIndex, faceBitsSize ) )
-			{
-				warning_f( "tobj", tobjFilePath, "dds: \'%s\': Write to file failed!", currentTextureFilePath );
-			}
+			warning_f( "tobj", tobjFilePath, "dds: \'%s\': Write to file failed (bits)!", currentTextureFilePath );
+			return false;
 		}
 	}
 
 	return true;
 }
 
-bool disassembleCubemapTextureObject( FileSystem &inputFs, const String &tobjFilePath, const prism::tobj_header_t &tobjHeader, const String &textureFilePath, FileSystem &outputFs,
-									  Array<String> &generatedTextureFilePaths, bool ddsOnlyHeader )
+bool disassembleCubemapTextureObject( FileSystem &inputFs, const String &tobjFilePath, const prism::tobj_header_t &tobjHeader, const String &textureFilePath,
+									  FileSystem &outputFs, Array<String> &generatedTextureFilePaths )
 {
 	bool deassembleTextureSuccess = false;
 	if( extractExtension( textureFilePath ).value_or( "" ) == ".dds" )
 	{
-		deassembleTextureSuccess = disassembleCubemapTextureObject_DDS( inputFs, tobjFilePath, textureFilePath, outputFs, generatedTextureFilePaths, ddsOnlyHeader );
+		deassembleTextureSuccess = disassembleCubemapTextureObject_DDS( inputFs, tobjFilePath, textureFilePath, outputFs, generatedTextureFilePaths );
 	}
 	else
 	{
@@ -938,7 +967,7 @@ bool disassembleCubemapTextureObject( FileSystem &inputFs, const String &tobjFil
 // Additionally, we want to disassemble cubemap DDS into multiple simple DDS files, and TOBJ is modified accordingly.
 // Returns false if some error occurred.
 // Returns true even though conversion has been not made - because tobj+dds is already in the proper format.
-bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader )
+bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo )
 {
 	auto tobjFile = fs.open( tobjFilePath, FileSystem::read | FileSystem::binary );
 	if( !tobjFile )
@@ -970,7 +999,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 		const String &textureFilePath = texturesFilePaths[ 0 ];
 
 		Array<String> generatedTextureFilePaths;
-		if( !disassembleCubemapTextureObject( fs, tobjFilePath, tobjHeader, textureFilePath, fileSystemToWriteTo, generatedTextureFilePaths, ddsOnlyHeader ) )
+		if( !disassembleCubemapTextureObject( fs, tobjFilePath, tobjHeader, textureFilePath, fileSystemToWriteTo, generatedTextureFilePaths ) )
 		{
 			return false;
 		}
@@ -1009,7 +1038,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 			{
 				if( s_ddsDxt10 == false )
 				{
-					if( !convertDDSFromDX10Format( *textureToConvert.first, resolveTextureFilePath( textureToConvert.second, tobjFilePath ), fileSystemToWriteTo, ddsOnlyHeader ) )
+					if( !convertDDSFromDX10Format( *textureToConvert.first, resolveTextureFilePath( textureToConvert.second, tobjFilePath ), fileSystemToWriteTo ) )
 					{
 						error_f( "tobj", tobjFilePath, "Unable to convert DDS \'%s\' to non-DXT10 format.", textureToConvert.second );
 						return false;
@@ -1023,7 +1052,8 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					dds::dxgi_format::format_b8g8r8x8_unorm,
 					dds::dxgi_format::format_b8g8r8a8_unorm_srgb,
 					dds::dxgi_format::format_b8g8r8a8_unorm,
-					dds::dxgi_format::format_r8_unorm
+					dds::dxgi_format::format_r8_unorm,
+					dds::dxgi_format::format_r9g9b9e5_sharedexp,
 				};
 				for( dds::dxgi_format noCompressFormat : noCompressFormats )
 				{
@@ -1044,7 +1074,8 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					dds::dxgi_format::format_bc5_snorm,
 					dds::dxgi_format::format_b8g8r8x8_unorm,
 					dds::dxgi_format::format_b8g8r8a8_unorm,
-					dds::dxgi_format::format_r8_unorm
+					dds::dxgi_format::format_r8_unorm,
+					dds::dxgi_format::format_r9g9b9e5_sharedexp,
 				};
 				for( dds::dxgi_format linearColorSpaceFormat : linearColorSpaceFormats )
 				{

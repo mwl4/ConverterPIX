@@ -57,7 +57,8 @@ public:
 	bool saveToMidFormats( String exportpath );
 
 private:
-	bool loadPre( FileSystem *fs, String filepath );
+	bool loadPreFirstStep( FileSystem *fs, String filepath );
+	bool loadPreSecondStep( FileSystem *fs, String filepath );
 	bool load( FileSystem *fs, String filepath );
 	bool loadDDS( FileSystem *fs, String filepath );
 
@@ -83,14 +84,19 @@ private:
 	String m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
 
-	bool m_tsnormal = false;
-	bool m_ui = false;
+	enum class Usage
+	{
+		none = 0,
+		tsnormal = 1,
+		ui = 2
+	};
+	Usage m_usage = Usage::none;
 
 	friend Model;
 };
 
 bool extractTextureObject( const String &inputTobjFilePath, const class MetaStat &inputTobjMetaStat, class FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
-bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader = false );
+bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tobjFilePath, FileSystem &fileSystemToWriteTo );
 
 extern bool s_ddsDxt10; // By default false, off. If turned on, DDS files will not be converted to non-DXT10 format.
 

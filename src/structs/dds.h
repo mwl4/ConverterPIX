@@ -321,10 +321,14 @@ namespace dds
 	static constexpr named_pixel_format PIXEL_FORMAT_R8 =
 		{ { sizeof( pixel_format ), pixel_flags::rgb, 0, 8, 0x000000ff, 0x000000000, 0x00000000, 0x00000000 }, "R8" };
 
+	static constexpr named_pixel_format PIXEL_FORMAT_E5B9G9R9 =
+		{ { sizeof( pixel_format ), pixel_flags::rgba, 0, 32, 0xff800000, 0x007fc000, 0x00003fe0, 0x0000001f }, "E5B9G9R9" };
+
 	static constexpr named_pixel_format formats[] =
 	{
 		PIXEL_FORMAT_B8G8R8A8, PIXEL_FORMAT_B5G5R5A1, PIXEL_FORMAT_B4G4R4A4,
 		PIXEL_FORMAT_B8G8R8, PIXEL_FORMAT_B5G6R5, PIXEL_FORMAT_R16G16, PIXEL_FORMAT_R8,
+		PIXEL_FORMAT_E5B9G9R9,
 	};
 
 	inline const named_pixel_format *recognize_pixel_format( const pixel_format &pf )
