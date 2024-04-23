@@ -72,7 +72,7 @@ void print_help()
 }
 
 bool convertSingleModel(String filepath, String exportpath, Array<String> optionalArgs);
-bool convertWholeBase(String basepath, String exportpath);
+bool convertWholeBase(FileSystem *fs, String exportpath);
 
 int main(int argc, char *argv[])
 {
@@ -97,9 +97,10 @@ int main(int argc, char *argv[])
 	String exportpath;
 	String path;
 	bool listdir_r = false;
+	bool showElapsedTime = false;
 
 	enum {
-		DIRECTORY_LIST,
+		WHOLE_BASE,
 		SINGLE_MODEL,
 		SINGLE_TOBJ,
 		DEBUG_DDS,
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
 		EXTRACT_FILE,
 		EXTRACT_DIRECTORY,
 		LIST_DIR
-	} mode = DIRECTORY_LIST;
+	} mode = WHOLE_BASE;
 
 	String *parameter = nullptr;
 	Array<String> optionalArgs;
@@ -184,21 +185,30 @@ int main(int argc, char *argv[])
 		{
 			s_ddsDxt10 = true;
 		}
+		else if( arg == "-showElapsedTime" )
+		{
+			showElapsedTime = true;
+		}
 		else
 		{
 			optionalArgs.push_back(arg);
 		}
 	}
 
-	for (const auto &base : basepath)
-	{
-		static int priority = 1;
-		ufsMount(base, true, priority++);
-	}
+	Map<String, FileSystem *> mountedBases;
+
+	int ufsPriority = 1;
+
+    for( const String &base : basepath )
+    {
+        mountedBases[ base ] = ufsMount( base, true, ufsPriority++ );
+    }
 
 	long long startTime =
-		std::chrono::duration_cast<std::chrono::milliseconds>
+		std::chrono::duration_cast<std::chrono::microseconds>
 		(std::chrono::system_clock::now().time_since_epoch()).count();
+
+	int exitCode = 0;
 
 	switch (mode)
 	{
@@ -215,24 +225,30 @@ int main(int argc, char *argv[])
 			}
 			convertSingleModel(path, exportpath, optionalArgs);
 		} break;
-		case DIRECTORY_LIST:
+		case WHOLE_BASE:
 		{
-			if (optionalArgs.size() == 0)
+			if (optionalArgs.size() != 1)
 			{
 				error("system", "", "Invalid parameters!");
 				return 1;
 			}
-			if (basepath.empty())
+			const String &basePathToConvert = optionalArgs[ 0 ];
+			FileSystem *fsToConvert = nullptr;
+			auto baseToConvertIt = mountedBases.find( basePathToConvert );
+			if( baseToConvertIt == mountedBases.end() )
 			{
-				basepath.push_back(optionalArgs[0]);
-				static int priority = 1;
-				ufsMount(basepath[0], true, priority++);
+				basepath.push_back( basePathToConvert );
+				fsToConvert = mountedBases[ basePathToConvert ] = ufsMount( basePathToConvert, true, ufsPriority++ );
 			}
-			if (exportpath.empty())
+			else
 			{
-				exportpath = basepath[0] + "_exp";
+				fsToConvert = baseToConvertIt->second;
 			}
-			convertWholeBase(basepath[0], exportpath);
+			if( exportpath.empty() )
+			{
+				exportpath = basepath.back() + "_exp";
+			}
+			exitCode = convertWholeBase( fsToConvert, exportpath ) ? 0 : 1;
 		} break;
 		case SINGLE_TOBJ:
 		{
@@ -345,12 +361,15 @@ int main(int argc, char *argv[])
 	}
 
 	long long endTime =
-		std::chrono::duration_cast<std::chrono::milliseconds>
+		std::chrono::duration_cast<std::chrono::microseconds>
 		(std::chrono::system_clock::now().time_since_epoch()).count();
 
-	//printf("Time : %llums\n", endTime - startTime);
+	if( showElapsedTime )
+	{
+		printf( "Elapsed time: %lluus | %llums | %f s\n", endTime - startTime, ( endTime - startTime ) / 1000, static_cast<float>( endTime - startTime ) / 1000.f / 1000.f );
+	}
 
-	return 0;
+	return exitCode;
 }
 
 bool convertSingleModel(String filepath, String exportpath, Array<String> optionalArgs)
@@ -405,9 +424,9 @@ bool convertSingleModel(String filepath, String exportpath, Array<String> option
 	return true;
 }
 
-bool convertWholeBase(String basepath, String exportpath)
+bool convertWholeBase( FileSystem *fs, String exportpath )
 {
-	auto files = getSFS()->readDir(basepath, true, true);
+	auto files = fs->readDir("/", true, true);
 	if (!files)
 	{
 		printf("No files to convert!\n");
@@ -433,7 +452,7 @@ bool convertWholeBase(String basepath, String exportpath)
 		if (f.IsDirectory())
 			continue;
 
-		const String filename = f.GetPath().substr(basepath.length());
+		const String filename = f.GetPath();
 		const Optional<String> extension = extractExtension(f.GetPath());
 		if (extension == ".pmg")
 		{
@@ -465,7 +484,7 @@ bool convertWholeBase(String basepath, String exportpath)
 		}
 	}
 	printf("\nBase converted: %s\n", exportpath.c_str());
-	return false;
+	return true;
 }
 
 /* eof */
