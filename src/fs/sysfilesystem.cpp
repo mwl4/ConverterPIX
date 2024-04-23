@@ -69,14 +69,14 @@ UniquePtr<File> SysFileSystem::open( const String &filePath, FsOpenMode mode, bo
 		+ ( mode & update ? "+" : "" );
 
 	FILE *fp = fopen( builtFilePath.c_str(), smode.c_str() );
-	if( !fp )
+	if( ( mode & write ) && fp == nullptr )
 	{
-		if( !dirExists( directory( filePath ) ) && ( mode & write ) )
+		if( !dirExists( directory( filePath ) ) )
 		{
 			if( mkdir( directory( filePath ) ) )
 			{
 				fp = fopen( builtFilePath.c_str(), smode.c_str() );
-				if( !fp )
+				if( fp == nullptr )
 				{
 					return nullptr;
 				}
@@ -113,7 +113,7 @@ bool SysFileSystem::mkdir(const String &dir)
 		return true;
 	}
 	dirr += '/';
-	for( size_t pos = dirr.find( '/', dirr.find( '/' ) + 1 ); pos != -1; pos = dirr.find( '/', pos + 1 ) )
+	for( size_t pos = dirr.find( '/', 0 ); pos != -1; pos = dirr.find( '/', pos + 1 ) )
 	{
 		if( !dirExistsStatic( dirr.substr( 0, pos ).c_str() ) )
 		{
