@@ -50,7 +50,8 @@ private:
 	String			m_filepath;
 	HashFileSystem *m_filesystem;
 	z_stream		m_stream;
-	uint64_t		m_position;
+	u64				m_position = 0;
+	u64				m_positionCompressed = 0;
 
 	const prism::hashfs_entry_t *m_header;
 

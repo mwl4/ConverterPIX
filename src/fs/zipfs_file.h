@@ -48,7 +48,8 @@ private:
 	String			m_filepath;
 	ZipFileSystem * m_filesystem;
 	z_stream		m_stream;
-	uint64_t		m_position;
+	uint64_t		m_position = 0;
+	uint64_t		m_positionCompressed = 0;
 
 	const class ZipEntry *m_entry;
 

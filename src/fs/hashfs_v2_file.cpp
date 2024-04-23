@@ -112,16 +112,16 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 		uint8_t inbuffer[ chunk ];
 		uint64_t bufferOffset = 0;
 
-		while( m_position < m_compressedSize && bufferOffset < bytesCount )
+		while( m_positionCompressed < m_compressedSize && bufferOffset < bytesCount )
 		{
-			uint64_t left = m_compressedSize - m_position;
+			uint64_t left = m_compressedSize - m_positionCompressed;
 			uint64_t bytes = std::min( chunk, left );
 			if( bytes == 0 )
 			{
 				break;
 			}
 
-			if( !m_filesystem->ioRead( inbuffer, bytes, m_deviceOffset + m_position ) )
+			if( !m_filesystem->ioRead( inbuffer, bytes, m_deviceOffset + m_positionCompressed ) )
 			{
 				error( "hashfs_v2", m_filepath, "Unable to read from filesystem file" );
 				return 0;
@@ -144,8 +144,9 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 
 			uint64_t wroteToBuffer = ( bytesCount - bufferOffset ) - m_zlibStream->avail_out;
 			bufferOffset += wroteToBuffer;
+			m_position += wroteToBuffer;
 			assert( bufferOffset <= bytesCount );
-			m_position += ( bytes - m_zlibStream->avail_in );
+			m_positionCompressed += ( bytes - m_zlibStream->avail_in );
 		}
 		return bufferOffset;
 	}
@@ -166,6 +167,8 @@ uint64_t HashFsV2File::read( void *buffer, uint64_t elementSize, uint64_t elemen
 			error( "hashfs_v2", m_filepath, "GDeflate returned error!" );
 			return 0;
 		}
+
+		m_position += bytesCount;
 
 		return bytesCount;
 	}
@@ -203,11 +206,12 @@ bool HashFsV2File::seek( uint64_t offset, Attrib attr )
 	{
 		if( offset == 0 && attr == SeekSet )
 		{
-			if( m_position != 0 )
+			if( m_positionCompressed != 0 )
 			{
 				zlibInflateDestroy();
 				zlibInflateInitialize();
 			}
+			m_positionCompressed = 0;
 			return true;
 		}
 		return false; // random access is not allowed
@@ -216,11 +220,12 @@ bool HashFsV2File::seek( uint64_t offset, Attrib attr )
 	{
 		if( offset == 0 && attr == SeekSet )
 		{
-			if( m_position != 0 )
+			if( m_positionCompressed != 0 )
 			{
 				gdeflateDecompressorDestroy();
 				gdeflateDecompressorInitialize();
 			}
+			m_positionCompressed = 0;
 			return true;
 		}
 		return false; // random access is not allowed

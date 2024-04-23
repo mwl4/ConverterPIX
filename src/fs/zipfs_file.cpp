@@ -30,7 +30,6 @@ ZipFsFile::ZipFsFile(const String &filepath, ZipFileSystem *filesystem, const cl
 	: m_filepath(filepath)
 	, m_filesystem(filesystem)
 	, m_entry(entry)
-	, m_position(0)
 {
 	if (m_entry->m_compressed)
 	{
@@ -81,15 +80,15 @@ uint64_t ZipFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCou
 		uint8_t inbuffer[chunk];
 		uint64_t bufferOffset = 0;
 
-		while (m_position < m_entry->m_compressedSize && bufferOffset < (elementSize * elementCount))
+		while (m_positionCompressed < m_entry->m_compressedSize && bufferOffset < (elementSize * elementCount))
 		{
-			uint64_t left = m_entry->m_compressedSize - m_position;
+			uint64_t left = m_entry->m_compressedSize - m_positionCompressed;
 			uint64_t bytes = std::min(chunk, left);
 			if (bytes == 0) {
 				break;
 			}
 
-			if (!m_filesystem->ioRead(inbuffer, bytes, m_entry->m_offset + m_position))
+			if (!m_filesystem->ioRead(inbuffer, bytes, m_entry->m_offset + m_positionCompressed))
 			{
 				error("zipfs", m_filepath, "Unable to read from filesystem file");
 				return 0;
@@ -113,7 +112,7 @@ uint64_t ZipFsFile::read(void *buffer, uint64_t elementSize, uint64_t elementCou
 			uint64_t wroteToBuffer = ((elementSize * elementCount) - bufferOffset) - m_stream.avail_out;
 			bufferOffset += wroteToBuffer;
 			assert(bufferOffset <= (elementSize * elementCount));
-			m_position += (bytes - m_stream.avail_in);
+			m_positionCompressed += (bytes - m_stream.avail_in);
 		}
 		return bufferOffset;
 	}
@@ -130,11 +129,13 @@ bool ZipFsFile::seek(uint64_t offset, Attrib attr)
 	{
 		if (offset == 0 && attr == SeekSet)
 		{
-			if (m_position != 0)
+			if (m_positionCompressed != 0)
 			{
 				inflateDestroy();
 				inflateInitialize();
 			}
+			m_positionCompressed = 0;
+			m_position = 0;
 			return true;
 		}
 		return false; // random access is not allowed

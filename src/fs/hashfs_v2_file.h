@@ -57,7 +57,8 @@ private:
 	const prism::hashfs_v2_entry_t *m_entry;
 	prism::fs_compression_t m_compression = prism::fs_compression_t::nocompress;
 
-	uint64_t		m_position = 0;
+	u64 m_position = 0;
+	u64 m_positionCompressed = 0;
 
 	uint64_t m_compressedSize = 0;
 	uint64_t m_size = 0;
