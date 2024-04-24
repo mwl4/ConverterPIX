@@ -373,7 +373,7 @@ bool HashFsV2::readHashFS()
 
 	if( metadataTableSize == m_header.m_metadata_table_compressed_size )
 	{
-		if( !m_root->blockRead( m_metadataTable.data(), m_header.m_metadata_table_offset, m_metadataTable.size() ) )
+		if( !m_root->blockRead( m_metadataTable.data(), m_header.m_metadata_table_offset, metadataTableSize ) )
 		{
 			error( "hashfs_v2", m_rootFilename, "Failed to read metadata table!" );
 			return false;
