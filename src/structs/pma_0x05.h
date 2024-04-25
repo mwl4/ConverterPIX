@@ -33,17 +33,25 @@ namespace prism
 {
 	namespace pma_0x05
 	{
+		enum class pma_flags_t : u16
+		{
+			movement =		( 1 << 1 ),
+			rotation =		( 1 << 2 ),
+		};
+
+		CP_ENUM_CLASS_BITFIELD( pma_flags_t );
+
 		struct pma_header_t
 		{
 			u32 m_version;				// +0
 			u16 m_frames;				// +4
-			u16 m_flags;				// +6
+			pma_flags_t m_flags;		// +6
 			u32 m_bones;				// +8
-			u64 m_skeleton_hash;		// +12 cityhash64 of skeleton file name without path
-			float3 m_bsphere_org;		//+20
-			float m_bsphere_rad;		//+32
-			float3 m_bbox_min;			//+36
-			float3 m_bbox_max;			//+48
+			u64 m_skeleton_hash;		// +12 cityhash64 of skeleton file full path, for example: /vehicle/some_skeleton.pis
+			float3 m_bsphere_org;		// +20
+			float m_bsphere_rad;		// +32
+			float3 m_bbox_min;			// +36
+			float3 m_bbox_max;			// +48
 			float m_anim_length;		// +60
 			i32 m_lengths_offset;		// +64
 			i32 m_bones_offset;			// +68
@@ -52,7 +60,8 @@ namespace prism
 			i32 m_delta_rot_offset;		// +80
 
 			static const u32 SUPPORTED_VERSION = 0x05;
-		};	ENSURE_SIZE(pma_header_t, 84);
+
+		};	ENSURE_SIZE( pma_header_t, 84 );
 
 		struct pma_frame_t
 		{
@@ -60,7 +69,9 @@ namespace prism
 			quat_t m_rot;				// +16
 			float3 m_trans;				// +32
 			float3 m_scale;				// +44
-		};	ENSURE_SIZE(pma_frame_t, 56);
+
+		};	ENSURE_SIZE( pma_frame_t, 56 );
+
 	}; // namespace pma_0x05
 } // namespace prism
 

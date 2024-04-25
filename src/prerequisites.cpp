@@ -167,9 +167,9 @@ namespace prism
 	}
 } // namespace prism
 
-void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destination )
+void extractFile( FileSystem &fileSystem, const String &filePath, FileSystem &destination )
 {
-	const Optional<String > extension = extractExtension( filePath );
+	const Optional<StringView> extension = extractExtension( filePath );
 	if( extension.has_value() && extension.value() == ".tobj" )
 	{
         MetaStat metaStat;

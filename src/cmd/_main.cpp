@@ -32,6 +32,8 @@
 #include <fs/file.h>
 #include <fs/sysfilesystem.h>
 #include <fs/uberfilesystem.h>
+#include <structs/pmg_0x15.h>
+#include <structs/pma_0x05.h>
 
 #include <chrono>
 
@@ -50,7 +52,10 @@ void print_help()
 		   "              specifies export path\n"
 		   "\n"
 		   "  -m, --model <model_path> [<anim_path_1> <anim_path_2> <anim_path_3> ...]\n"
-		   "              mode: convert single model to mid-formats (model_path is relative to base)\n"
+		   "              mode: convert single model to mid-formats (model_path is relative to base, without extension)\n"
+		   "\n"
+		   "  --find-model-animations <model_path>\n"
+		   "              mode: finds and prints all matching animations file path to model (model_path is relative to base, without extension)\n"
 		   "\n"
 		   "  -t, --tobj <tobj_path>\n"
 		   "              mode: convert single tobj to mid-formats (tobj_path is relative to base)\n"
@@ -137,6 +142,7 @@ void print_help()
 
 bool convertSingleModel(String filepath, String exportpath, Array<String> optionalArgs);
 bool convertWholeBase(FileSystem *fs, String exportpath);
+bool printMatchingAnimations( String modelFilePath );
 
 int main(int argc, char *argv[])
 {
@@ -174,6 +180,7 @@ int main(int argc, char *argv[])
 		LIST_DIR,
 		CALC_CITYHASH64,
 		CALC_CITYHASH64_FILE,
+		FIND_MODEL_ANIMATIONS,
 	} mode = WHOLE_BASE;
 
 	String *parameter = nullptr;
@@ -215,6 +222,11 @@ int main(int argc, char *argv[])
 		else if( arg == "-d" || arg == "--debug-dds" )
 		{
 			mode = DEBUG_DDS;
+			parameter = &path;
+		}
+		else if( arg == "--find-model-animations" )
+		{
+			mode = FIND_MODEL_ANIMATIONS;
 			parameter = &path;
 		}
 		else if( arg == "-extract_f" || arg == "--extract-file" )
@@ -459,6 +471,10 @@ int main(int argc, char *argv[])
 				printf( "Unable to open file \'%s\'!\n", path.c_str() );
 			}
 		} break;
+		case FIND_MODEL_ANIMATIONS:
+		{
+			exitCode = printMatchingAnimations( path ) ? 0 : 1;
+		} break;
 	}
 
 	long long endTime =
@@ -540,7 +556,7 @@ bool convertWholeBase( FileSystem *fs, String exportpath )
 		if (f.IsDirectory())
 			continue;
 
-		const Optional<String> extension = extractExtension(f.GetPath());
+		const Optional<StringView> extension = extractExtension(f.GetPath());
 		if (extension.has_value() && (extension.value() == ".pmg" || extension.value() == ".tobj"))
 		{
 			++size;
@@ -554,7 +570,7 @@ bool convertWholeBase( FileSystem *fs, String exportpath )
 			continue;
 
 		const String filename = f.GetPath();
-		const Optional<String> extension = extractExtension(f.GetPath());
+		const Optional<StringView> extension = extractExtension(f.GetPath());
 		if (extension == ".pmg")
 		{
 			const String modelPath = filename.substr(0, filename.length() - 4);
@@ -585,6 +601,85 @@ bool convertWholeBase( FileSystem *fs, String exportpath )
 		}
 	}
 	printf("\nBase converted: %s\n", exportpath.c_str());
+	return true;
+}
+
+bool printMatchingAnimations( String modelFilePath )
+{
+	u64 skeletonHash = 0;
+	{
+		const String modelGeomFilePath = modelFilePath + ".pmg";
+		const UniquePtr<File> modelGeomFile = getUFS()->open( modelGeomFilePath, FileSystem::read | FileSystem::binary );
+		if( modelGeomFile == nullptr )
+		{
+			printf( "Unable to open model file \'%s\'!\n", modelGeomFilePath.c_str() );
+			return false;
+		}
+		prism::pmg_0x15::pmg_header_t header;
+		if( !modelGeomFile->blockRead( &header, 0, sizeof( header ) ) )
+		{
+			printf( "Unable to read model file \'%s\'!\n", modelGeomFilePath.c_str() );
+			return false;
+		}
+		if( !( header.m_signature[ 2 ] == 'P' && header.m_signature[ 1 ] == 'm' && header.m_signature[ 0 ] == 'g' ) )
+		{
+			printf( "Model geometry file \'%s\' has invalid signature!\n", modelGeomFilePath.c_str() );
+			return false;
+		}
+		if( header.m_version != header.SUPPORTED_VERSION )
+		{
+			printf( "Model geometry file \'%s\' is in unexpected version (%u/%u)!\n", modelGeomFilePath.c_str(), header.m_version, header.SUPPORTED_VERSION );
+			return false;
+		}
+		skeletonHash = header.m_skeleton_hash;
+	}
+
+	if( skeletonHash == 0 )
+	{
+		printf( "Model \'%s\' does not have skeleton!\n", modelFilePath.c_str() );
+		return false;
+	}
+
+	const auto entries = getUFS()->readDir( "/", true, true );
+	if( entries == nullptr )
+	{
+		printf( "Unable to list root directory recursively!\n" );
+		return false;
+	}
+
+	for( const FileSystem::Entry &entry : *entries )
+	{
+		if( entry.IsDirectory() )
+		{
+			continue;
+		}
+
+		const String &filePath = entry.GetPath();
+
+		const Optional<StringView> extension = extractExtension( filePath );
+		if( extension.has_value() && extension.value() == ".pma" )
+		{
+			const UniquePtr<File> animationFile = getUFS()->open( filePath, FileSystem::read | FileSystem::binary );
+			if( animationFile == nullptr )
+			{
+				continue;
+			}
+			prism::pma_0x05::pma_header_t header;
+			if( !animationFile->blockRead( &header, 0, sizeof( header ) ) )
+			{
+				continue;
+			}
+			if( header.m_version != header.SUPPORTED_VERSION )
+			{
+				continue;
+			}
+			if( header.m_skeleton_hash == skeletonHash )
+			{
+				printf( "%s\n", filePath.c_str() );
+			}
+		}
+	}
+
 	return true;
 }
 

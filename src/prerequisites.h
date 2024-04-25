@@ -109,6 +109,8 @@ using Pair			= std::pair<FIRST, SECOND>;
 template< typename T >
 using Optional		= std::optional< T >;
 
+using StringView	= std::string_view;
+
 #include <callbacks.h>
 
 #define TAB		"     "
@@ -346,7 +348,7 @@ P alignForward( P pointer, A alignment )
 const uint32_t TEXTURE_DATA_PITCH_ALIGNMENT =       256; // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
 const uint32_t TEXTURE_DATA_PLACEMENT_ALIGNMENT =   512; // D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT
 
-void extractFile( FileSystem &fileSystem, String filePath, FileSystem &destination );
+void extractFile( FileSystem &fileSystem, const String &filePath, FileSystem &destination );
 
 template< typename T1, typename T2 >
 T1 *as( T2 *p )
@@ -363,6 +365,16 @@ const T &interpretBufferAt( const Container &container, const uint64_t offset, c
 	assert( size_t( offset + count * sizeof( T ) ) <= container.size() );
 
 	return *reinterpret_cast< const T * >( container.data() + offset );
+}
+
+template< typename T, typename Container >
+T &interpretBufferAt( Container &container, const uint64_t offset, const uint64_t count = 1 )
+{
+    static_assert( std::is_same_v< typename Container::value_type, u8 >, "value type should be u8!" );
+
+    assert( size_t( offset + count * sizeof( T ) ) <= container.size() );
+
+    return *reinterpret_cast< T * >( container.data() + offset );
 }
 
 template< typename T >

@@ -37,39 +37,56 @@
 
 using namespace prism;
 
+inline static u64 getSkeletonHashFromHeader( const pma_0x03::pma_header_t &header ) { return 0; }
+inline static u64 getSkeletonHashFromHeader( const pma_0x04::pma_header_t &header ) { return header.m_skeleton_hash; }
+inline static u64 getSkeletonHashFromHeader( const pma_0x05::pma_header_t &header ) { return header.m_skeleton_hash; }
+
 template<typename pma_header_t, typename pma_frame_t>
-bool Animation::loadAnim(const uint8_t *const buffer, const size_t size)
+bool Animation::loadAnim( Span<u8> buffer )
 {
-	pma_header_t *header = (pma_header_t *)(buffer);
+	using pma_flags_t = decltype( pma_header_t::m_flags );
 
-	m_totalLength = header->m_anim_length;
+	pma_header_t &header = interpretBufferAt<pma_header_t>( buffer, 0 );
 
-	m_bones.resize(header->m_bones);
-	m_frames.resize(header->m_bones);
-	m_timeframes.resize(header->m_frames);
+	m_skeletonHash = getSkeletonHashFromHeader( header );
 
-	for (uint32_t i = 0; i < m_bones.size(); ++i)
+	m_totalLength = header.m_anim_length;
+
+	m_bones.resize( header.m_bones );
+	m_frames.resize( header.m_bones );
+	m_timeframes.resize( header.m_frames );
+
+	for( u32 frameIndex = 0; frameIndex < header.m_frames; ++frameIndex )
 	{
-		m_bones[i] = *(uint8_t *)(buffer + header->m_bones_offset + i*sizeof(uint8_t));
-		m_frames[i].resize(header->m_frames);
-		for (uint32_t j = 0; j < header->m_frames; ++j)
+		m_timeframes[ frameIndex ] = interpretBufferAt<float>( buffer, header.m_lengths_offset + frameIndex * sizeof( float ) );
+	}
+
+	for( u32 i = 0; i < m_bones.size(); ++i )
+	{
+		m_bones[ i ] = interpretBufferAt<BoneIndex>( buffer, header.m_bones_offset + i * sizeof( u8 ) );
+
+		Array<Frame> &destBoneFrameArray = m_frames[ i ];
+		destBoneFrameArray.resize( header.m_frames );
+
+		for( u32 frameIndex = 0; frameIndex < header.m_frames; ++frameIndex )
 		{
-			pma_frame_t *frame = (pma_frame_t *)(buffer + header->m_frames_offset + i*sizeof(pma_frame_t) + j*m_bones.size()*sizeof(pma_frame_t));
-			if(i == 0) m_timeframes[j] = *(float *)(buffer + header->m_lengths_offset + j * sizeof(float));
-			m_frames[i][j].m_scaleOrientation = frame->m_scale_orient;
-			m_frames[i][j].m_rotation = frame->m_rot;
-			m_frames[i][j].m_translation = frame->m_trans;
-			m_frames[i][j].m_scale = frame->m_scale;
+			pma_frame_t &frame = interpretBufferAt<pma_frame_t>( buffer, header.m_frames_offset + i * sizeof( pma_frame_t ) + frameIndex * m_bones.size() * sizeof( pma_frame_t ) );
+			Frame &destBoneFrame = destBoneFrameArray[ frameIndex ];
+			destBoneFrame.m_scaleOrientation = frame.m_scale_orient;
+			destBoneFrame.m_rotation = frame.m_rot;
+			destBoneFrame.m_translation = frame.m_trans;
+			destBoneFrame.m_scale = frame.m_scale;
 		}
 	}
 
-	if (header->m_flags == 2)
+	if( !!( header.m_flags & pma_flags_t::movement ) )
 	{
-		m_movement = std::make_unique<Array<Float3>>(header->m_frames);
-		for (u32 i = 0; i < header->m_frames; ++i)
+		Array<Float3> movement( static_cast<size_t>( header.m_frames ) );
+		for( u32 frameIndex = 0; frameIndex < header.m_frames; ++frameIndex )
 		{
-			(*m_movement)[i] = *((float3 *)(buffer + header->m_delta_trans_offset) + i);
+			movement[ frameIndex ] = interpretBufferAt<Float3>( buffer, header.m_delta_trans_offset + frameIndex * sizeof( Float3 ) );
 		}
+		m_movement = std::make_unique<Array<Float3>>( std::move( movement ) );
 	}
 
 	return true;
@@ -101,20 +118,24 @@ bool Animation::load(SharedPtr<Model> model, String filePath)
 		return false;
 	}
 
-	size_t fileSize = static_cast<size_t>(file->size());
-	UniquePtr<uint8_t[]> buffer(new uint8_t[fileSize]);
-	file->read((char *)buffer.get(), sizeof(uint8_t), fileSize);
+	const size_t fileSize = static_cast<size_t>( file->size() );
+	UniquePtr<u8[]> buffer( new u8[ fileSize ] );
+	file->read( buffer.get(), sizeof( u8 ), fileSize );
 	file.reset();
 
-	switch ((u8)buffer.get()[0])
+	const Span<u8> bufferSpan( buffer.get(), fileSize );
+
+	const u32 pmaVersion = interpretBufferAt<u32>( bufferSpan, 0 );
+
+	switch( pmaVersion )
 	{
-		case 0x03: return loadAnim<pma_0x03::pma_header_t, pma_0x03::pma_frame_t>(buffer.get(), fileSize);
-		case 0x04: return loadAnim<pma_0x04::pma_header_t, pma_0x04::pma_frame_t>(buffer.get(), fileSize);
-		case 0x05: return loadAnim<pma_0x05::pma_header_t, pma_0x05::pma_frame_t>(buffer.get(), fileSize);
+		case pma_0x03::pma_header_t::SUPPORTED_VERSION: return loadAnim<pma_0x03::pma_header_t, pma_0x03::pma_frame_t>( bufferSpan );
+		case pma_0x04::pma_header_t::SUPPORTED_VERSION: return loadAnim<pma_0x04::pma_header_t, pma_0x04::pma_frame_t>( bufferSpan );
+		case pma_0x05::pma_header_t::SUPPORTED_VERSION: return loadAnim<pma_0x05::pma_header_t, pma_0x05::pma_frame_t>( bufferSpan );
 	}
 
-	error_f("animation", m_filePath, "Invalid version of the file (have: %i, expected: %i, %i or %i)",
-		buffer.get()[0], pma_0x03::pma_header_t::SUPPORTED_VERSION, pma_0x04::pma_header_t::SUPPORTED_VERSION, pma_0x05::pma_header_t::SUPPORTED_VERSION);
+	error_f( "animation", m_filePath, "Invalid version of the file (have: %u, expected: %u, %u or %u)",
+			 pmaVersion, pma_0x03::pma_header_t::SUPPORTED_VERSION, pma_0x04::pma_header_t::SUPPORTED_VERSION, pma_0x05::pma_header_t::SUPPORTED_VERSION );
 
 	return false;
 }

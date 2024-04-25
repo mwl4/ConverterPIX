@@ -43,7 +43,7 @@ namespace prism
 			i32 m_bone_count;							// +12
 			i32 m_weight_width;							// +16
 			i32 m_locator_count;						// +20
-			u64 m_skeleton_hash;						// +24 cityhash64 of skeleton file name without path
+			u64 m_skeleton_hash;						// +24 cityhash64 of skeleton file full path, for example: /vehicle/some_skeleton.pis
 			float3 m_bb_center;							// +32
 			float m_bb_diagonal_size;					// +44
 			aabox_t m_bb;								// +48

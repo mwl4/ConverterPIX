@@ -33,12 +33,20 @@ namespace prism
 {
 	namespace pma_0x03
 	{
+		enum class pma_flags_t : u16
+		{
+			movement =		( 1 << 1 ),
+			rotation =		( 1 << 2 ),
+		};
+
+		CP_ENUM_CLASS_BITFIELD( pma_flags_t );
+
 		struct pma_header_t
 		{
 			u32 m_version;				// +0
 			token_t m_name;				// +4
 			u16 m_frames;				// +12
-			u16 m_flags;				// +14
+			pma_flags_t m_flags;		// +14
 			u32 m_bones;				// +16
 			float m_anim_length;		// +20
 			i32 m_lengths_offset;		// +24
@@ -48,7 +56,8 @@ namespace prism
 			i32 m_delta_rot_offset;		// +40
 
 			static const u32 SUPPORTED_VERSION = 0x03;
-		};	ENSURE_SIZE(pma_header_t, 44);
+
+		};	ENSURE_SIZE( pma_header_t, 44 );
 
 		struct pma_frame_t
 		{
@@ -56,7 +65,8 @@ namespace prism
 			quat_t m_rot;				// +16
 			float3 m_trans;				// +32
 			float3 m_scale;				// +44
-		};	ENSURE_SIZE(pma_frame_t, 56);
+
+		};	ENSURE_SIZE( pma_frame_t, 56 );
 	}; // namespace pma_0x03
 } // namespace prism
 

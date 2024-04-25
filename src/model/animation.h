@@ -39,16 +39,23 @@ public:
 		friend Animation;
 	};
 
+	using BoneIndex = u8;
+
 public:
-	bool load(SharedPtr<Model> model, String filePath);
-  
-  template<typename pma_header_t, typename pma_frame_t>
-  bool loadAnim(const uint8_t *const buffer, const size_t size);
-  void saveToPia(String exportPath) const;
+	bool load( SharedPtr<Model> model, String filePath );
+
+	void saveToPia( String exportPath ) const;
+
+	u64 getSkeletonHash() const { return m_skeletonHash; }
 
 private:
+	template< typename pma_header_t, typename pma_frame_t >
+	bool loadAnim( Span<u8> buffer );
+
+private:
+	u64 m_skeletonHash = 0;
 	float m_totalLength = 0.f;
-	Array<uint8_t> m_bones;
+	Array<BoneIndex> m_bones;
 	Array<Array<Frame>> m_frames; // @[bone][frame]
 	Array<float> m_timeframes;
 	UniquePtr<Array<Float3>> m_movement;

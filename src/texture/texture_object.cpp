@@ -55,7 +55,7 @@ static String resolveTextureFilePath( String textureFilePath, String tobjFilePat
 // We must also handle case, when files are extracted from HashFS_v2 with SCS Extractor, and loaded here from SysFS.
 bool TextureObject::load( String filepath )
 {
-	const Optional<String > extension = extractExtension( filepath );
+	const Optional<StringView> extension = extractExtension( filepath );
 	if( !extension.has_value() || extension.value() != ".tobj" )
 	{
 		warning( "tobj", filepath, "This loader supports only .tobj files!" );
@@ -368,7 +368,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 
 bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inputTobjMetaStat, FileSystem &fileSystemToWriteTo, const bool ddsOnlyHeader )
 {
-	const Optional<String> inputTobjFilePathExtension = extractExtension( inputTobjFilePath );
+	const Optional<StringView> inputTobjFilePathExtension = extractExtension( inputTobjFilePath );
 	if( inputTobjFilePathExtension == std::nullopt || inputTobjFilePathExtension.value() != ".tobj" )
 	{
 		return false;

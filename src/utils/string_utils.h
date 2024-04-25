@@ -22,7 +22,7 @@
 
 #pragma once
 
-Optional<String> extractExtension(const String &filePath);
+Optional<StringView> extractExtension(const StringView &filePath);
 
 String removeExtension( const String &filePath );
 

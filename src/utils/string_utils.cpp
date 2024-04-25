@@ -24,13 +24,13 @@
 
 #include "string_utils.h"
 
-Optional<String> extractExtension( const String &filePath )
+Optional<StringView> extractExtension( const StringView &filePath )
 {
     const size_t dotPosition = filePath.rfind( '.' );
 
     if( dotPosition == String::npos )
     {
-        return Optional<String>();
+        return std::nullopt;
     }
 
     // We need to ensure that dot is part of file name
@@ -38,10 +38,10 @@ Optional<String> extractExtension( const String &filePath )
 
     if( lastBackOrForwardSlashPosition != String::npos && dotPosition < lastBackOrForwardSlashPosition )
     {
-        return Optional<String>();
+        return std::nullopt;
     }
 
-    return Optional<String>( filePath.substr( dotPosition ) );
+    return Optional<StringView>( filePath.substr( dotPosition ) );
 }
 
 String removeExtension( const String &filePath )
