@@ -92,6 +92,11 @@ UniquePtr<File> SysFileSystem::open( const String &filePath, FsOpenMode mode, bo
 		}
 	}
 
+	if( fp == nullptr )
+	{
+		return nullptr;
+	}
+
 	auto file = std::make_unique<SysFsFile>();
 	file->m_fp = fp;
 	fseek( file->m_fp, 0, SEEK_SET );
