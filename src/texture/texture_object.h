@@ -79,7 +79,7 @@ private:
 	u8 m_bias = 0;
 	bool m_noanisotropic = false;
 	bool m_nocompress = false;
-	bool m_customColorSpace = false; // linear color space
+	bool m_linearColorSpace = false;
 
 	String m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;

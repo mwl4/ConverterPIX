@@ -142,9 +142,9 @@ bool TextureObject::load( FileSystem *fs, String filepath )
 	m_addr_v = ( Addr )( header->m_addr_v );
 	m_addr_w = ( Addr )( header->m_addr_w );
 	m_bias = header->m_bias;
-	m_nocompress = !!header->m_nocompress;
-	m_noanisotropic = !!header->m_noanisotropic;
-	m_customColorSpace = !!header->m_custom_color_space;
+	m_nocompress = header->m_compress == prism::tobj_compress_t::no;
+	m_noanisotropic = header->m_anisotropic == prism::tobj_anisotropic_t::no;
+	m_linearColorSpace = header->m_color_space == prism::tobj_color_space_t::linear;
 
 	m_texturesCount = 0;
 
@@ -194,7 +194,7 @@ bool TextureObject::loadDDS( FileSystem *fs, String filepath )
 	}
 	const dds::header &header = interpretBufferAt<dds::header>( buffer, sizeof( magic ) );
 
-	if( m_customColorSpace )
+	if( m_linearColorSpace )
 	{
 		if( ( !!( header.m_pixel_format.m_flags & dds::pixel_flags::four_cc ) && header.m_pixel_format.m_four_cc == dds::COMPRESS_ATI2 )
 			|| ( header.m_pixel_format == dds::PIXEL_FORMAT_R16G16 ) )
@@ -345,7 +345,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		*file << "nocompress" << SEOL;
 	}
 
-	if (m_usage == Usage::none && m_customColorSpace)
+	if (m_usage == Usage::none && m_linearColorSpace)
 	{
 		*file << "color_space linear" << SEOL;
 	}
@@ -1063,7 +1063,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					}
 				}
 
-				bool customColorSpaceInTobjToSet = false;
+				bool linearColorSpaceInTobjToSet = false;
 				static const dds::dxgi_format linearColorSpaceFormats[] =
 				{
 					dds::dxgi_format::format_bc2_unorm,
@@ -1081,17 +1081,17 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 				{
 					if( textureDx10Format == linearColorSpaceFormat )
 					{
-						customColorSpaceInTobjToSet = true;
+						linearColorSpaceInTobjToSet = true;
 					}
 				}
 
 				// workaround for SCS packer not writing m_custom_color_space when extracting files. It should be part of tobj extraction.
-				if( noCompressInTobjToSet || customColorSpaceInTobjToSet )
+				if( noCompressInTobjToSet || linearColorSpaceInTobjToSet )
 				{
 					Array<u8> newTobjBuffer = tobjBuffer;
-					prism::tobj_header_t &newTobjHeader = *reinterpret_cast< prism::tobj_header_t * >( newTobjBuffer.data() );
-					newTobjHeader.m_custom_color_space = customColorSpaceInTobjToSet;
-					newTobjHeader.m_nocompress = noCompressInTobjToSet;
+					prism::tobj_header_t &newTobjHeader = interpretBufferAt<prism::tobj_header_t>( newTobjBuffer, 0 );
+					newTobjHeader.m_color_space = linearColorSpaceInTobjToSet ? prism::tobj_color_space_t::linear : prism::tobj_color_space_t::srgb;
+					newTobjHeader.m_compress = noCompressInTobjToSet ? prism::tobj_compress_t::no : prism::tobj_compress_t::yes;
 					if( const auto newTobjFile = fileSystemToWriteTo.open( tobjFilePath, FileSystem::write | FileSystem::binary ) )
 					{
 						newTobjFile->blockWrite( newTobjBuffer.data(), newTobjBuffer.size() );
