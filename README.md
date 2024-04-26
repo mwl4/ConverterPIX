@@ -13,33 +13,56 @@ This software is used by blender add-on [ConverterPIXWrapper](https://github.com
 
 ***Parameters:***
 
-    -h - prints help text
+    -h, --help  prints help text
 
-    <base> - mode: converts entire base(directory or archive) to mid-formats
+    <base_path>
+                mode: converts entire base(directory or archive) to mid-formats
 
-    -b <base_path> - specify base path and mount it (can be used multiple times)
+    -b, --base <base_path>
+                specify base path and mount it (can be used multiple times)
 
-    -e <export_path> - specify export path
-    
-    -m <model_path> - mode: convert single model to mid-formats (model_path is relative to base)
-    
-    -t <tobj_path> - mode: convert single tobj to mid-formats (tobj_path is relative to base)
-    
-    -d <dds_path> - mode: print debug info about given DDS file (dds_path is absolute path)
+    -e, --export <export_path>
+                specifies export path
 
-    -extract_f <file_path> - mode: extracts given file and saves it in export path (file_path is relative to base)
+    -m, --model <model_path> [<anim_path_1> <anim_path_2> <anim_path_3> ...]
+                mode: convert single model to mid-formats (model_path is relative to base, without extension)
 
-    -show_f <file_path> - mode: extracts given file and prints it to stdout (file_path is relative to base)
+    --find-model-animations <model_path>
+                mode: finds and prints all matching animations file path to model (model_path is relative to base, without extension)
 
-    -extract_d <dir_path> - mode: extracts given directory and saves it in export path (dir_path is relative to base)
+    -t, --tobj <tobj_path>
+                mode: convert single tobj to mid-formats (tobj_path is relative to base)
 
-    -listdir <dir_path> - mode: lists entries of given directory (dir_path is relative to base)
+    -d, --debug-dds <dds_path>
+                mode: print debug info about given DDS file (dds_path is absolute path)
 
-    -listdir_r <dir_path> - mode: lists entries of given directory recursively (dir_path is relative to base)
+    --extract-file <file_path>
+                mode: extracts given file and saves it in export path (file_path is relative to base)
 
-    -matFormat147 - switch: output materials to 1.47 mid-format
+    --show-file <file_path>
+                mode: extracts given file and prints it to stdout (file_path is relative to base)
 
-    -ddsDxt10 - switch: output DDS files in DXT10 format
+    --extract-directory <dir_path>
+                mode: extracts given directory and saves it in export path (dir_path is relative to base)
+
+    --list-directory <dir_path>
+                mode: lists entries of given directory (dir_path is relative to base)
+
+    --list-directory-recursive <dir_path>
+                mode: lists entries of given directory recursively (dir_path is relative to base)
+
+    --calc-cityhash64 <string>
+                mode: calculate and print to stdout cityhash64 of given string
+
+    --calc-cityhash64-file <file_path>
+                mode: calculate and print to stdout cityhash64 of given file (file_path is absolute path)
+
+    --output-material-format147
+                switch: output materials in 1.47 mid-format
+
+    --output-dds-dxt10
+                switch: output DDS files in DXT10 format
+
 
 
 ----------
@@ -87,9 +110,7 @@ This software is used by blender add-on [ConverterPIXWrapper](https://github.com
     # will show content of /def/ui.sii file stored in def.scs archive
 
     
-Note that animations will not be converted when converting the whole base.
-
-This is caused by lack of information, so you have to convert each model individually to edit animations.
+Note that animations will not be converted when converting the whole base. TBD
 
 
 ----------
