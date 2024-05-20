@@ -22,7 +22,7 @@ import shutil
 import logging
 
 scs_packer = 'scs_packer'
-converter_pix = os.path.abspath('../../bin/win_x86/converter_pix_d')
+converter_pix = os.path.abspath('../../bin/win_x86/converter_pix')
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='test.log.txt', encoding='utf-8', level=logging.DEBUG, filemode='w')
@@ -89,6 +89,7 @@ run_test(['b8g8r8_nomips_3_3_2_2_2_0.tobj', 'b8g8r8_nomips.dds'])
 run_test(['b8g8r8_mips_3_3_2_2_2_0.tobj', 'b8g8r8_mips.dds'])
 run_test(['cubemap_dxt1_nomips.tobj', 'cubemap_dxt1_nomips_b.dds', 'cubemap_dxt1_nomips_s.dds'])
 run_test(['dxt5_mips.tobj', 'dxt5_mips.dds'])
+run_test(['r16g16_unorm.tobj', 'r16g16_unorm.dds', 'test.txt']) # added test.txt, as without it, readdir of / in archive yields about missing entry metadata for some reason
 
 print(f'tests passed: {tests_count_passed} / {tests_count}')
 
