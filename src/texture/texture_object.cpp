@@ -205,6 +205,55 @@ bool TextureObject::loadDDS( FileSystem *fs, String filepath )
 	return true;
 }
 
+class UsageInferredSettings
+{
+public:
+	static UsageInferredSettings get( TextureObject::Usage usage );
+
+	bool addr() const { return m_bits & c_addr; }
+	UsageInferredSettings &inferAddr() { m_bits |= c_addr; return *this; }
+
+    bool nomips() const { return m_bits & c_nomips; }
+	UsageInferredSettings &inferNomips() { m_bits |= c_nomips; return *this; }
+
+    bool nocompress() const { return m_bits & c_nocompress; }
+	UsageInferredSettings &inferNocompress() { m_bits |= c_nocompress; return *this; }
+
+    bool colorSpace() const { return m_bits & c_colorSpace; }
+	UsageInferredSettings &inferColorSpace() { m_bits |= c_colorSpace; return *this; }
+
+private:
+	static constexpr u32 c_addr =		( 1 << 0 );
+	static constexpr u32 c_nomips =		( 1 << 1 );
+	static constexpr u32 c_nocompress =	( 1 << 2 );
+	static constexpr u32 c_colorSpace = ( 1 << 3 );
+
+	u32 m_bits = 0; // container for different settings, implementation detail
+};
+
+UsageInferredSettings UsageInferredSettings::get( TextureObject::Usage usage )
+{
+	struct UsageInferredSettingsTable
+	{
+		UsageInferredSettings m_allSettings[ static_cast<u32>( TextureObject::Usage::count ) ];
+
+		UsageInferredSettings &settings( TextureObject::Usage usage )
+		{
+			assert( static_cast<u32>( usage ) < static_cast<u32>( TextureObject::Usage::count ) );
+			return m_allSettings[ static_cast<u32>( usage ) ];
+		}
+
+		UsageInferredSettingsTable()
+		{
+			settings( TextureObject::Usage::ui ).inferNomips().inferNocompress().inferColorSpace();
+			settings( TextureObject::Usage::data ).inferNomips().inferNocompress().inferColorSpace();
+			settings( TextureObject::Usage::projected ).inferAddr().inferNomips();
+		}
+	};
+	static UsageInferredSettingsTable data;
+	return data.settings( usage );
+}
+
 bool TextureObject::saveToMidFormats( String exportpath )
 {
 	if (m_converted)
@@ -220,6 +269,39 @@ bool TextureObject::saveToMidFormats( String exportpath )
 	if (m_type < TextureObject::_1D_MAP || m_type > TextureObject::_CUBE_MAP)
 	{
 		printf("Unsupported tobj type: \"%s\"!\n", m_filepath.c_str());
+	}
+
+	Optional< MemFileSystem > optionalExtractedTobjFs;
+	{
+		MetaStat metaStat;
+		if( !getUFS()->mstat( &metaStat, m_filepath ) )
+		{
+			warning_f( "tobj", m_filepath, "Unable to mstat file!" );
+			return false;
+		}
+		if( metaStat.m_meta.size() > 0 )
+		{
+			optionalExtractedTobjFs.emplace();
+			if( !extractTextureObject( m_filepath, metaStat, optionalExtractedTobjFs.value() ) )
+			{
+				printf( "Unable to extract tobj: %s\n", m_filepath.c_str() );
+				return false;
+			}
+		}
+	}
+
+	FileSystem *const inputFileSystem = optionalExtractedTobjFs.has_value() ? as<FileSystem>( &optionalExtractedTobjFs.value() ) : as<FileSystem>( getUFS() );
+
+	UberFileSystem conversionLocalUfs;
+	conversionLocalUfs.mount( inputFileSystem, 1 );
+	{
+		// mount temporary device to which we will write potential results
+		FileSystem &conversionFsToWriteTo = *conversionLocalUfs.mount( std::make_unique< MemFileSystem >(), 2 );
+		if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, conversionFsToWriteTo ) )
+		{
+			printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
+			return false;
+		}
 	}
 
 	auto mapType = [](TextureObject::Type type) -> String {
@@ -257,39 +339,21 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		}
 		return "UNKNOWN";
 	};
-
-	Optional< MemFileSystem > optionalExtractedTobjFs;
-	{
-		MetaStat metaStat;
-		if( !getUFS()->mstat( &metaStat, m_filepath ) )
+	auto usageString = [&](Usage u) -> String {
+		switch (u)
 		{
-			warning_f( "tobj", m_filepath, "Unable to mstat file!" );
-			return false;
+			case Usage::none:		return "default";
+			case Usage::tsnormal:	return "tsnormal";
+			case Usage::ui:			return "ui";
+			case Usage::data:		return "data";
+			case Usage::projected:	return "projected";
+			default:
+				printf("Unknown usage of tobj file: \"%s\"!\n", m_filepath.c_str());
 		}
-		if( metaStat.m_meta.size() > 0 )
-		{
-			optionalExtractedTobjFs.emplace();
-			if( !extractTextureObject( m_filepath, metaStat, optionalExtractedTobjFs.value() ) )
-			{
-				printf( "Unable to extract tobj: %s\n", m_filepath.c_str() );
-				return false;
-			}
-		}
-	}
+		return "UNKNOWN";
+	};
 
-	FileSystem *const inputFileSystem = optionalExtractedTobjFs.has_value() ? as<FileSystem>( &optionalExtractedTobjFs.value() ) : as<FileSystem>( getUFS() );
-
-	UberFileSystem conversionLocalUfs;
-	conversionLocalUfs.mount( inputFileSystem, 1 );
-	{
-		// mount temporary device to which we will write potential results
-		FileSystem &conversionFsToWriteTo = *conversionLocalUfs.mount( std::make_unique< MemFileSystem >(), 2 );
-		if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, conversionFsToWriteTo ) )
-		{
-			printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
-			return false;
-		}
-	}
+	const UsageInferredSettings usageInferredSettings = UsageInferredSettings::get( m_usage );
 
 	*file << fmt::sprintf("map %s" SEOL, mapType(m_type).c_str());
 	for (uint32_t i = 0; i < m_texturesCount; ++i)
@@ -311,12 +375,15 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		copyFile(inputf.get(), outputf.get());
 	}
 
-	*file << "addr" << SEOL;
-	*file << TAB << addrAttribute(m_addr_u) << SEOL;
-	*file << TAB << addrAttribute(m_addr_v) << SEOL;
-	if (m_type == TextureObject::_CUBE_MAP)
+	if( !usageInferredSettings.addr() )
 	{
-		*file << TAB << addrAttribute(m_addr_w) << SEOL;
+		*file << "addr" << SEOL;
+		*file << TAB << addrAttribute(m_addr_u) << SEOL;
+		*file << TAB << addrAttribute(m_addr_v) << SEOL;
+		if (m_type == TextureObject::_CUBE_MAP)
+		{
+			*file << TAB << addrAttribute(m_addr_w) << SEOL;
+		}
 	}
 
 	if (m_mipFilter == TextureObject::LINEAR)
@@ -325,7 +392,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 	}
 	else
 	{
-		if ( m_usage != Usage::ui && m_mipFilter == TextureObject::NOMIPS)
+		if (!usageInferredSettings.nomips() && m_mipFilter == TextureObject::NOMIPS)
 		{
 			*file << "nomips" << SEOL;
 		}
@@ -340,19 +407,19 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		*file << "noanisotropic" << SEOL;
 	}
 
-	if ( m_usage != Usage::ui && m_nocompress)
+	if (!usageInferredSettings.nocompress() && m_nocompress)
 	{
 		*file << "nocompress" << SEOL;
 	}
 
-	if (m_usage == Usage::none && m_linearColorSpace)
+	if (!usageInferredSettings.colorSpace() && m_linearColorSpace)
 	{
 		*file << "color_space linear" << SEOL;
 	}
 
 	if (m_usage != Usage::none)
 	{
-		*file << "usage " << ( m_usage == Usage::tsnormal ? "tsnormal" : "ui") << SEOL;
+		*file << "usage " << usageString(m_usage) << SEOL;
 	}
 
 	if (m_bias != 0)
@@ -734,6 +801,10 @@ bool convertDDSFromDX10Format( FileSystem &inputFs, const String &textureFilePat
 		ddsHeaderConverted.m_pixel_format = dds::PIXEL_FORMAT_E5B9G9R9;
 		ddsImagesBitsConverted = convertImageBits_R9G9B9E5_SHAREDEXP_To_E5B9G9R9( ddsBufferBits.data(), ddsBufferBits.size(), ddsHeader.m_width, ddsHeader.m_height, facesStoredInDDS, imagesStoredInDDS );
 	}
+	else if( ddsFormat == dds::dxgi_format::format_r16g16_unorm )
+	{
+		ddsHeaderConverted.m_pixel_format = dds::PIXEL_FORMAT_R16G16;
+	}
 	else
 	{
 		error_f( "dds", textureFilePath, "File cannot be converted, as format %s(%u) is not supported!", dds::stringize_dxgi_format( ddsFormat ), ( u32 )ddsFormat );
@@ -1054,6 +1125,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					dds::dxgi_format::format_b8g8r8a8_unorm,
 					dds::dxgi_format::format_r8_unorm,
 					dds::dxgi_format::format_r9g9b9e5_sharedexp,
+					dds::dxgi_format::format_r16g16_unorm,
 				};
 				for( dds::dxgi_format noCompressFormat : noCompressFormats )
 				{
@@ -1076,6 +1148,7 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 					dds::dxgi_format::format_b8g8r8a8_unorm,
 					dds::dxgi_format::format_r8_unorm,
 					dds::dxgi_format::format_r9g9b9e5_sharedexp,
+					dds::dxgi_format::format_r16g16_unorm,
 				};
 				for( dds::dxgi_format linearColorSpaceFormat : linearColorSpaceFormats )
 				{

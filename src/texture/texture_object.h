@@ -52,6 +52,17 @@ public:
 		MIRROR_CLAMP_TO_EDGE = 6
 	};
 
+	enum class Usage : u32
+	{
+		none = 0, // default
+		tsnormal,
+		ui,
+		data,
+		projected,
+
+		count, // always at the end
+	};
+
 public:
 	bool load( String filepath );
 	bool saveToMidFormats( String exportpath );
@@ -84,12 +95,6 @@ private:
 	String m_filepath; // @example /vehicle/truck/share/glass.tobj
 	bool m_converted = false;
 
-	enum class Usage
-	{
-		none = 0,
-		tsnormal = 1,
-		ui = 2
-	};
 	Usage m_usage = Usage::none;
 
 	friend Model;
