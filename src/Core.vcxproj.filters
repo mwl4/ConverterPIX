@@ -248,6 +248,9 @@
     <ClInclude Include="fs\memfs_file.h">
       <Filter>Source Files\fs</Filter>
     </ClInclude>
+    <ClInclude Include="structs\ppd_0x18.h">
+      <Filter>Source Files\structs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fs\file.cpp">

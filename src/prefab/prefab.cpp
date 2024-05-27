@@ -31,6 +31,7 @@
 #include <structs/ppd_0x15.h>
 #include <structs/ppd_0x16.h>
 #include <structs/ppd_0x17.h>
+#include <structs/ppd_0x18.h>
 
 #include <prefab/node.h>
 #include <prefab/curve.h>
@@ -75,10 +76,12 @@ bool Prefab::load(String filePath)
 		case ppd_0x15::ppd_header_t::SUPPORTED_VERSION: return loadVersion0x15(buffer.get(), fileSize);
 		case ppd_0x16::ppd_header_t::SUPPORTED_VERSION: return loadVersion0x16(buffer.get(), fileSize);
 		case ppd_0x17::ppd_header_t::SUPPORTED_VERSION: return loadVersion0x17(buffer.get(), fileSize);
+		case ppd_0x18::ppd_header_t::SUPPORTED_VERSION: return loadVersion0x18(buffer.get(), fileSize);
 	}
 
-	error_f("model", m_filePath, "Invalid version of prefab file (have: %i expected: %i, %i or %i)", version,
-			ppd_0x15::ppd_header_t::SUPPORTED_VERSION, ppd_0x16::ppd_header_t::SUPPORTED_VERSION, ppd_0x17::ppd_header_t::SUPPORTED_VERSION);
+	error_f("model", m_filePath, "Invalid version of prefab file (have: %i expected: %i, %i, %i or %i)", version,
+			ppd_0x15::ppd_header_t::SUPPORTED_VERSION, ppd_0x16::ppd_header_t::SUPPORTED_VERSION, ppd_0x17::ppd_header_t::SUPPORTED_VERSION,
+			ppd_0x18::ppd_header_t::SUPPORTED_VERSION);
 
 	return false;
 }
@@ -548,6 +551,163 @@ bool Prefab::loadVersion0x17(const uint8_t * const buffer, const size_t fileSize
 		intersection.m_radius = is->m_inter_radius;
 		intersection.m_flags = is->m_flags;
 		m_intersections.push_back(intersection);
+	}
+
+	m_loaded = true;
+	return true;
+}
+
+bool Prefab::loadVersion0x18( const uint8_t *const buffer, const size_t fileSize )
+{
+	using namespace prism::ppd_0x18;
+
+	const ppd_header_t *const header = ( ppd_header_t * )( buffer );
+
+	if( header->m_node_offset > fileSize
+		|| header->m_nav_curve_offset > fileSize
+		|| header->m_sign_offset > fileSize
+		|| header->m_semaphore_offset > fileSize
+		|| header->m_spawn_point_offset > fileSize
+		|| header->m_terrain_point_pos_offset > fileSize
+		|| header->m_terrain_point_normal_offset > fileSize
+		|| header->m_terrain_point_variant_offset > fileSize
+		|| header->m_map_point_offset > fileSize
+		|| header->m_trigger_point_offset > fileSize
+		|| header->m_intersection_offset > fileSize )
+	{
+		error_f( "prefab", m_filePath, "Offset inside file exceeds file size!" );
+		return false;
+	}
+
+	Node node; Curve curve; Sign sign; Semaphore semaphore; SpawnPoint spawnPoint; MapPoint mapPoint;
+	TerrainPointVariant terrainPointVariant; TriggerPoint triggerPoint; Intersection intersection;
+	TerrainPoint terrainPoint;
+
+	for( u32 i = 0; i < header->m_node_count; ++i )
+	{
+		ppd_node_t *fnode = ( ppd_node_t * )( buffer + header->m_node_offset ) + i;
+		node.m_terrainPointIdx = fnode->m_terrain_point_idx;
+		node.m_terrainPointCount = fnode->m_terrain_point_count;
+		node.m_variantIdx = fnode->m_variant_idx;
+		node.m_variantCount = fnode->m_variant_count;
+		node.m_position = fnode->m_pos;
+		node.m_direction = fnode->m_dir;
+		for( u32 j = 0; j < 8; ++j )
+		{
+			node.m_inputLines[ j ] = fnode->m_input_lines[ j ];
+			node.m_outputLines[ j ] = fnode->m_output_lines[ j ];
+		}
+		m_nodes.push_back( node );
+	}
+
+	for( u32 i = 0; i < header->m_nav_curve_count; ++i )
+	{
+		ppd_curve_t *fcurve = ( ppd_curve_t * )( buffer + header->m_nav_curve_offset ) + i;
+		curve.m_name = token_to_string( fcurve->m_name );
+		curve.m_flags = fcurve->m_flags;
+		curve.m_leadsToNodes = fcurve->m_leads_to_nodes;
+		curve.m_startPosition = fcurve->m_start_pos;
+		curve.m_startRotation = fcurve->m_start_rot;
+		curve.m_endPosition = fcurve->m_end_pos;
+		curve.m_endRotation = fcurve->m_end_rot;
+		curve.m_length = fcurve->m_length;
+		for( u32 j = 0; j < 4; ++j )
+		{
+			curve.m_nextLines[ j ] = fcurve->m_next_lines[ j ];
+			curve.m_prevLines[ j ] = fcurve->m_prev_lines[ j ];
+		}
+		curve.m_nextLinesCount = fcurve->m_count_next;
+		curve.m_prevLinesCount = fcurve->m_count_prev;
+		curve.m_semaphoreId = fcurve->m_semaphore_id;
+		curve.m_trafficRule = token_to_string( fcurve->m_traffic_rule );
+		m_curves.push_back( curve );
+	}
+
+	for( u32 i = 0; i < header->m_sign_count; ++i )
+	{
+		ppd_sign_t *fsign = ( ppd_sign_t * )( buffer + header->m_sign_offset ) + i;
+		sign.m_name = token_to_string( fsign->m_name );
+		sign.m_position = fsign->m_position;
+		sign.m_rotation = fsign->m_rotation;
+		sign.m_model = token_to_string( fsign->m_model );
+		sign.m_part = token_to_string( fsign->m_part );
+		m_signs.push_back( sign );
+	}
+
+	for( u32 i = 0; i < header->m_semaphore_count; ++i )
+	{
+		ppd_semaphore_t *fsemaphore = ( ppd_semaphore_t * )( buffer + header->m_semaphore_offset ) + i;
+		semaphore.m_position = fsemaphore->m_position;
+		semaphore.m_rotation = fsemaphore->m_rotation;
+		semaphore.m_type = fsemaphore->m_type;
+		semaphore.m_semaphoreId = fsemaphore->m_semaphore_id;
+		semaphore.m_intervals = fsemaphore->m_intervals;
+		semaphore.m_cycle = fsemaphore->m_cycle;
+		semaphore.m_profile = token_to_string( fsemaphore->m_profile );
+		m_semaphores.push_back( semaphore );
+	}
+
+	for( u32 i = 0; i < header->m_spawn_point_count; ++i )
+	{
+		ppd_spawn_point_t *fspawnpt = ( ppd_spawn_point_t * )( buffer + header->m_spawn_point_offset ) + i;
+		spawnPoint.m_position = fspawnpt->m_position;
+		spawnPoint.m_rotation = fspawnpt->m_rotation;
+		spawnPoint.m_type = fspawnpt->m_type;
+		m_spawnPoints.push_back( spawnPoint );
+	}
+
+	for( u32 i = 0; i < header->m_terrain_point_count; ++i )
+	{
+		terrainPoint.m_position = *( ( float3 * )( buffer + header->m_terrain_point_pos_offset ) + i );
+		terrainPoint.m_normal = *( ( float3 * )( buffer + header->m_terrain_point_normal_offset ) + i );
+		m_terrainPoints.push_back( terrainPoint );
+	}
+
+	for( u32 i = 0; i < header->m_terrain_point_variant_count; ++i )
+	{
+		ppd_terrain_point_variant_t *ftpv = ( ppd_terrain_point_variant_t * )( buffer + header->m_terrain_point_variant_offset ) + i;
+		terrainPointVariant.m_attach0 = ftpv->m_attach0;
+		terrainPointVariant.m_attach1 = ftpv->m_attach1;
+		m_terrainPointVariants.push_back( terrainPointVariant );
+	}
+
+	for( u32 i = 0; i < header->m_map_point_count; ++i )
+	{
+		ppd_map_point_t *fmappt = ( ppd_map_point_t * )( buffer + header->m_map_point_offset ) + i;
+		mapPoint.m_mapVisualFlags = fmappt->m_map_visual_flags;
+		mapPoint.m_mapNavFlags = fmappt->m_map_nav_flags;
+		mapPoint.m_position = fmappt->m_position;
+		for( u32 j = 0; j < 6; ++j )
+		{
+			mapPoint.m_neighbour[ j ] = fmappt->m_neighbours[ j ];
+		}
+		mapPoint.m_neighbourCount = fmappt->m_neighbour_count;
+		m_mapPoints.push_back( mapPoint );
+	}
+
+	for( u32 i = 0; i < header->m_trigger_point_count; ++i )
+	{
+		ppd_trigger_point_t *triggerpt = ( ppd_trigger_point_t * )( buffer + header->m_trigger_point_offset ) + i;
+		triggerPoint.m_id = triggerpt->m_trigger_id;
+		triggerPoint.m_action = token_to_string( triggerpt->m_trigger_action );
+		triggerPoint.m_range = triggerpt->m_trigger_range;
+		triggerPoint.m_reset_delay = triggerpt->m_trigger_reset_delay;
+		triggerPoint.m_reset_dist = triggerpt->m_trigger_reset_dist;
+		triggerPoint.m_flags = triggerpt->m_flags;
+		triggerPoint.m_position = triggerpt->m_position;
+		triggerPoint.m_neighbours[ 0 ] = triggerpt->m_neighbours[ 0 ];
+		triggerPoint.m_neighbours[ 1 ] = triggerpt->m_neighbours[ 1 ];
+		m_triggerPoints.push_back( triggerPoint );
+	}
+
+	for( u32 i = 0; i < header->m_intersection_count; ++i )
+	{
+		ppd_intersection_t *is = ( ppd_intersection_t * )( buffer + header->m_intersection_offset ) + i;
+		intersection.m_curveId = is->m_inter_curve_id;
+		intersection.m_position = is->m_inter_position;
+		intersection.m_radius = is->m_inter_radius;
+		intersection.m_flags = is->m_flags;
+		m_intersections.push_back( intersection );
 	}
 
 	m_loaded = true;

@@ -49,6 +49,7 @@ private:
 	bool loadVersion0x15(const uint8_t *const buffer, const size_t size);
 	bool loadVersion0x16(const uint8_t *const buffer, const size_t size);
 	bool loadVersion0x17(const uint8_t *const buffer, const size_t size);
+	bool loadVersion0x18(const uint8_t *const buffer, const size_t size);
 
 private:
 	Array<Node> m_nodes;

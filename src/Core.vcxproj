@@ -67,6 +67,7 @@
     <ClInclude Include="structs\ppd_0x15.h" />
     <ClInclude Include="structs\ppd_0x16.h" />
     <ClInclude Include="structs\ppd_0x17.h" />
+    <ClInclude Include="structs\ppd_0x18.h" />
     <ClInclude Include="structs\tobj.h" />
     <ClInclude Include="structs\zip.h" />
     <ClInclude Include="texture\texture.h" />
