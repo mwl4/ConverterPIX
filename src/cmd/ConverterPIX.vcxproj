@@ -13,19 +13,19 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8ACF1ABB-2B42-492B-A403-BD98A61FC110}</ProjectGuid>
     <RootNamespace>ConverterPIX</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -42,11 +42,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\bin\win_x86\</OutDir>
     <TargetName>converter_pix_d</TargetName>
-    <IntDir>..\..\obj\release\win_x86\$(ProjectName)\</IntDir>
+    <IntDir>..\..\obj\$(Configuration)\win_x86\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\bin\win_x86\</OutDir>
-    <IntDir>..\..\obj\release\win_x86\$(ProjectName)\</IntDir>
+    <IntDir>..\..\obj\$(Configuration)\win_x86\$(ProjectName)\</IntDir>
     <TargetName>converter_pix</TargetName>
     <IncludePath>$(ProjectDir)/;$(IncludePath)</IncludePath>
   </PropertyGroup>
