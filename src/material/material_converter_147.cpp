@@ -44,14 +44,19 @@ MaterialConverter147::AttributeConvertMapPre147 MaterialConverter147::m_convertM
 	{ "reflection_secondary", MaterialConverter147::AttributeConvert("reflection2", 1, 0) },
 	{ "lod_selector", MaterialConverter147::AttributeConvert("aux[1]", 1, 0) },
 	{ "shadow_offset", MaterialConverter147::AttributeConvert("aux[0]", 1, 0) },
-	{ "amod_decal_blending_factors", MaterialConverter147::AttributeConvert("amod_decal_blending_factors", 2, 0) }, //not present in materials until 1.47
-	{ "texgen_0_gen", MaterialConverter147::AttributeConvert("aux[0]", 2, 0) },
-	{ "texgen_0_rot", MaterialConverter147::AttributeConvert("texgen_0_rot", 1, 0) }, //not present in materials until 1.47
-	{ "texgen_1_gen", MaterialConverter147::AttributeConvert("aux[1]", 2, 0) },
-	{ "texgen_1_rot", MaterialConverter147::AttributeConvert("texgen_1_rot", 1, 0) }, //not present in materials until 1.47
+	{ "amod_decal_blending_factors", MaterialConverter147::AttributeConvert("aux[0]", 2, 0) }, //not present in materials until 1.47
+	{ "texgen_0_gen", MaterialConverter147::AttributeConvert("aux[0]", 4, 0) }, //was float2, now float4
+	{ "texgen_0_rot", MaterialConverter147::AttributeConvert("aux[0]", 4, 2) }, //not present in materials until 1.47
+	{ "texgen_1_gen", MaterialConverter147::AttributeConvert("aux[1]", 4, 0) }, //was float2, now float4
+	{ "texgen_1_rot", MaterialConverter147::AttributeConvert("aux[1]", 4, 2) }, //not present in materials until 1.47
+	{ "far_color", MaterialConverter147::AttributeConvert("aux[2]", 4, 0) }, //not present in materials until 1.47
+	{ "far_specular_power", MaterialConverter147::AttributeConvert("aux[2]", 4, 3) }, //not present in materials until 1.47
 	{ "depth_bias", MaterialConverter147::AttributeConvert("aux[0]", 1, 0) },
 	{ "luminance_output", MaterialConverter147::AttributeConvert("aux[5]", 2, 0) },
 	{ "luminance_night", MaterialConverter147::AttributeConvert("aux[5]", 2, 1) },
+	{ "interior_atlas_dimensions", MaterialConverter147::AttributeConvert("aux[1]", 2, 0) }, //not present in materials until 1.51
+	{ "interior_glass_color", MaterialConverter147::AttributeConvert("aux[2]", 4, 0) }, //not present in materials until 1.51
+	{ "interior_unit_room_dimensions", MaterialConverter147::AttributeConvert("aux[0]", 2, 0) }, //not present in materials until 1.51
 	{ "water_distances", MaterialConverter147::AttributeConvert("aux[0]", 3, 0) },
 	{ "water_near_color", MaterialConverter147::AttributeConvert("aux[1]", 3, 0) },
 	{ "water_horizon_color", MaterialConverter147::AttributeConvert("aux[2]", 3, 0) },
@@ -82,7 +87,7 @@ MaterialConverter147::AttributeConvertMapPre147 MaterialConverter147::m_convertM
 	{ "flake_density", MaterialConverter147::AttributeConvert("aux[6]", 4, 3) },
 	{ "flip_color", MaterialConverter147::AttributeConvert("aux[7]", 4, 0) },
 	{ "flip_strength", MaterialConverter147::AttributeConvert("aux[7]", 4, 3) },
-	{ "mix00_diffuse_secondary", MaterialConverter147::AttributeConvert("mix00_diffuse_secondary", 3, 0) }, //not present in materials until 1.47
+	{ "mix00_diffuse_secondary", MaterialConverter147::AttributeConvert("aux[0]", 3, 0) }, //not present in materials until 1.47
 	{ "mult_uvscale", MaterialConverter147::AttributeConvert("aux[5]", 4, 0) },
 	{ "mult_uvscale_secondary", MaterialConverter147::AttributeConvert("aux[5]", 4, 2) },
 	{ "sheet_frame_size_r", MaterialConverter147::AttributeConvert("aux[0]", 4, 0) },
@@ -145,7 +150,9 @@ MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convert
 
 MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convertMapToPost147_Tg0Tg1 = {
 	{ "aux[0]", { MaterialConverter147::AttributeConvert("texgen_0_gen", 2, 0) } },
-	{ "aux[1]", { MaterialConverter147::AttributeConvert("texgen_1_gen", 2, 0) } }
+	{ "aux[0]", { MaterialConverter147::AttributeConvert("texgen_0_rot", 1, 2) } },
+	{ "aux[1]", { MaterialConverter147::AttributeConvert("texgen_1_gen", 2, 0) } },
+	{ "aux[1]", { MaterialConverter147::AttributeConvert("texgen_1_rot", 1, 2) } }
 };
 
 MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convertMapToPost147_Lightmap = {

@@ -653,6 +653,7 @@ bool Prefab::loadVersion0x18( const uint8_t *const buffer, const size_t fileSize
 		spawnPoint.m_position = fspawnpt->m_position;
 		spawnPoint.m_rotation = fspawnpt->m_rotation;
 		spawnPoint.m_type = fspawnpt->m_type;
+		spawnPoint.m_flags = fspawnpt->m_flags;
 		m_spawnPoints.push_back( spawnPoint );
 	}
 
@@ -972,11 +973,13 @@ bool Prefab::saveToPip(String exportPath) const
 			TAB "Name: \"%s\"" SEOL
 			TAB "Position: ( %s )" SEOL
 			TAB "Rotation: ( %s )" SEOL
-			TAB "Type: %i" SEOL,
+			TAB "Type: %i" SEOL
+			TAB "Flags: %u" SEOL,
 				fmt::sprintf("sp_%i", (int)i).c_str(),
 				to_string(sp->m_position).c_str(),
 				to_string(sp->m_rotation).c_str(),
-				sp->m_type
+				sp->m_type,
+				sp->m_flags
 			);
 		*file << "}" SEOL;
 	}
