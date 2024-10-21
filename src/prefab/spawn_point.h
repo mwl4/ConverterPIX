@@ -31,6 +31,7 @@ private:
 	Float3 m_position;
 	Quaternion m_rotation;
 	u32 m_type;
+	u32 m_flags;
 
 	friend Prefab;
 };

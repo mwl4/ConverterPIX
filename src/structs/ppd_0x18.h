@@ -90,7 +90,7 @@ namespace prism
 			float3 m_position;
 			quat_t m_rotation;
 			u32 m_type;
-			u32 m_unknown;
+			u32 m_flags;
 		};	ENSURE_SIZE(ppd_spawn_point_t, 36);
 
 		struct ppd_map_point_t // sizeof(48)
