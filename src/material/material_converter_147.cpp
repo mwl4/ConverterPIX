@@ -47,6 +47,7 @@ MaterialConverter147::AttributeConvertMapPre147 MaterialConverter147::m_convertM
 	{ "amod_decal_blending_factors", MaterialConverter147::AttributeConvert("aux[0]", 2, 0) }, //not present in materials until 1.47
 	{ "texgen_0_gen", MaterialConverter147::AttributeConvert("aux[0]", 4, 0) }, //was float2, now float4
 	{ "texgen_0_rot", MaterialConverter147::AttributeConvert("aux[0]", 4, 2) }, //not present in materials until 1.47
+	{ "lod_switch_distance", MaterialConverter147::AttributeConvert("aux[0]", 4, 3) },
 	{ "texgen_1_gen", MaterialConverter147::AttributeConvert("aux[1]", 4, 0) }, //was float2, now float4
 	{ "texgen_1_rot", MaterialConverter147::AttributeConvert("aux[1]", 4, 2) }, //not present in materials until 1.47
 	{ "far_color", MaterialConverter147::AttributeConvert("aux[2]", 4, 0) }, //not present in materials until 1.47
@@ -151,6 +152,7 @@ MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convert
 MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convertMapToPost147_Tg0Tg1 = {
 	{ "aux[0]", { MaterialConverter147::AttributeConvert("texgen_0_gen", 2, 0) } },
 	{ "aux[0]", { MaterialConverter147::AttributeConvert("texgen_0_rot", 1, 2) } },
+	{ "aux[0]", { MaterialConverter147::AttributeConvert("lod_switch_distance", 1, 3) } },
 	{ "aux[1]", { MaterialConverter147::AttributeConvert("texgen_1_gen", 2, 0) } },
 	{ "aux[1]", { MaterialConverter147::AttributeConvert("texgen_1_rot", 1, 2) } }
 };
@@ -249,7 +251,18 @@ bool MaterialConverter147::convertAttributesToPost147Format(const String &effect
 				newAttr.m_valueType = Material::Attribute::FLOAT;
 				newAttr.m_valueCount = (*it).m_valueCount;
 
-				Material::setValues(newAttr, attrValues, (*it).m_startIndex);
+				// Special case for "lod_switch_distance" attribute, because looks like in pre147 format value is divided by 25.
+				// (conversion_tools_2_20 converts value from aux[0]: (x.x  x.x  x.x  1.0) to "lod_switch_distance: 25.0").
+				if (attrName == "lod_switch_distance" && !attrValues.empty()) {
+					Array<String> modifiedValues = attrValues;
+					float value = std::stof(modifiedValues[0]);
+					value *= 25.0f;
+					modifiedValues[0] = std::to_string(value);
+					Material::setValues(newAttr, modifiedValues, (*it).m_startIndex);
+				} else {
+					Material::setValues(newAttr, attrValues, (*it).m_startIndex);
+				}
+
 				//info_f("material", effectName, "Converted attribute to post 1.47 format: %s -> %s(%s)", attrName.c_str(), newAttr.m_name.c_str(), prism::to_string(newAttr.m_value).c_str());
 			}
 			return true;
@@ -368,7 +381,14 @@ void MaterialConverter147::convertAttributesToPre147Format(const String &effect,
 			convertedAttribute.m_valueType = attribute.second.m_valueType;
 			for (uint32_t i=0; i<attribute.second.m_valueCount; i++)
 			{
-				convertedAttribute.m_value[convertRule->second.m_startIndex+i] = attribute.second.m_value[i];
+				// Special case for "lod_switch_distance" attribute, because looks like in pre147 format value is divided by 25.
+				// (conversion_tools_2_20 converts value from aux[0]: (x.x  x.x  x.x  1.0) to "lod_switch_distance: 25.0").
+				if (attribute.second.m_name == "lod_switch_distance") {
+					convertedAttribute.m_value[convertRule->second.m_startIndex + i] = attribute.second.m_value[i] / 25.0f;
+				}
+				else {
+					convertedAttribute.m_value[convertRule->second.m_startIndex + i] = attribute.second.m_value[i];
+				}
 			}
 			//info_f("material", effect, "Converted attribute to pre 1.47 format: %s(%s) -> %s(%s)", attribute.second.m_name.c_str(), prism::to_string(attribute.second.m_value).c_str(), convertedAttribute.m_name.c_str(), prism::to_string(convertedAttribute.m_value).c_str());
 		}
