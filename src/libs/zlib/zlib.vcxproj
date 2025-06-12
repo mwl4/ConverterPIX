@@ -40,13 +40,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -81,15 +81,15 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)..\bin\libs\$(ProjectName)\$(PlatformName)\</OutDir>
     <IntDir>$(SolutionDir)..\obj\$(ProjectName)\$(Configuration)_$(PlatformName)\</IntDir>
-    <TargetName>$(ProjectName)_debug</TargetName>
+    <TargetName>$(ProjectName)_d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)..\bin\libs\$(ProjectName)\$(PlatformName)\</OutDir>
     <IntDir>$(SolutionDir)..\obj\$(ProjectName)\$(Configuration)_$(PlatformName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\..\bin\lib\release\$(ProjectName)\$(PlatformName)\</OutDir>
-    <IntDir>..\..\..\obj\release\$(ProjectName)\$(PlatformName)\</IntDir>
+    <OutDir>$(SolutionDir)..\bin\libs\$(ProjectName)\$(PlatformName)\</OutDir>
+    <IntDir>$(SolutionDir)..\obj\$(ProjectName)\$(Configuration)_$(PlatformName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
