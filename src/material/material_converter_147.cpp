@@ -42,7 +42,7 @@ MaterialConverter147::AttributeConvertMapPre147 MaterialConverter147::m_convertM
 	{ "specular_secondary", MaterialConverter147::AttributeConvert("aux[3]", 4, 0) },
 	{ "shininess_secondary", MaterialConverter147::AttributeConvert("aux[3]", 4, 3) },
 	{ "reflection_secondary", MaterialConverter147::AttributeConvert("reflection2", 1, 0) },
-	{ "lod_selector", MaterialConverter147::AttributeConvert("aux[1]", 1, 0) },
+	{ "lod_selector", MaterialConverter147::AttributeConvert("aux[1]", 3, 0) },
 	{ "shadow_offset", MaterialConverter147::AttributeConvert("aux[0]", 1, 0) },
 	{ "amod_decal_blending_factors", MaterialConverter147::AttributeConvert("aux[0]", 2, 0) }, //not present in materials until 1.47
 	{ "texgen_0_gen", MaterialConverter147::AttributeConvert("aux[0]", 4, 0) }, //was float2, now float4
@@ -146,7 +146,7 @@ MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convert
 
 MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convertMapToPost147_Leaves = {
 	{ "aux[0]", { MaterialConverter147::AttributeConvert("shadow_offset", 1, 0) } },
-	{ "aux[1]", { MaterialConverter147::AttributeConvert("lod_selector", 1, 0) } }
+	{ "aux[1]", { MaterialConverter147::AttributeConvert("lod_selector", 3, 0) } }
 };
 
 MaterialConverter147::AttributeConvertMapPost147 MaterialConverter147::m_convertMapToPost147_Tg0Tg1 = {
