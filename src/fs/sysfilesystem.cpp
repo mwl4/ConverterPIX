@@ -118,7 +118,7 @@ bool SysFileSystem::mkdir(const String &dir)
 		return true;
 	}
 	dirr += '/';
-	for( size_t pos = dirr.find( '/', 0 ); pos != -1; pos = dirr.find( '/', pos + 1 ) )
+	for( size_t pos = dirr.find( '/', 1 ); pos != String::npos; pos = dirr.find( '/', pos + 1 ) )
 	{
 		if( !dirExistsStatic( dirr.substr( 0, pos ).c_str() ) )
 		{
