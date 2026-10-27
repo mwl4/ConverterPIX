@@ -1063,6 +1063,9 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 
 	const Array<String> texturesFilePaths = textureObjectReadTextures( tobjBuffer );
 
+	// tobj as it currently is in the output
+	Array<u8> currentTobjBuffer = tobjBuffer;
+
 	Array<Pair<FileSystem*, String>> texturesToConvert;
 
 	if( tobjHeader.m_type == prism::tobj_type_t::cubic && texturesFilePaths.size() == 1 )
@@ -1072,6 +1075,14 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 		Array<String> generatedTextureFilePaths;
 		if( !disassembleCubemapTextureObject( fs, tobjFilePath, tobjHeader, textureFilePath, fileSystemToWriteTo, generatedTextureFilePaths ) )
 		{
+			return false;
+		}
+
+		// disassembly wrote a new tobj with 6 texture paths, continue from that one
+		const UniquePtr<File> disassembledTobjFile = fileSystemToWriteTo.open( tobjFilePath, FileSystem::read | FileSystem::binary );
+		if( !disassembledTobjFile || !disassembledTobjFile->getContents( currentTobjBuffer ) )
+		{
+			error( "tobj", tobjFilePath, "Unable to read disassembled texture object file" );
 			return false;
 		}
 
@@ -1161,7 +1172,8 @@ bool convertTextureObjectToOldFormatsIfNeeded( FileSystem &fs, const String &tob
 				// workaround for SCS packer not writing m_custom_color_space when extracting files. It should be part of tobj extraction.
 				if( noCompressInTobjToSet || linearColorSpaceInTobjToSet )
 				{
-					Array<u8> newTobjBuffer = tobjBuffer;
+					//use latest buffer
+					Array<u8> newTobjBuffer = currentTobjBuffer;
 					prism::tobj_header_t &newTobjHeader = interpretBufferAt<prism::tobj_header_t>( newTobjBuffer, 0 );
 					newTobjHeader.m_color_space = linearColorSpaceInTobjToSet ? prism::tobj_color_space_t::linear : prism::tobj_color_space_t::srgb;
 					newTobjHeader.m_compress = noCompressInTobjToSet ? prism::tobj_compress_t::no : prism::tobj_compress_t::yes;
