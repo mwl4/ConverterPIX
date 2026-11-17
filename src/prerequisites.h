@@ -302,6 +302,19 @@ String valueToQuotedString(const char *const value);
 	((unsigned)(unsigned char)(ch2) << 16) | ((unsigned)(unsigned char)(ch3) << 24 ))
 #endif
 
+/**
+ * @brief: Makes magic number of the file from its parts
+ *
+ * @param[in] tag The identifier of the format (ex. 0x70B1, which reads as "TOBJ")
+ * @param[in] separator The character stored between the tag and the version
+ * @param[in] version The version of the format
+ * @return @c The magic number (ex. 0x70B10A01)
+*/
+constexpr u32 make_magic( const u16 tag, const char separator, const u8 version )
+{
+	return ( u32( tag ) << 16 ) | ( u32( u8( separator ) ) << 8 ) | u32( version );
+}
+
 template < typename T >
 struct IsIntegral {
 	enum { value = std::numeric_limits<T>::is_integer };

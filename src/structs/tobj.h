@@ -109,9 +109,11 @@ namespace prism
 		tobj_color_space_t m_color_space;	// +38
 		u8 m_unkn11;						// +39
 
-		static const u32 SUPPORTED_MAGIC = 1890650625;
+		static const u32 SUPPORTED_MAGIC = make_magic( 0x70B1 /* TOBJ */, '\n', 1 );
 
 	};	ENSURE_SIZE( tobj_header_t, 40 );
+
+	static_assert( tobj_header_t::SUPPORTED_MAGIC == 1890650625, "Invalid magic" );
 
 	struct tobj_texture_t
 	{
