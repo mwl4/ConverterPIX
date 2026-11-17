@@ -164,21 +164,21 @@ void print_debug( const String &filepath )
     auto file = getSFS()->open( filepath, FileSystem::read | FileSystem::binary );
     if( file == nullptr )
     {
-        printf( "Cannot open dds file: \"%s\"! %s" SEOL, filepath.c_str(), strerror( errno ) );
+        error_f( "dds", filepath, "Cannot open dds file (%s)!", strerror( errno ) );
         return;
     }
 
     Array<u8> headerBuffer( static_cast< size_t >( sizeof( u32 ) + sizeof( dds::header ) ) );
     if( !file->blockRead( headerBuffer.data(), 0, headerBuffer.size() ) )
     {
-        printf( "Unable to read file!\n" );
+        error( "dds", filepath, "Unable to read file!" );
         return;
     }
 
     const u32 magic = interpretBufferAt<u32>( headerBuffer, 0 );
     if( magic != dds::MAGIC )
     {
-        printf( "Invalid dds magic: %i expected: %i\n", magic, dds::MAGIC );
+        error_f( "dds", filepath, "Invalid dds magic: %i expected: %i", magic, dds::MAGIC );
         return;
     }
 
@@ -191,50 +191,50 @@ void print_debug( const String &filepath )
             Array<u8> dxt10HeaderBuffer( static_cast< size_t >( sizeof( dds::header_dxt10 ) ) );
             if( !file->blockRead( dxt10HeaderBuffer.data(), headerBuffer.size(), dxt10HeaderBuffer.size() ) )
             {
-                printf( "Unable to read file!\n" );
+                error( "dds", filepath, "Unable to read file!" );
                 return;
             }
 
             const dds::header_dxt10 &dxt10Header = interpretBufferAt<dds::header_dxt10>( dxt10HeaderBuffer, 0 );
 
-            printf( "dxt10\n" );
+            info( "dds", filepath, "dxt10" );
 
             if( const char *const format = stringize_dxgi_format( dxt10Header.m_dxgi_format ) )
             {
-                printf( "pixel format = %s\n", format );
+                info_f( "dds", filepath, "pixel format = %s", format );
             }
             else
             {
-                printf( "pixel format not known\n" );
+                info( "dds", filepath, "pixel format not known" );
             }
         }
         else
         {
-            printf( "compression: %s\n", dds::uint2s( header.m_pixel_format.m_four_cc ).c_str() );
+            info_f( "dds", filepath, "compression: %s", dds::uint2s( header.m_pixel_format.m_four_cc ) );
         }
     }
     else
     {
         if( const auto pixelFormat = dds::recognize_pixel_format( header.m_pixel_format ) )
         {
-            printf( "pixel format = %s\n", pixelFormat->m_name );
+            info_f( "dds", filepath, "pixel format = %s", pixelFormat->m_name );
         }
         else
         {
-            printf( "pixel format not known\n" );
+            info( "dds", filepath, "pixel format not known" );
         }
-        printf( "bits: %i masks(rgba): %X/%X/%X/%X flags: %X\n",
+        info_f( "dds", filepath, "bits: %i masks(rgba): %X/%X/%X/%X flags: %X",
                 header.m_pixel_format.m_rgb_bit_count,
                 header.m_pixel_format.m_r_bit_mask,
                 header.m_pixel_format.m_g_bit_mask,
                 header.m_pixel_format.m_b_bit_mask,
                 header.m_pixel_format.m_a_bit_mask,
-                header.m_pixel_format.m_flags );
+                static_cast<u32>( header.m_pixel_format.m_flags ) );
     }
-    
-    printf( "mipmaps count: %u\n", header.m_mip_map_count );
 
-    printf( "cubemap: %s\n", !!( header.m_caps2 & dds::caps2::cubemap ) ? "yes" : "no" );
+    info_f( "dds", filepath, "mipmaps count: %u", header.m_mip_map_count );
+
+    info_f( "dds", filepath, "cubemap: %s", !!( header.m_caps2 & dds::caps2::cubemap ) ? "yes" : "no" );
 }
 }
 

@@ -101,7 +101,7 @@ bool TextureObject::loadPreSecondStep( FileSystem *fs, String filepath )
 		// Makes sure texture object is in proper format
 		if( !convertTextureObjectToOldFormatsIfNeeded( *fs, filepath, fsToWriteTo ) )
 		{
-			printf( "Unable to convert tobj to old formats: %s\n", filepath.c_str() );
+			warning( "tobj", filepath, "Unable to convert tobj to old formats!" );
 			return false;
 		}
 	}
@@ -262,13 +262,13 @@ bool TextureObject::saveToMidFormats( String exportpath )
 	auto file = getSFS()->open(exportpath + m_filepath, FileSystem::write | FileSystem::binary);
 	if (!file)
 	{
-		printf("Cannot open file: \"%s\"! %s\n" SEOL, m_filepath.c_str(), strerror(errno));
+		error_f("tobj", m_filepath, "Cannot open file for write (%s)!", strerror(errno));
 		return false;
 	}
 
 	if (m_type < TextureObject::_1D_MAP || m_type > TextureObject::_CUBE_MAP)
 	{
-		printf("Unsupported tobj type: \"%s\"!\n", m_filepath.c_str());
+		warning("tobj", m_filepath, "Unsupported tobj type!");
 	}
 
 	Optional< MemFileSystem > optionalExtractedTobjFs;
@@ -284,7 +284,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 			optionalExtractedTobjFs.emplace();
 			if( !extractTextureObject( m_filepath, metaStat, optionalExtractedTobjFs.value() ) )
 			{
-				printf( "Unable to extract tobj: %s\n", m_filepath.c_str() );
+				warning( "tobj", m_filepath, "Unable to extract tobj!" );
 				return false;
 			}
 		}
@@ -299,7 +299,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		FileSystem &conversionFsToWriteTo = *conversionLocalUfs.mount( std::make_unique< MemFileSystem >(), 2 );
 		if( !convertTextureObjectToOldFormatsIfNeeded( *inputFileSystem, m_filepath, conversionFsToWriteTo ) )
 		{
-			printf( "Unable to convert tobj to old formats: %s\n", m_filepath.c_str() );
+			warning( "tobj", m_filepath, "Unable to convert tobj to old formats!" );
 			return false;
 		}
 	}
@@ -325,7 +325,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 			case TextureObject::MIRROR:				return "mirror";
 			case TextureObject::MIRROR_CLAMP:		return "mirror_clamp";
 			case TextureObject::MIRROR_CLAMP_TO_EDGE:	return "mirror_clamp_to_edge";
-			default: printf("Unknown addr type of tobj file: \"%s\"!\n", m_filepath.c_str());
+			default: warning("tobj", m_filepath, "Unknown addr type of tobj file!");
 		}
 		return "UNKNOWN";
 	};
@@ -335,7 +335,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 			case TextureObject::NEAREST:	return "nearest";
 			case TextureObject::LINEAR:		return "linear";
 			default:
-				printf("Unknown filter type of tobj file: \"%s\"!\n", m_filepath.c_str());
+				warning("tobj", m_filepath, "Unknown filter type of tobj file!");
 		}
 		return "UNKNOWN";
 	};
@@ -348,7 +348,7 @@ bool TextureObject::saveToMidFormats( String exportpath )
 			case Usage::data:		return "data";
 			case Usage::projected:	return "projected";
 			default:
-				printf("Unknown usage of tobj file: \"%s\"!\n", m_filepath.c_str());
+				warning("tobj", m_filepath, "Unknown usage of tobj file!");
 		}
 		return "UNKNOWN";
 	};
@@ -363,13 +363,13 @@ bool TextureObject::saveToMidFormats( String exportpath )
 		auto inputf = conversionLocalUfs.open(m_textures[i], FileSystem::read | FileSystem::binary);
 		if (!inputf)
 		{
-			printf("Could not open file: \"%s\" to copy-read!\n", m_textures[i].c_str());
+			warning_f("tobj", m_filepath, "Could not open file: \"%s\" to copy-read!", m_textures[i]);
 			continue;
 		}
 		auto outputf = getSFS()->open(exportpath + m_textures[i], FileSystem::write | FileSystem::binary);
 		if (!outputf)
 		{
-			printf("Could not open file: \"%s\" to copy-read!\n", (exportpath + m_textures[i]).c_str());
+			warning_f("tobj", m_filepath, "Could not open file: \"%s\" to copy-write!", exportpath + m_textures[i]);
 			continue;
 		}
 		copyFile(inputf.get(), outputf.get());
@@ -593,7 +593,7 @@ bool extractTextureObject( const String &inputTobjFilePath, const MetaStat &inpu
 	}
 	else
 	{
-		printf( "Unable to open file for write!" );
+		warning_f( "tobj", inputTobjFilePath, "Unable to open file \'%s\' for write!", outputDDSFilePath );
 	}
 
 	return true;

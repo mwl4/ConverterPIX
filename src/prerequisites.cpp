@@ -175,7 +175,7 @@ void extractFile( FileSystem &fileSystem, const String &filePath, FileSystem &de
         MetaStat metaStat;
         if( !fileSystem.mstat( &metaStat, filePath ) )
         {
-			printf( "Unable to mstat file: %s\n", filePath.c_str() );
+			error( "system", filePath, "Unable to mstat file!" );
             return;
         }
 
@@ -191,7 +191,7 @@ void extractFile( FileSystem &fileSystem, const String &filePath, FileSystem &de
 
 	if( inputFile == nullptr )
 	{
-		printf( "Unable to open file for read: %s\n", filePath.c_str() );
+		error( "system", filePath, "Unable to open file for read!" );
 		return;
 	}
 
@@ -199,7 +199,7 @@ void extractFile( FileSystem &fileSystem, const String &filePath, FileSystem &de
 
 	if( outputFile == nullptr )
 	{
-		printf( "Unable to open file for write: %s\n", ( destination.root( filePath ) ).c_str() );
+		error_f( "system", filePath, "Unable to open file \'%s\' for write!", destination.root( filePath ) );
 		return;
 	}
 
