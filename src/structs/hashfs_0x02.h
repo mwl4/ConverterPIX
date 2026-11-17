@@ -80,6 +80,8 @@ namespace prism
 		sample =							2,
 		mipproxy =							3,
 		inline_directory =					4,
+		pma =								5,
+		pmg =								6,
 		plain =								1 << 7,			// 128
 		directory =							plain | 1,		// 129
 		mip0 =								plain | 2,		// 130
@@ -101,6 +103,22 @@ namespace prism
 	{
 		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 1, "Fix code below." );
 		out_value.m_value[ 0 ] = metadata[ 0 ];
+	}
+
+	inline void hashfs_v2_meta_pma_get_value( const u32 *metadata, fs_meta_pma_t &out_value )
+	{
+		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 8, "Fix code below." );
+		for( u32 i = 0; i < 8; ++i )
+		{
+			out_value.m_value[ i ] = metadata[ i ];
+		}
+	}
+
+	inline void hashfs_v2_meta_pmg_get_value( const u32 *metadata, fs_meta_pmg_t &out_value )
+	{
+		static_assert( CP_ARRAY_SIZE( out_value.m_value ) == 2, "Fix code below." );
+		out_value.m_value[ 0 ] = metadata[ 0 ];
+		out_value.m_value[ 1 ] = metadata[ 1 ];
 	}
 
 	inline void hashfs_v2_meta_plain_get_value( const u32 *metadata, fs_meta_plain_t &out_value )

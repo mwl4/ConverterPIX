@@ -24,6 +24,7 @@
 
 #include "tobj.h"
 #include "../utils/token.h"
+#include "../math/vector.h"
 
 #pragma pack(push, 1)
 
@@ -163,6 +164,63 @@ public:
 	u64 get_offset() const
 	{
 		return u64( m_value[ 4 ] ) | ( u64( m_value[ 5 ] ) << 32 );
+	}
+};
+
+// Metadata of animation (.pma): packer copies here some fields of pma_header_t (version 0x05),
+// so they are known without reading the file.
+class fs_meta_pma_t
+{
+public:
+	static constexpr c_token_t c_name = tn( "pma" );
+
+	u32 m_value[ 8 ];
+
+	u32 get_flags() const						// [0] pma_header_t::m_flags
+	{
+		return m_value[ 0 ];
+	}
+
+	float get_anim_length() const				// [1] pma_header_t::m_anim_length
+	{
+		return as_float( m_value[ 1 ] );
+	}
+
+	u64 get_skeleton_hash() const				// [2] [3] pma_header_t::m_skeleton_hash
+	{
+		return u64( m_value[ 2 ] ) | ( u64( m_value[ 3 ] ) << 32 );
+	}
+
+	float get_bsphere_rad() const				// [4] pma_header_t::m_bsphere_rad
+	{
+		return as_float( m_value[ 4 ] );
+	}
+
+	float3 get_bsphere_org() const				// [5] [6] [7] pma_header_t::m_bsphere_org
+	{
+		return float3( as_float( m_value[ 5 ] ), as_float( m_value[ 6 ] ), as_float( m_value[ 7 ] ) );
+	}
+
+private:
+	static float as_float( const u32 bits )
+	{
+		float result;
+		memcpy( &result, &bits, sizeof( result ) );
+		return result;
+	}
+};
+
+// Metadata of geometry (.pmg): packer copies here skeleton hash from pmg_header_t (version 0x15).
+class fs_meta_pmg_t
+{
+public:
+	static constexpr c_token_t c_name = tn( "pmg" );
+
+	u32 m_value[ 2 ];
+
+	u64 get_skeleton_hash() const				// [0] [1] pmg_header_t::m_skeleton_hash
+	{
+		return u64( m_value[ 0 ] ) | ( u64( m_value[ 1 ] ) << 32 );
 	}
 };
 

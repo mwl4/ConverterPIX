@@ -294,6 +294,18 @@ void HashFsV2::mstatEntry( MetaStat *result, const prism::hashfs_v2_entry_t *ent
 			prism::hashfs_v2_meta_sample_get_value( metadata, value );
 			metaToAdd.setValue( value );
 		}
+		else if( meta == prism::hashfs_v2_meta_t::pma )
+		{
+			prism::fs_meta_pma_t value;
+			prism::hashfs_v2_meta_pma_get_value( metadata, value );
+			metaToAdd.setValue( value );
+		}
+		else if( meta == prism::hashfs_v2_meta_t::pmg )
+		{
+			prism::fs_meta_pmg_t value;
+			prism::hashfs_v2_meta_pmg_get_value( metadata, value );
+			metaToAdd.setValue( value );
+		}
 		else if( meta == prism::hashfs_v2_meta_t::mipproxy || meta == prism::hashfs_v2_meta_t::inline_directory || meta == prism::hashfs_v2_meta_t::directory )
 		{
 			return; // skip it
@@ -470,6 +482,8 @@ prism::token_t HashFsV2::getMetaTokenName( prism::hashfs_v2_meta_t meta )
 	case prism::hashfs_v2_meta_t::img:		return tn( "img" );
 	case prism::hashfs_v2_meta_t::sample:	return tn( "sample" );
 	case prism::hashfs_v2_meta_t::mipproxy:	return tn( "mipproxy" );
+	case prism::hashfs_v2_meta_t::pma:		return tn( "pma" );
+	case prism::hashfs_v2_meta_t::pmg:		return tn( "pmg" );
 	case prism::hashfs_v2_meta_t::plain:	return tn( "plain" );
 	case prism::hashfs_v2_meta_t::mip0:		return tn( "mip0" );
 	case prism::hashfs_v2_meta_t::mip1:		return tn( "mip1" );
